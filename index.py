@@ -23,7 +23,7 @@ intents.messages = True
 intents.reactions = True
 intents.voice_states = True
 
-with open("C:/Users/Erwann/OneDrive/Documents/Code/bot/StatBot/data.json") as data:
+with open("") as data:
     credentials = json.load(data)
 
 TOKEN = credentials["token"]
@@ -35,7 +35,6 @@ DATABASE = credentials["database"]
 bot = commands.Bot(command_prefix = "s.", description = "Bot for useless statistics", intents = intents)
 bot.remove_command("help")
 
-#mysql -h localhost -u root -p
 try:
     cnx = mysql.connector.connect(user = USER,
                                   password = PASSWORD,
@@ -694,7 +693,7 @@ async def card(ctx):
     cards = ("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J" , "Q", "K")
     colors = ("D", "S", "C", "H")
     card, color = random.choice(cards), random.choice(colors)
-    file = discord.File(f"C:/Users/Erwann/OneDrive/Documents/Code/bot/StatBot/deck/{card}{color}.png", filename = "card.png")
+    file = discord.File(f"/deck/{card}{color}.png", filename = "card.png")
 
     embed = discord.Embed(title = "Your card", description = "Here's the card you drew", color = 0x008000)
     embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
