@@ -119,3 +119,23 @@ class Usage(commands.Cog):
         embed.set_footer(text = "I hope you have fun with my (useless) bot ^^")
 
         await ctx.send(embed = embed)
+
+    @commands.command(description = "Delete all your data from the database", aliases = ["DELETE"])
+    async def delete(self, ctx, user : discord.User == None):
+        if not user:
+            await ctx.send("This command will delete all your data ! To perform it you have to mention yourself !")
+            return
+
+        elif (ctx.author == user) or (ctx.author.id == self.bot.owner_id):
+            id = ctx.author.id
+            delBC = f"DELETE FROM BelongC WHERE idUser = {id};"
+            delBG = f"DELETE FROM BelongG WHERE idUser = {id};"
+            delUser = f"DELETE FROM User WHERE idUser = {id};"
+            self.cursor.execute(delBC)
+            self.cursor.execute(delBG)
+            self.cursor.execute(delUser)
+            self.cnx.commit()
+
+        else:
+            await ctx.send("You can't delete another user data !")
+            return
