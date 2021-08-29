@@ -121,7 +121,7 @@ class Usage(commands.Cog):
         await ctx.send(embed = embed)
 
     @commands.command(description = "Delete all your data from the database", aliases = ["DELETE"])
-    async def delete(self, ctx, user : discord.User == None):
+    async def delete(self, ctx, user : discord.User = None):
         if not user:
             await ctx.send("This command will delete all your data ! To perform it you have to mention yourself !")
             return
