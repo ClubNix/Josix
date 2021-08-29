@@ -357,4 +357,4 @@ class Events(commands.Cog):
 
         else:
             print(error)
-            await ctx.send("An error occured, it's because my dumb owner doesn't know how to code. \nSorry to bother you but could you report it to him ?")
+            await ctx.send("Something went wrong")

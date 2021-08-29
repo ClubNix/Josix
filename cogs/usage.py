@@ -5,9 +5,10 @@ def setup(bot, cursor, cnx):
     bot.add_cog(Usage(bot, cursor))
 
 class Usage(commands.Cog):
-    def __init__(self, bot, cursor):
+    def __init__(self, bot, cursor, cnx):
         self.bot = bot
         self.cursor = cursor
+        self.cnx = cnx
 
     @commands.command(description = "Help command of the bot", aliases = ["HELP"])
     async def help(self, ctx, commandName = None):

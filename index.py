@@ -64,7 +64,7 @@ else:
 
     bot.add_cog(admin.Admin(bot, cursor, cnx))
     bot.add_cog(events.Events(bot, cursor, cnx))
-    bot.add_cog(usage.Usage(bot, cursor))
+    bot.add_cog(usage.Usage(bot, cursor, cnx))
     bot.add_cog(stats.Stats(bot, cursor))
     bot.add_cog(games.Games(bot))
     bot.add_cog(fun.Fun(bot))
