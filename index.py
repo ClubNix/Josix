@@ -3,8 +3,6 @@
 import discord
 from discord.ext import commands
 from discord.ext import tasks
-import mysql.connector
-from mysql.connector import errorcode
 
 import cogs.admin as admin
 import cogs.events as events
@@ -12,6 +10,7 @@ import cogs.usage as usage
 import cogs.stats as stats
 import cogs.games as games
 import cogs.fun as fun
+from database.database import DatabaseHandler
 
 import os
 import sys 
@@ -37,37 +36,20 @@ PASSWORD = credentials["password"]
 HOST = credentials["host"]
 DATABASE = credentials["database"]
 
+DB = DatabaseHandler(USER,
+                     PASSWORD,
+                     HOST,
+                     DATABASE)
+
 bot = commands.Bot(command_prefix = "s.", description = "Bot for useless statistics", intents = intents)
 bot.remove_command("help")
-        
-try:
-    cnx = mysql.connector.connect(user = USER,
-                                  password = PASSWORD,
-                                  host = HOST,
-                                  database = DATABASE)
-
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Something is wrong with the username or/and password")
-
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist")
-
-    elif err.errno == errorcode.CR_UNKNOWN_HOST:
-        print("Unknown host")
-
-    else:
-        print(err)
-else:
-    print("Bot successfully connected to database")
-    cursor = cnx.cursor()
-
-    bot.add_cog(admin.Admin(bot, cursor, cnx))
-    bot.add_cog(events.Events(bot, cursor, cnx))
-    bot.add_cog(usage.Usage(bot, cursor, cnx))
-    bot.add_cog(stats.Stats(bot, cursor))
-    bot.add_cog(games.Games(bot))
-    bot.add_cog(fun.Fun(bot))
+    
+bot.add_cog(admin.Admin(bot))
+bot.add_cog(events.Events(bot))
+bot.add_cog(usage.Usage(bot))
+bot.add_cog(stats.Stats(bot))
+bot.add_cog(games.Games(bot))
+bot.add_cog(fun.Fun(bot))
 
 def main():
     global bot
@@ -102,51 +84,56 @@ async def dm(ctx, member : discord.User, *txt):
 
 @bot.command(hidden = True)
 @commands.is_owner()
-async def unload(ctx, name=None):
+async def load(ctx, name = None):
+    if name:
+        bot.load_extension(name)
+
+@bot.command(hidden = True)
+@commands.is_owner()
+async def unload(ctx, name = None):
     if name:
         bot.unload_extension(name)
+
+@bot.command(hidden = True)
+@commands.is_owner()
+async def reload(ctx, name = None):
+    if name:
+        try:
+            bot.reload_extension(name)
+        except:
+            bot.load_extension(name)
 
 ##########
 ##########
 ##########
 
 async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
-        selectM = f"SELECT idUser, numberMsg, (SELECT SUM(numberMsg) FROM BelongG WHERE idGuild = {guild.id}) FROM BelongG WHERE idGuild = {guild.id} ORDER BY numberMsg DESC LIMIT 5;"
-        selectR = f"SELECT idReact, nameReact, numberReact, (SELECT SUM(numberReact) FROM Reaction WHERE idGuild = {guild.id}) FROM reaction WHERE idGuild = {guild.id} ORDER BY numberReact DESC LIMIT 5;"
-        selectC = f"SELECT idChannel, numberMsg FROM Channel WHERE idGuild = {guild.id} ORDER BY numberMsg DESC LIMIT 5;"
+        queryM, queryR, queryC = DB.embedStat(guild)
 
-        cursor.execute(selectM)
         topMember = ""
-        for id, number, totalM in cursor.fetchall():
+        for id, number, totalM in queryM:
             user = bot.get_user(id)
 
             if user == None:
-                delUser = f"DELETE FROM BelongG WHERE idUser = {id} AND idGuild = {guild.id};"
-                cursor.execute(delUser)
+                DB.deleteBG(id, 0)
             else:
                 topMember += f"{user.mention} : **{number}**\n"
 
-        cursor.execute(selectR)
         topReact = ""
-        for id, name, number, totalR in cursor.fetchall():
+        for id, name, number, totalR in queryR:
             emoji = bot.get_emoji(id)
 
             if emoji == None:
-                delEmoji = f"DELETE FROM Reaction WHERE idReact = {id};"
-                cursor.execute(delEmoji)
+                DB.deleteReact(id)
             else:
                 topReact += f"<:{name}:{id}> : **{number}**\n"
 
-        cursor.execute(selectC)
         topChan = ""
-        for id, number in cursor.fetchall():
+        for id, number in queryC:
             chan = bot.get_channel(id)
 
             if chan == None:
-                delBC = f"DELETE FROM BelongC WHERE idChan = {id};"
-                delChan = f"DELETE FROM Channel WHERE idChan = {id};"
-                cursor.execute(delBC)
-                cursor.execute(delChan)
+                DB.deleteChan(id)
             else:
                 topChan += f"<#{id}> : **{number}**\n"
 
@@ -163,11 +150,11 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
         embed.add_field(name = "Total members :", value = row[4])
         embed.add_field(name = "New members :", value = row[2])
         embed.add_field(name = "Lost members :", value = row[3])
-        #count
+        # Count
         embed.add_field(name = "Total messages send", value = totalM)
         embed.add_field(name = "Total usage of the key word", value = resKW)
         embed.add_field(name = "Total reactions used", value = totalR)
-        #top
+        # Top
         embed.add_field(name = "Top active members :", value = topMember)
         embed.add_field(name = "Top active channels :", value = topChan)
         embed.add_field(name = "Top used reactions :", value = topReact)
@@ -179,33 +166,16 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
 
 @tasks.loop(hours = 24)
 async def sendStat():
-    select = f"""SELECT idGuild, chanStatID, newMembers, lostMembers, totalMembers, lastSend, keyWord, nbKeyWord
-                  FROM Guild
-                  WHERE (sendStatus = '1' AND DATEDIFF(CAST(NOW() AS DATE), lastSend) >= 1)
-                     OR (sendStatus = '2' AND DATEDIFF(CAST(NOW() AS DATE), lastSend) >= 7)
-                     OR (sendStatus = '3' AND DATEDIFF(CAST(NOW() AS DATE), lastSend) >= 30);"""
-
-    cursor.execute(select)
-    query1 = cursor.fetchall()
+    query1 = DB.getGuilds()
 
     for row in query1:
         guild = bot.get_guild(row[0])
         chan = bot.get_channel(row[1])
-
         embed = await getEmbedStat(guild, row)
         await chan.send(embed = embed)
 
-        upd_guild = f"UPDATE Guild SET newMembers = 0, lostMembers = 0, lastSend = CAST(NOW() AS DATE) WHERE idGuild = {row[0]};"
-        upd_belongG = f"UPDATE BelongG SET numberMsg = 0 WHERE idGuild = {guild.id};"
-        upd_chan = f"UPDATE Channel SET numberMsg = 0 WHERE idGuild = {guild.id};"
-        upd_react = f"UPDATE Reaction SET numberReact = 0 WHERE idGuild = {guild.id};"
-
-        cursor.execute(upd_guild)
-        cursor.execute(upd_belongG)
-        cursor.execute(upd_chan)
-        cursor.execute(upd_react)
-
-    cnx.commit()
+        DB.updStat(row[0])
+    DB.commitQ()
 
 ##########
 ##########

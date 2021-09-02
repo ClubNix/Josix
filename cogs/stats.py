@@ -4,56 +4,111 @@ import datetime as dt
 import matplotlib
 import matplotlib.pyplot as plt
 import os
+from database.database import DatabaseHandler
 
-def setup(bot, cursor, cnx):
-    bot.add_cog(Stats(bot, cursor))
+def setup(bot):
+    bot.add_cog(Stats(bot))
 
 class Stats(commands.Cog):
-    def __init__(self, bot, cursor):
+    def __init__(self, bot):
         self.bot = bot
-        self.cursor = cursor
+        self.DB = DatabaseHandler()
+
+    async def getEmbedStat(self, guild : discord.Guild, row = None) -> discord.Embed:
+        queryM, queryR, queryC = self.DB.embedStat(guild)
+        topMember = ""
+
+        for id, number, totalM in queryM:
+            user = self.bot.get_user(id)
+            if user == None:
+                self.DB.deleteBG(id, 0)
+            else:
+                topMember += f"{user.mention} : **{number}**\n"
+
+        topReact = ""
+        for id, name, number, totalR in queryR:
+            emoji = self.bot.get_emoji(id)
+            if emoji == None:
+                self.DB.deleteReact(id)
+            else:
+                topReact += f"<:{name}:{id}> : **{number}**\n"
+
+        topChan = ""
+        for id, number in queryC:
+            chan = self.bot.get_channel(id)
+            if chan == None:
+                self.DB.deleteChan(id)
+            else:
+                topChan += f"<#{id}> : **{number}**\n"
+
+        resKW = ""
+        if row[6] == "":
+            resKW = "No key-word"
+        else:
+            resKW = row[7]
+
+        embed = discord.Embed(title = f"Statistics of the server {guild.name}", description = f"Last send : {row[5]}", color = 0x0089FF)
+        embed.set_author(name = self.bot.user, icon_url = self.bot.user.avatar_url)
+        embed.set_thumbnail(url = guild.icon_url)
+        # Members
+        embed.add_field(name = "Total members :", value = row[4])
+        embed.add_field(name = "New members :", value = row[2])
+        embed.add_field(name = "Lost members :", value = row[3])
+        # Count
+        embed.add_field(name = "Total messages send", value = totalM)
+        embed.add_field(name = "Total usage of the key word", value = resKW)
+        embed.add_field(name = "Total reactions used", value = totalR)
+        # Top
+        embed.add_field(name = "Top active members :", value = topMember)
+        embed.add_field(name = "Top active channels :", value = topChan)
+        embed.add_field(name = "Top used reactions :", value = topReact)
+        return embed
 
     @commands.command(description = "See the amount of discord account created each year in your server", aliases = ["dateaccounts", "dates_accounts"])
     @commands.guild_only()
     async def dateAccounts(self, ctx):
         dates = {}
+        total = 0
+        baseStr = "[----------]"
         year = int(dt.datetime.now().strftime("%Y"))
                     
         for i in range(2015, year + 1):
             dates[i] = 0
-            select = f"SELECT COUNT(yearDate) FROM BelongG bg INNER JOIN User u ON bg.idUser = u.idUser WHERE yearDate = {i} AND bg.idGuild = {ctx.guild.id};"
-            self.cursor.execute(select)
-            query = self.cursor.fetchall()
+            query = self.DB.getYearCount(i, ctx.guild.id)
             if len(query) != 0:
-                dates[i] += query[0][0]
-
-        plt.bar(dates.keys(), dates.values())
-        plt.xlabel("Année de création du compte")
-        plt.ylabel("Nombre de comptes créés pour l'année")
-        plt.savefig(f"./statDate_{ctx.guild.id}.png")
-        plt.close()
-
-        img = discord.File(f"./statDate_{ctx.guild.id}.png")
-        await ctx.send(file = img)
-
-        os.remove(f"./statDate_{ctx.guild.id}.png")
+                count = query[0][0]
+                dates[i] += count
+                total += count
+        
+        embed = discord.Embed(title = "Accounts statistic", description = "Number of accounts created per year in the server", color = 0x0089FF)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        embed.set_thumbnail(url = self.bot.user.avatar_url)
+        for year in dates:
+            if dates[year] > 0:
+                percent = round((dates[year] / total) * 100, 2)
+                index = int(round((percent / 10), 0))
+                newStr = baseStr.replace("-", "/", index)
+                embed.add_field(name = year,
+                                value = newStr[:1] + "**" + newStr[1:index + 1] + "**" + newStr[index + 1:] + f" ==> **{percent}** %",
+                                inline = False)
+            else:
+                embed.add_field(name = year, value = baseStr + " ==> **0** %", inline = False)
+        await ctx.send(embed = embed)
 
     @commands.command(aliases = ["guildInfo", "server_info"], description = "Your server data")
     @commands.guild_only()
     async def serverInfo(self, ctx):
         server = ctx.guild
+        users = self.DB.countUserGuild(server.id)
 
-        select = f"SELECT COUNT(idUser) FROM BelongG WHERE idGuild = {server.id};"
-        self.cursor.execute(select)
-
-        embed = discord.Embed(title = "Guild's infos", description = "Your guild informations !", color = 0x0089FF)
+        embed = discord.Embed(title = "Server's infos", description = "Your server informations !", color = 0x0089FF)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
         embed.set_thumbnail(url = server.icon_url)
         embed.add_field(name = "Name :", value = server.name, inline = True)
         embed.add_field(name = "Owner :", value = server.owner, inline = True)
         embed.add_field(name = "Region :", value = server.region, inline = True)
         embed.add_field(name = "Total users :", value = len(server.members), inline = True)
-        embed.add_field(name = "Total registered users :", value = self.cursor.fetchall()[0][0], inline = True)
+        embed.add_field(name = "Total registered users :", value = users, inline = True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
         embed.add_field(name = "Total of text channels :", value = len(server.text_channels), inline = True)
         embed.add_field(name = "Total of voice channels :", value = len(server.voice_channels), inline = True)
@@ -64,7 +119,7 @@ class Stats(commands.Cog):
 
         await ctx.send(embed = embed)
 
-    @commands.command(aliases = ["usagechannel", "top_users", "usage_channel"], description = "Get the channel statistics")
+    @commands.command(aliases = ["usagechannel", "channelStats", "channelstats", "top_users", "usage_channel"], description = "Get the channel statistics")
     @commands.guild_only()
     async def usageChannel(self, ctx, limit : int = 5):
         chan = ctx.channel
@@ -73,41 +128,39 @@ class Stats(commands.Cog):
         user = None
         date = chan.created_at.strftime("%D")
 
-        select1 = f"SELECT idUser, numberMsg, (SELECT SUM(numberMsg) FROM BelongC WHERE idChannel = {chan.id}) FROM BelongC WHERE idChannel = {chan.id} ORDER BY numberMsg DESC LIMIT {limit};"
-        select2 = f"SELECT idUser, numberMsg, (SELECT SUM(numberMsg) FROM BelongC WHERE idChannel = {chan.id}) FROM BelongC WHERE idChannel = {chan.id} ORDER BY numberMsg LIMIT {limit};"
-        self.cursor.execute(select1)
-        query1 = self.cursor.fetchall()
-
-        for row in query1:
+        top, bottom = self.DB.getUsageChannel(chan.id, limit)
+        for row in top:
             user = self.bot.get_user(row[0])
-            topMember += f"• {user.mention} : **{row[1]}**\n"
+            if user == None:
+                self.DB.deleteBG(row[0], 0)
+            else:
+                topMember += f"• {user.mention} : **{row[1]}**\n"
 
-        self.cursor.execute(select2)
-        query2 = self.cursor.fetchall()
-        for row in query2:
+        for row in bottom:
             user = self.bot.get_user(row[0])
-            bottomMember += f"• {user.mention} : **{row[1]}**\n"
+            if user == None:
+                self.DB.deleteBG(row[0], 0)
+            else:
+                bottomMember += f"• {user.mention} : **{row[1]}**\n"
+
 
         embed = discord.Embed(title = "Channel Statistics", description = f"Statistics of the channel **{chan.name}**", color = 0x0089FF)
         embed.set_thumbnail(url = ctx.guild.icon_url)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
         embed.add_field(name = "Channel name :", value = chan.name)
         embed.add_field(name = "Channel creation date :", value = date)
-        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
+        embed.add_field(name= '\u200B', value= '\u200B', inline = True)
         embed.add_field(name = "Total messages sended :", value = row[2])
-        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
-        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
-        embed.add_field(name = f"Top {len(query1)} users of this channel :", value = topMember)
-        embed.add_field(name = f"Bottom {len(query2)} users of this channel :", value = bottomMember)
+        embed.add_field(name= '\u200B', value= '\u200B', inline = True)
+        embed.add_field(name= '\u200B', value= '\u200B', inline = True)
+        embed.add_field(name = f"Top {len(top)} users of this channel :", value = topMember)
+        embed.add_field(name = f"Bottom {len(bottom)} users of this channel :", value = bottomMember)
         await ctx.send(embed = embed)
 
     @commands.command(aliases = ["serverstats", "server_stats", "guildStats", "guild_stats"], description = "Get your server statistics")
     @commands.guild_only()
     async def serverStats(self, ctx):
-        select = f"SELECT idGuild, chanStatID, newMembers, lostMembers, totalMembers, lastSend, keyWord, nbKeyWord FROM Guild WHERE idGuild = {ctx.guild.id};"
-        self.cursor.execute(select)
-        query = self.cursor.fetchall()
-
+        query = self.DB.getGuild(ctx.guild.id)
         embed = await self.getEmbedStat(ctx.guild, query[0])
         await ctx.send(embed = embed)
 
@@ -116,42 +169,24 @@ class Stats(commands.Cog):
         if id == None:
             user = ctx.author
             prem = "Not in premium or data impossible"
-        
         else:
             user = ctx.guild.get_member(id)
 
         dateU = user.created_at.strftime("%D")
-        select = ""
         prem = ""
 
         if id != None and (not ctx.message.guild or user.premium_since == None):
-            prem = "Not in premium"
-        else:
             prem = str(user.premium_since)
-
-        if not ctx.message.guild:
-            select = f"""SELECT COUNT(idGuild), SUM(bg.numberMsg)
-                        FROM User u INNER JOIN BelongG bg ON u.idUser = bg.idUser
-                        WHERE u.idUser = {user.id}"""
-
         else:
-            selectVerif = f"SELECT idChannel FROM BelongC WHERE idUser = {user.id} AND idChannel = {ctx.channel.id};"
-            self.cursor.execute(selectVerif)
-            query = self.cursor.fetchall()
-
-            if len(query) == 0:
-                select = f"""SELECT COUNT(idGuild), SUM(bg.numberMsg), bg.nbSecond, 0
-                            FROM User u INNER JOIN BelongG bg ON u.idUser = bg.idUser
-                            WHERE u.idUser = {user.id};"""
-
+            prem = "Not in premium"
+            
+        if not ctx.message.guild:
+            query = self.DB.userMsg(user.id)
+        else:
+            if len(self.DB.getBC(user.id, 2, ctx.channel.id)) == 0:
+                query = self.DB.userMsgChan(user.id, False)
             else:
-                select = f"""SELECT COUNT(idGuild), SUM(bg.numberMsg), bg.nbSecond, bc.numberMsg
-                            FROM User u INNER JOIN BelongG bg ON u.idUser = bg.idUser
-                                        INNER JOIN BelongC bc ON u.idUser = bc.idUser
-                            WHERE u.idUser = {user.id} AND bc.idChannel = {ctx.channel.id};"""
-
-        self.cursor.execute(select)
-        query = self.cursor.fetchall()
+                query = self.DB.userMsgChan(user.id, True, ctx.channel.id)
 
         embed = discord.Embed(title = "User statistics", description = f"Statistics of the user **{user}**", color = 0x0089FF)
         embed.set_thumbnail(url = user.avatar_url)
@@ -194,10 +229,7 @@ class Stats(commands.Cog):
             return
 
         elif category == "messages":
-            select = f"SELECT idUser, SUM(numberMsg) FROM BelongG GROUP BY idUser ORDER BY numberMsg DESC LIMIT {limit};"
-            self.cursor.execute(select)
-            query = self.cursor.fetchall()
-
+            query = self.DB.topMessages(limit)
             res += "Ordered by the total number of messages registered :\n"
             for id, nbre in query:
                 user = self.bot.get_user(id)
@@ -205,10 +237,7 @@ class Stats(commands.Cog):
             await ctx.send(res)
 
         elif category == "voice_chat":
-            select = f"SELECT idUser, SUM(nbSecond) FROM BelongG GROUP BY idUser ORDER BY nbSecond DESC LIMIT {limit};"
-            self.cursor.execute(select)
-            query = self.cursor.fetchall()
-
+            query = self.DB.topVoiceChat(limit)
             res += "Ordered by the total of time passed in voice chat (hh:mm:ss) :\n"
             for id, nbSec in query:
                 if nbSec == None:
@@ -225,66 +254,3 @@ class Stats(commands.Cog):
         
         else:
             await ctx.send("I don't recognize this category sorry, maybe you spelled it wrong, look at the `help` category to see more")
-
-    async def getEmbedStat(self, guild : discord.Guild, row = None) -> discord.Embed:
-        selectM = f"SELECT idUser, numberMsg, (SELECT SUM(numberMsg) FROM BelongG WHERE idGuild = {guild.id}) FROM BelongG WHERE idGuild = {guild.id} ORDER BY numberMsg DESC LIMIT 5;"
-        selectR = f"SELECT idReact, nameReact, numberReact, (SELECT SUM(numberReact) FROM Reaction WHERE idGuild = {guild.id}) FROM reaction WHERE idGuild = {guild.id} ORDER BY numberReact DESC LIMIT 5;"
-        selectC = f"SELECT idChannel, numberMsg FROM Channel WHERE idGuild = {guild.id} ORDER BY numberMsg DESC LIMIT 5;"
-
-        self.cursor.execute(selectM)
-        topMember = ""
-        for id, number, totalM in self.cursor.fetchall():
-            user = self.bot.get_user(id)
-
-            if user == None:
-                delUser = f"DELETE FROM BelongG WHERE idUser = {id} AND idGuild = {guild.id};"
-                self.cursor.execute(delUser)
-            else:
-                topMember += f"{user.mention} : **{number}**\n"
-
-        self.cursor.execute(selectR)
-        topReact = ""
-        for id, name, number, totalR in self.cursor.fetchall():
-            emoji = self.bot.get_emoji(id)
-
-            if emoji == None:
-                delEmoji = f"DELETE FROM Reaction WHERE idReact = {id};"
-                self.cursor.execute(delEmoji)
-            else:
-                topReact += f"<:{name}:{id}> : **{number}**\n"
-
-        self.cursor.execute(selectC)
-        topChan = ""
-        for id, number in self.cursor.fetchall():
-            chan = self.bot.get_channel(id)
-
-            if chan == None:
-                delBC = f"DELETE FROM BelongC WHERE idChan = {id};"
-                delChan = f"DELETE FROM Channel WHERE idChan = {id};"
-                self.cursor.execute(delBC)
-                self.cursor.execute(delChan)
-            else:
-                topChan += f"<#{id}> : **{number}**\n"
-
-        resKW = ""
-        if row[6] == "":
-            resKW = "No key-word"
-        else:
-            resKW = row[7]
-
-        embed = discord.Embed(title = f"Statistics of the server {guild.name}", description = f"Last send : {row[5]}", color = 0x0089FF)
-        embed.set_author(name = self.bot.user, icon_url = self.bot.user.avatar_url)
-        embed.set_thumbnail(url = guild.icon_url)
-        # Members
-        embed.add_field(name = "Total members :", value = row[4])
-        embed.add_field(name = "New members :", value = row[2])
-        embed.add_field(name = "Lost members :", value = row[3])
-        #count
-        embed.add_field(name = "Total messages send", value = totalM)
-        embed.add_field(name = "Total usage of the key word", value = resKW)
-        embed.add_field(name = "Total reactions used", value = totalR)
-        #top
-        embed.add_field(name = "Top active members :", value = topMember)
-        embed.add_field(name = "Top active channels :", value = topChan)
-        embed.add_field(name = "Top used reactions :", value = topReact)
-        return embed

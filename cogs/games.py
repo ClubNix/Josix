@@ -3,7 +3,7 @@ from discord.ext import commands
 import random
 import os
 
-def setup(bot, cursor, cnx):
+def setup(bot):
     bot.add_cog(Games(bot))
 
 class Games(commands.Cog):

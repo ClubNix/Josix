@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
-def setup(bot, cursor, cnx):
+def setup(bot):
     bot.add_cog(Fun(bot))
 
 class Fun(commands.Cog):
