@@ -47,7 +47,7 @@ bot.remove_command("help")
 
 for name in init.names:
     bot.load_extension("cogs." + name)
-    print("Extension : " + name + " loaded")
+    print("Extension " + name + " loaded")
 
 """
 bot.add_cog(admin.Admin(bot))
@@ -107,7 +107,7 @@ async def reload(ctx, name = None):
         try:
             bot.reload_extension("cogs." + name)
         except:
-            bot.load_extension(name)
+            bot.load_extension("cogs." + name)
 
 ##########
 ##########
