@@ -1,13 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime as dt
-import matplotlib
-import matplotlib.pyplot as plt
-import os
 from database.database import DatabaseHandler
-
-def setup(bot):
-    bot.add_cog(Stats(bot))
 
 class Stats(commands.Cog):
     def __init__(self, bot):
@@ -254,3 +248,6 @@ class Stats(commands.Cog):
         
         else:
             await ctx.send("I don't recognize this category sorry, maybe you spelled it wrong, look at the `help` category to see more")
+
+def setup(bot):
+    bot.add_cog(Stats(bot))

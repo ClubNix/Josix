@@ -3,9 +3,6 @@ from discord.ext import commands
 import datetime as dt
 from database.database import DatabaseHandler
 
-def setup(bot):
-    bot.add_cog(Events(bot))
-
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -213,7 +210,7 @@ class Events(commands.Cog):
             if join != None:
                 delta = (dt.datetime.now() - join).total_seconds()
                 self.DB.resetJoin(member.id, before.channel.guild.id, delta)
-"""
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
@@ -236,4 +233,7 @@ class Events(commands.Cog):
 
         else:
             print(error)
-            await ctx.send("Something went wrong")"""
+            await ctx.send("Something went wrong")
+
+def setup(bot):
+    bot.add_cog(Events(bot))

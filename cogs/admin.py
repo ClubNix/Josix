@@ -2,9 +2,6 @@ import discord
 from discord.ext import commands
 from database.database import DatabaseHandler
 
-def setup(bot):
-    bot.add_cog(Admin(bot))
-
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -153,3 +150,6 @@ class Admin(commands.Cog):
     async def unset(self, ctx):
         self.DB.unsetSend(ctx.guild.id)
         await ctx.send("This channel will no longer receive your server stats !")
+
+def setup(bot):
+    bot.add_cog(Admin(bot))

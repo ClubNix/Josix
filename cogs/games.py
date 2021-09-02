@@ -3,9 +3,6 @@ from discord.ext import commands
 import random
 import os
 
-def setup(bot):
-    bot.add_cog(Games(bot))
-
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -96,3 +93,6 @@ class Games(commands.Cog):
         embed.add_field(name = "Column :", value = column, inline = True)
         embed.add_field(name = "Dozen :", value = dozen, inline = True)
         await ctx.send(embed = embed)
+
+def setup(bot):
+    bot.add_cog(Games(bot))

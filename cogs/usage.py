@@ -2,9 +2,6 @@ import discord
 from discord.ext import commands
 from database.database import DatabaseHandler
 
-def setup(bot):
-    bot.add_cog(Usage(bot))
-
 class Usage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -126,3 +123,6 @@ class Usage(commands.Cog):
         else:
             await ctx.send("You can't delete another user data !")
             return
+
+def setup(bot):
+    bot.add_cog(Usage(bot))

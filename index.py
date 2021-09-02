@@ -10,6 +10,7 @@ import cogs.usage as usage
 import cogs.stats as stats
 import cogs.games as games
 import cogs.fun as fun
+import cogs.__init__ as init 
 from database.database import DatabaseHandler
 
 import os
@@ -43,13 +44,18 @@ DB = DatabaseHandler(USER,
 
 bot = commands.Bot(command_prefix = "s.", description = "Bot for useless statistics", intents = intents)
 bot.remove_command("help")
-    
+
+for name in init.names:
+    bot.load_extension("cogs." + name)
+    print("Extension : " + name + " loaded")
+
+"""
 bot.add_cog(admin.Admin(bot))
 bot.add_cog(events.Events(bot))
 bot.add_cog(usage.Usage(bot))
 bot.add_cog(stats.Stats(bot))
 bot.add_cog(games.Games(bot))
-bot.add_cog(fun.Fun(bot))
+bot.add_cog(fun.Fun(bot))"""
 
 def main():
     global bot
@@ -86,20 +92,20 @@ async def dm(ctx, member : discord.User, *txt):
 @commands.is_owner()
 async def load(ctx, name = None):
     if name:
-        bot.load_extension(name)
+        bot.load_extension("cogs." + name)
 
 @bot.command(hidden = True)
 @commands.is_owner()
 async def unload(ctx, name = None):
     if name:
-        bot.unload_extension(name)
+        bot.unload_extension("cogs." + name)
 
 @bot.command(hidden = True)
 @commands.is_owner()
 async def reload(ctx, name = None):
     if name:
         try:
-            bot.reload_extension(name)
+            bot.reload_extension("cogs." + name)
         except:
             bot.load_extension(name)
 

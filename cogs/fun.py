@@ -2,9 +2,6 @@ import discord
 from discord.ext import commands
 import random
 
-def setup(bot):
-    bot.add_cog(Fun(bot))
-
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -45,3 +42,6 @@ class Fun(commands.Cog):
             await ctx.send(ctx.message.author.avatar_url)
         else:
             await ctx.send(user.avatar_url)
+
+def setup(bot):
+    bot.add_cog(Fun(bot))
