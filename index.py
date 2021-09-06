@@ -64,7 +64,7 @@ def main():
 
 @bot.event
 async def on_ready():
-    print("J'aime les Stats")
+    print("\n----- J'aime les Stats ----- \n")
     await bot.change_presence(activity = discord.Game(f"stats and {bot.command_prefix}help"))
     sendStat.start()
 
