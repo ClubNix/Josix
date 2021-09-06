@@ -7,7 +7,7 @@ class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(description = "Let's get a look at your luck and throw some dices", aliases = ["ROLL"])
+    @commands.command(description = "Let's get a look at your luck by throwing some dices", aliases = ["ROLL"])
     async def roll(self, ctx, numberRolls : int = 1, mini : int = 1, maxi : int = 6):
         if mini < 0:
             mini = 1
@@ -19,17 +19,17 @@ class Games(commands.Cog):
         if numberRolls < 1 or numberRolls > 25:
             numberRolls = 1
 
-        listeRoll = []
+        listRoll = []
         for _ in range(0, numberRolls):
-            listeRoll.append(random.randint(mini,maxi))
-        total = sum(listeRoll)
-        moyenne = total / len(listeRoll)
+            listRoll.append(random.randint(mini,maxi))
+        total = sum(listRoll)
+        moyenne = total / len(listRoll)
 
         embed = discord.Embed(title = f"{ctx.message.author.name}'s rolls :game_die:", color = 0x008000)
         embed.set_author(name = ctx.message.author, icon_url = ctx.message.author.avatar_url)
         embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/709732615980056606/858436523531567104/combien-de-joueurs-a-la-pC3A9tanque-pC3A9tanque-gC3A9nC3A9ration.png")
         embed.add_field(name = "Number of rolls :", value = f"**{numberRolls}**", inline = False)
-        embed.add_field(name = "Rolls obtained :", value = f"{listeRoll}", inline = False)
+        embed.add_field(name = "Rolls obtained :", value = f"{listRoll}", inline = False)
         embed.add_field(name = "Sum", value = f"{total}", inline = True)
         embed.add_field(name = "Average", value = f"{moyenne}", inline = True)
         await ctx.send(embed = embed)
@@ -44,7 +44,7 @@ class Games(commands.Cog):
         colors = ("D", "S", "C", "H")
         card, color = random.choice(cards), random.choice(colors)
         script_dir = os.path.dirname(__file__)
-        file_path = os.path.join(script_dir, '../deck/{card}{color}.png')
+        file_path = os.path.join(script_dir, f'../deck/{card}{color}.png')
         file = discord.File(file_path, filename = "card.png")
 
         embed = discord.Embed(title = "Your card", description = "Here's the card you drew", color = 0x008000)
@@ -57,8 +57,8 @@ class Games(commands.Cog):
     @commands.command(description = "Play a game of roulette like you're at the casino !")
     async def roulette(self, ctx):
         colors = ("🟩", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "⬛", "🟥",
-                "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛",
-                "🟥", "⬛", "🟥", "⬛", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥"
+                  "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛",
+                  "🟥", "⬛", "🟥", "⬛", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥"
         )
         column = ""
         dozen = ""
@@ -92,6 +92,41 @@ class Games(commands.Cog):
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
         embed.add_field(name = "Column :", value = column, inline = True)
         embed.add_field(name = "Dozen :", value = dozen, inline = True)
+        await ctx.send(embed = embed)
+
+    @commands.command(description = "Do a game of Rock-Paper-Scissors against the bot !", aliases = ["RPS"])
+    async def rps(self, ctx, gesture : str):
+        moves = ["rock", "paper", "scissors"]
+        emojis = [":rock:", ":leaves:", ":scissors:"]
+        results = ["You won", "You lost", "It's a tie"]
+        condition = lambda x, y : (x - y) == 1 or (y == len(moves) - 1 and x == 0)
+        move = gesture.lower()
+        botMove = random.randint(0, 2)
+        userMove = 0
+        winner = 0
+
+        try:
+            userMove = moves.index(move)
+        except ValueError:
+            await ctx.send("Move unavailable ! Choose `rock`, `paper` or `scissors`")
+            return
+    
+        if condition(userMove, botMove):
+            winner = 0
+        else:
+            if condition(botMove, userMove):
+                winner = 1
+            else:
+                winner = 2
+
+        embed = discord.Embed(title = "Rock Paper Scissors", description = "Result of the round", color = 0x008000)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        embed.set_thumbnail(url = "https://www.iconspng.com/uploads/rockpaperscissors/rockpaperscissors.png") 
+        embed.add_field(name = "Result :", value = results[winner], inline = True)
+        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
+        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
+        embed.add_field(name = "User's move :", value = emojis[userMove], inline = True)
+        embed.add_field(name = "Your move :", value = emojis[botMove])
         await ctx.send(embed = embed)
 
 def setup(bot):
