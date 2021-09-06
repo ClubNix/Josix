@@ -1,4 +1,5 @@
 import discord
+from discord.enums import UserFlags
 from discord.ext import commands
 import datetime as dt
 from database.database import DatabaseHandler
@@ -160,11 +161,31 @@ class Stats(commands.Cog):
 
     @commands.command(aliases = ["userstats", "user_stats", "memberStats", "member_stats"], description = "Get a user statistics")
     async def userStats(self, ctx, id : int = None):
+        flags = {UserFlags.staff : "staff",
+                 UserFlags.partner : "partner",
+                 UserFlags.hypesquad : "hypesquad",
+                 UserFlags.bug_hunter : "bug_hunter",
+                 UserFlags.mfa_sms : "mfa_sms",
+                 UserFlags.premium_promo_dismissed : "premium_promo_dismissed",
+                 UserFlags.hypesquad_bravery : "hypesquad_bravery",
+                 UserFlags.hypesquad_brilliance : "hypesquad_brilliance",
+                 UserFlags.hypesquad_balance : "hypesquad_balance",
+                 UserFlags.early_supporter : "early_supporter",
+                 UserFlags.team_user : "team_user",
+                 UserFlags.system : "system",
+                 UserFlags.has_unread_urgent_messages : "has_unread_urgent_messages",
+                 UserFlags.bug_hunter_level_2 : "bug_hunter_level_2",
+                 UserFlags.verified_bot : "verified_bot",
+                 UserFlags.verified_bot_developer : "verified_bot_developer"}
+
         if id == None:
             user = ctx.author
             prem = "Not in premium or data impossible"
         else:
             user = ctx.guild.get_member(id)
+            if user == None:
+                await ctx.send("This user doesn't exist")
+                return
 
         dateU = user.created_at.strftime("%D")
         prem = ""
@@ -182,6 +203,12 @@ class Stats(commands.Cog):
             else:
                 query = self.DB.userMsgChan(user.id, True, ctx.channel.id)
 
+        badges = ""
+        for value in user.public_flags.all():
+            badges += flags[value]
+        if len(badges) == 0:
+            badges = "None"
+
         embed = discord.Embed(title = "User statistics", description = f"Statistics of the user **{user}**", color = 0x0089FF)
         embed.set_thumbnail(url = user.avatar_url)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
@@ -190,10 +217,10 @@ class Stats(commands.Cog):
         embed.add_field(name = "Display name :", value = user.display_name)
         embed.add_field(name = "Account creation date :", value = dateU)
         embed.add_field(name = "Premium since :", value = prem)
-        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
+        embed.add_field(name= "Badges", value = badges, inline = True)
         embed.add_field(name = "Total guilds registered :", value = query[0][0])
         embed.add_field(name = "Total messages in the server :", value = query[0][1])
-        embed.add_field(name= '\u200B', value= '\u200B', inline= True)
+        embed.add_field(name= '\u200B', value= '\u200B', inline = True)
 
         if ctx.message.guild:
             embed.add_field(name = "Total messages in the channel :", value = query[0][3])
