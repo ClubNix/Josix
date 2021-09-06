@@ -19,7 +19,7 @@ import json
 
 # Initialisation
 
-intents = discord.Intents.default()  
+intents = discord.Intents.none()
 intents.members = True
 intents.guilds = True
 intents.messages = True

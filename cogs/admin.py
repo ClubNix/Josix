@@ -151,5 +151,29 @@ class Admin(commands.Cog):
         self.DB.unsetSend(ctx.guild.id)
         await ctx.send("This channel will no longer receive your server stats !")
 
+    @commands.command(description = "Erase the channel from the database", aliases = ["erasechannel", "erase_channel"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels = True)
+    async def eraseChannel(self, ctx, id : int):
+        if id is None:
+            await ctx.send("You need to provide the channel id to make sure you want to delete it")
+        
+        elif id != ctx.channel.id:
+            await ctx.send("The id needs to be equal to this current channel !")
+
+        else:
+            self.DB.deleteChannel(id)
+
+"""
+    @commands.command(description = "Hide the channel to me", aliases = ["HIDE"])
+    @commands.guild_only()
+    @commands.has_permissions(manage_channels = True)
+    async def hide(self, ctx):
+        print(self.bot.get_user(713164137194061916))
+        print(ctx.channel.permissions_for(self.bot.get_user(237657579692621824)))
+
+        await ctx.channel.set_permissions(target = self.bot.user, read_messages = False,
+                                                                  send_messages = False)
+"""
 def setup(bot):
     bot.add_cog(Admin(bot))

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import cogs.__init__ as init
 from database.database import DatabaseHandler
 
 class Usage(commands.Cog):
@@ -10,15 +11,17 @@ class Usage(commands.Cog):
     @commands.command(description = "Help command of the bot", aliases = ["HELP"])
     async def help(self, ctx, commandName = None):
         if commandName == None:
-            lst = ""
-            for command in self.bot.commands:
-                if not command.hidden:
-                    lst += f"`{command.name}`, "
-
             embed = discord.Embed(title = "Help command", description = f"Description of the commands, use `{self.bot.command_prefix}help [commandName]` to get more info about a specific command", color = 0x0089FF)
             embed.set_thumbnail(url = self.bot.user.avatar_url)
             embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
-            embed.add_field(name = "All commands :", value = lst[:len(lst) - 2], inline = False)
+            for cogName in init.names:
+                lst = ""
+                className = init.names[cogName]
+                cog = self.bot.get_cog(className)
+                for command in cog.get_commands():
+                    lst += "`" + command.name + "`, "
+                if cogName != "events":
+                    embed.add_field(name = className + " commands", value = lst[:len(lst) - 2], inline = False)
             embed.add_field(name = "Other informations :", value = f"""• Owner : {self.bot.get_user(237657579692621824)} \n• prefix : `{self.bot.command_prefix}`\n• Invite the bot : `{self.bot.command_prefix}invite` \n• More informations : `{self.bot.command_prefix}info`""")
             await ctx.send(embed = embed)
 
