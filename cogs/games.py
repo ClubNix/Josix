@@ -121,7 +121,7 @@ class Games(commands.Cog):
 
         embed = discord.Embed(title = "Rock Paper Scissors", description = "Result of the round", color = 0x008000)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
-        embed.set_thumbnail(url = "https://www.iconspng.com/uploads/rockpaperscissors/rockpaperscissors.png") 
+        embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/709732615980056606/884507061554147378/rockpaperscissors.png") 
         embed.add_field(name = "Result :", value = results[winner], inline = True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)

@@ -42,8 +42,11 @@ DB = DatabaseHandler(USER,
                      HOST,
                      DATABASE)
 
-bot = commands.Bot(command_prefix = "s.", description = "Bot for useless statistics", intents = intents)
-bot.remove_command("help")
+bot = commands.Bot(command_prefix = "s.",
+                   description = "Bot for useless statistics",
+                   activity = discord.Game("stats and s.help"),
+                   help_command = None,
+                   intents = intents)
 
 for name in init.names:
     bot.load_extension("cogs." + name)
@@ -65,7 +68,6 @@ def main():
 @bot.event
 async def on_ready():
     print("\n----- J'aime les Stats ----- \n")
-    await bot.change_presence(activity = discord.Game(f"stats and {bot.command_prefix}help"))
     sendStat.start()
 
 @bot.command(hidden = True)
