@@ -64,7 +64,6 @@ def main():
     global bot
     bot.run(TOKEN)
 
-
 @bot.event
 async def on_ready():
     print("\n----- J'aime les Stats ----- \n")
@@ -182,7 +181,8 @@ async def sendStat():
         embed = await getEmbedStat(guild, row)
         await chan.send(embed = embed)
 
-        DB.updStat(row[0])
+        if row[10] == "1":
+            DB.updStat(row[0])
     DB.commitQ()
 
 ##########

@@ -176,5 +176,30 @@ class Admin(commands.Cog):
         await ctx.channel.set_permissions(target = self.bot.user, read_messages = False,
                                                                   send_messages = False)
 
+    @commands.command(description = "Turn on/off the auto refresh of the stats after the regular stats send (default ON)",
+                      aliases = ["autorefresh", "auto_refresh"])
+    @commands.guild_only()
+    @commands.has_permissions(administrator = True)
+    async def autoRefresh(self, ctx):
+        currentRes = self.DB.getGuild(ctx.guild.id)[0][10]
+        new = ""
+        status = ""
+        if currentRes == "0":
+            new = "1"
+            status = "auto refresh set to ON"
+        else:
+            new = "0"
+            status = "auto refresh set to OFF"
+        self.DB.updRefresh(new, ctx.guild.id)
+        await ctx.send(status)
+
+    @commands.command(description = "Refresh the guild stats sended in the serverStats command or regular stats send", aliases = ["REFRESH"])
+    @commands.guild_only()
+    @commands.has_permissions(administrator = True)
+    async def refresh(self, ctx):
+        self.DB.updStat(ctx.guild.id)
+        self.DB.commitQ()
+        await ctx.send("Server stats refreshed :ok_hand:")
+
 def setup(bot):
     bot.add_cog(Admin(bot))

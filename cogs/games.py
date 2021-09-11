@@ -125,8 +125,8 @@ class Games(commands.Cog):
         embed.add_field(name = "Result :", value = results[winner], inline = True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
-        embed.add_field(name = "User's move :", value = emojis[userMove], inline = True)
-        embed.add_field(name = "Your move :", value = emojis[botMove])
+        embed.add_field(name = "Your move :", value = emojis[userMove], inline = True)
+        embed.add_field(name = "My move :", value = emojis[botMove])
         await ctx.send(embed = embed)
 
 def setup(bot):

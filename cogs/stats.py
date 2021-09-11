@@ -46,9 +46,9 @@ class Stats(commands.Cog):
         embed.set_author(name = self.bot.user, icon_url = self.bot.user.avatar_url)
         embed.set_thumbnail(url = guild.icon_url)
         # Members
-        embed.add_field(name = "Total members :", value = row[4])
-        embed.add_field(name = "New members :", value = row[2])
-        embed.add_field(name = "Lost members :", value = row[3])
+        embed.add_field(name = "Total members :", value = row[3])
+        embed.add_field(name = "New members :", value = row[1])
+        embed.add_field(name = "Lost members :", value = row[2])
         # Count
         embed.add_field(name = "Total messages send", value = totalM)
         embed.add_field(name = "Total usage of the key word", value = resKW)
@@ -275,6 +275,29 @@ class Stats(commands.Cog):
         
         else:
             await ctx.send("I don't recognize this category sorry, maybe you spelled it wrong, look at the `help` category to see more")
+
+    @commands.command(description = "Get the activity of the user on all the channels in the server", aliases = ["useractivity", "user_activity"])
+    @commands.guild_only()
+    async def userActivity(self, ctx, id : int = None):
+        user = None
+        if id == None:
+            user = ctx.author
+        else:
+            user = self.bot.get_user(id)
+
+        res = ""
+        query = self.DB.activity(user.id, ctx.guild.id)
+        for row in query:
+            chan = self.bot.get_channel(row[0])
+            if chan == None:
+                self.DB.deleteChan(row[0])
+            else:
+                res += f"• {chan.mention} -> {row[1]} message(s)\n"
+        embed = discord.Embed(title = "User's activity", description = f"Activity of the user {user} in the server {ctx.guild.name}", color = 0x0089FF)
+        embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+        embed.set_thumbnail(url = ctx.guild.icon_url)
+        embed.add_field(name = "Activity :", value = res)
+        await ctx.send(embed = embed)
 
 def setup(bot):
     bot.add_cog(Stats(bot))
