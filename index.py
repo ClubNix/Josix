@@ -91,7 +91,7 @@ async def dm(ctx, member : discord.User, *txt):
 
 @bot.command(hidden = True)
 @commands.is_owner()
-async def load(ctx, name = None):
+async def loadCog(ctx, name = None):
     if name:
         bot.load_extension("cogs." + name)
 
@@ -181,7 +181,7 @@ async def sendStat():
         embed = await getEmbedStat(guild, row)
         await chan.send(embed = embed)
 
-        if row[10] == "1":
+        if row[8] == "1":
             DB.updStat(row[0])
     DB.commitQ()
 

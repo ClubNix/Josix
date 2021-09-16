@@ -86,10 +86,10 @@ class Admin(commands.Cog):
         self.loadC(ctx)
         await ctx.send("Channels successfully loaded !")
 
-    @commands.command(description = "Load your server custom emotes (useful if the bot got disconnected)", aliases = ["loademote", "loademoji", "load_emoji", "load_emote"])
+    @commands.command(description = "Load your server custom emotes (useful if the bot got disconnected)", aliases = ["loademotes", "loademojis", "load_emojis", "load_emotes"])
     @commands.guild_only()
     @commands.has_permissions(administrator = True)
-    async def loadEmote(self, ctx):
+    async def loadEmotes(self, ctx):
         self.loadR(ctx)
         await ctx.send("Emotes successfully loaded !")
 

@@ -114,9 +114,9 @@ class Stats(commands.Cog):
 
         await ctx.send(embed = embed)
 
-    @commands.command(aliases = ["usagechannel", "channelStats", "channelstats", "top_users", "usage_channel"], description = "Get the channel statistics")
+    @commands.command(aliases = ["channelstats", "channel_stats"], description = "Get the channel statistics")
     @commands.guild_only()
-    async def usageChannel(self, ctx, limit : int = 5):
+    async def channelStats(self, ctx, limit : int = 5):
         chan = ctx.channel
         topMember = ""
         bottomMember = ""
@@ -205,9 +205,11 @@ class Stats(commands.Cog):
 
         badges = ""
         for value in user.public_flags.all():
-            badges += flags[value]
+            badges += flags[value] + ", "
         if len(badges) == 0:
             badges = "None"
+        else:
+            badges = badges[:len(badges) - 2]
 
         embed = discord.Embed(title = "User statistics", description = f"Statistics of the user **{user}**", color = 0x0089FF)
         embed.set_thumbnail(url = user.avatar_url)
@@ -272,18 +274,22 @@ class Stats(commands.Cog):
                 user = self.bot.get_user(id)
                 res += f"• {user.name}#{user.discriminator} ==> {hour}:{minute}:{nbSec}\n"
             await ctx.send(res)
+
+        elif category in ["reaction", "reactions", "react"]:
+            #query = self.DB.topReact(limit)
+            await ctx.send("WIP")
         
         else:
             await ctx.send("I don't recognize this category sorry, maybe you spelled it wrong, look at the `help` category to see more")
 
     @commands.command(description = "Get the activity of the user on all the channels in the server", aliases = ["useractivity", "user_activity"])
     @commands.guild_only()
-    async def userActivity(self, ctx, id : int = None):
+    async def userActivity(self, ctx, idUser : int = None):
         user = None
-        if id == None:
+        if idUser == None:
             user = ctx.author
         else:
-            user = self.bot.get_user(id)
+            user = self.bot.get_user(idUser)
 
         res = ""
         query = self.DB.activity(user.id, ctx.guild.id)

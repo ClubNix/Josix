@@ -63,7 +63,7 @@ class Usage(commands.Cog):
             embed2.add_field(name = "Usage :", value = usage)
             await ctx.send(embed = embed2)
 
-    @commands.command(description = "Important informations about the bot", aliases = ["INFO", "informations", "INFORMATIONS"])
+    @commands.command(description = "Important informations about the bot", aliases = ["INFO", "informations"])
     async def info(self, ctx):
         embed = discord.Embed(title = "Important informations", description = "Read this to be aware of how I work", color = 0x0089FF)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
@@ -126,6 +126,14 @@ class Usage(commands.Cog):
         else:
             await ctx.send("You can't delete another user data !")
             return
+
+    @commands.command(description = "List the `load` commands you can use", aliases = ["LOAD"])
+    async def load(self, ctx):
+        await ctx.send("""Load commands available :
+• `loadServer` (Equals to the 3 following commands in one)
+• `loadUsers`
+• `loadChannels`
+• `loadEmotes`""")
 
 def setup(bot):
     bot.add_cog(Usage(bot))
