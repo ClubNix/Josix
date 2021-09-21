@@ -118,16 +118,27 @@ class Games(commands.Cog):
                 winner = 1
             else:
                 winner = 2
-
-        embed = discord.Embed(title = "Rock Paper Scissors", description = "Result of the round", color = 0x008000)
+                
+        embed = discord.Embed(title = "Rock Paper Scissors", 
+                              description = "Result of the round",
+                              color = 0x008000)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
         embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/709732615980056606/884507061554147378/rockpaperscissors.png") 
         embed.add_field(name = "Result :", value = results[winner], inline = True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
         embed.add_field(name= '\u200B', value= '\u200B', inline= True)
-        embed.add_field(name = "Your move :", value = emojis[userMove], inline = True)
+        embed.add_field(name = "Your move :", value = emojis[userMove])
         embed.add_field(name = "My move :", value = emojis[botMove])
         await ctx.send(embed = embed)
+
+    @commands.command(description = "Choose one sentence among all your" +
+                                    "choices (separate them with `;`) -> " + 
+                                    "... ; ...",
+                      aliases = ["CHOOSE"])
+    async def choose(self, ctx, *message):
+        message = " ".join(message)
+        lst = message.split(";")
+        await ctx.send("> " + random.choice(lst))
 
 def setup(bot):
     bot.add_cog(Games(bot))

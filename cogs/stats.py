@@ -219,7 +219,7 @@ class Stats(commands.Cog):
         embed.add_field(name = "Display name :", value = user.display_name)
         embed.add_field(name = "Account creation date :", value = dateU)
         embed.add_field(name = "Premium since :", value = prem)
-        embed.add_field(name= "Badges", value = badges, inline = True)
+        embed.add_field(name = "Badges", value = badges, inline = True)
         embed.add_field(name = "Total guilds registered :", value = query[0][0])
         embed.add_field(name = "Total messages in the server :", value = query[0][1])
         embed.add_field(name= '\u200B', value= '\u200B', inline = True)
@@ -263,16 +263,18 @@ class Stats(commands.Cog):
             query = self.DB.topVoiceChat(limit)
             res += "Ordered by the total of time passed in voice chat (hh:mm:ss) :\n"
             for id, nbSec in query:
-                if nbSec == None:
-                    nbSec = 0
-
-                hour = int(nbSec / 3600)
-                nbSec -= 3600 * hour
-                minute = int(nbSec / 60)
-                nbSec -= 60 * minute
+                time = ""
+                if nbSec == None or nbSec == 0:
+                    time = "00:00:00"
+                else:
+                    hour = int(nbSec / 3600)
+                    nbSec -= 3600 * hour
+                    minute = int(nbSec / 60)
+                    nbSec -= 60 * minute
+                    time = f"{hour}:{minute}:{nbSec}"
 
                 user = self.bot.get_user(id)
-                res += f"• {user.name}#{user.discriminator} ==> {hour}:{minute}:{nbSec}\n"
+                res += f"• {user.name}#{user.discriminator} ==> {time}\n"
             await ctx.send(res)
 
         elif category in ["reaction", "reactions", "react"]:
