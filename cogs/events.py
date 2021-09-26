@@ -101,7 +101,8 @@ class Events(commands.Cog):
         if len(self.DB.getUser(idUser)) == 0:
             self.DB.addOneUser(idUser, idGuild, member.created_at.year)
 
-        self.DB.addBG(idUser, idGuild, True)
+        if len(self.DB.getBG(member.id, 2, member.guild.id)) == 0:
+            self.DB.addBG(idUser, idGuild, True)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):

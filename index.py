@@ -148,7 +148,7 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
         if row[6] == "":
             resKW = "No key-word"
         else:
-            resKW = row[7]
+            resKW = row[8]
 
         embed = discord.Embed(title = f"Statistics of the server {guild.name}", description = f"Last send : {row[5]}", color = 0x0089FF)
         embed.set_author(name = bot.user, icon_url = bot.user.avatar_url)

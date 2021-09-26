@@ -40,7 +40,7 @@ class Stats(commands.Cog):
         if row[6] == "":
             resKW = "No key-word"
         else:
-            resKW = row[7]
+            resKW = row[8]
 
         embed = discord.Embed(title = f"Statistics of the server {guild.name}", description = f"Last send : {row[5]}", color = 0x0089FF)
         embed.set_author(name = self.bot.user, icon_url = self.bot.user.avatar_url)
@@ -152,7 +152,7 @@ class Stats(commands.Cog):
         embed.add_field(name = f"Bottom {len(bottom)} users of this channel :", value = bottomMember)
         await ctx.send(embed = embed)
 
-    @commands.command(aliases = ["serverstats", "server_stats", "guildStats", "guild_stats"], description = "Get your server statistics")
+    @commands.command(aliases = ["serverstats", "server_stats"], description = "Get your server statistics")
     @commands.guild_only()
     async def serverStats(self, ctx):
         query = self.DB.getGuild(ctx.guild.id)
