@@ -1,30 +1,32 @@
-# Importation modules
+##########
+########## Importation modules
+##########
 
 import discord
 from discord.ext import commands
 from discord.ext import tasks
 
-import cogs.admin as admin
-import cogs.events as events
-import cogs.usage as usage
-import cogs.stats as stats
-import cogs.games as games
-import cogs.fun as fun
-import cogs.__init__ as init 
 from database.database import DatabaseHandler
 
 import os
 import sys 
 import json
 
-# Initialisation
+######
+###### Initialisation
+######
 
+"""
+On choisit quelles informations le bot
+va traiter. Tout ce qui n'est pas utile 
+n'est pas ajouté pour réduire le traffic.
+"""
 intents = discord.Intents.none()
-intents.members = True
-intents.guilds = True
-intents.messages = True
-intents.reactions = True
-intents.voice_states = True
+intents.members = True # Informations linked to the members
+intents.guilds = True # Informations linked to the servers
+intents.messages = True # Informations linked to the messages
+intents.reactions = True # Informations linked to the reactions
+intents.voice_states = True # Informations linked to the voice channel activity
 
 script_dir = os.path.dirname(__file__)
 file_path = os.path.join(script_dir, 'data.json')
@@ -37,37 +39,41 @@ PASSWORD = credentials["password"]
 HOST = credentials["host"]
 DATABASE = credentials["database"]
 
+# Connexion to the database with the DatabaseHandler file
 DB = DatabaseHandler(USER,
                      PASSWORD,
                      HOST,
                      DATABASE)
 
+# Creation of the bot (instance of commands.Bot)
 bot = commands.Bot(command_prefix = "s.",
                    description = "Bot for useless statistics",
                    activity = discord.Game("stats and s.help"),
                    help_command = None,
                    intents = intents)
 
-for name in init.names:
-    bot.load_extension("cogs." + name)
-    print("Extension " + name + " loaded")
-
-"""
-bot.add_cog(admin.Admin(bot))
-bot.add_cog(events.Events(bot))
-bot.add_cog(usage.Usage(bot))
-bot.add_cog(stats.Stats(bot))
-bot.add_cog(games.Games(bot))
-bot.add_cog(fun.Fun(bot))"""
-
+# Main function to launch the bot (and load the cogs / extensions)
 def main():
     global bot
+    for name in init.names:
+        bot.load_extension("cogs." + name)
+        print("Extension " + name + " loaded")
     bot.run(TOKEN)
 
 @bot.event
 async def on_ready():
     print("\n----- J'aime les Stats ----- \n")
-    sendStat.start()
+    sendStat.start() # Start the loop (sendStat function)
+
+##########
+########## Administrative commands 
+########## Only the owners can use it
+##########
+
+"""
+Commands are hiddenn (hidden parameter) to make the
+help command easier and not show them in the embed
+"""
 
 @bot.command(hidden = True)
 @commands.is_owner()
@@ -111,12 +117,20 @@ async def reload(ctx, name = None):
             bot.load_extension("cogs." + name)
 
 ##########
-##########
+########## Main loop to realise the daily send of the stats
 ##########
 
 async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
+        """
+        A function to create the embed for the stats of each server
+        The informations are extracted from the database with DatabaseHandler
+        and used to create the embed and the stats
+        """
+
+        # Get the informations about the members, reactions and channels of the server
         queryM, queryR, queryC = DB.embedStat(guild)
 
+        # Creating the leaderboard of the members 
         topMember = ""
         for id, number, totalM in queryM:
             user = bot.get_user(id)
@@ -126,6 +140,7 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
             else:
                 topMember += f"{user.mention} : **{number}**\n"
 
+        # Creating the leaderboard of the reactions
         topReact = ""
         for id, name, number, totalR in queryR:
             emoji = bot.get_emoji(id)
@@ -135,6 +150,7 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
             else:
                 topReact += f"<:{name}:{id}> : **{number}**\n"
 
+        # Creating the leaderboard of the channels
         topChan = ""
         for id, number in queryC:
             chan = bot.get_channel(id)
@@ -144,6 +160,7 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
             else:
                 topChan += f"<#{id}> : **{number}**\n"
 
+        # Get the number of use of the key-words
         resKW = ""
         if row[6] == "":
             resKW = "No key-word"
@@ -167,12 +184,13 @@ async def getEmbedStat(guild : discord.Guild, row = None) -> discord.Embed:
         embed.add_field(name = "Top used reactions :", value = topReact)
         return embed
 
-##########
-##########
-##########
-
 @tasks.loop(hours = 24)
 async def sendStat():
+    """
+    The loop (task) to send the stats
+    Get all the registered servers that need to get their stats
+    Get the embed and send it for each server, after that, reset the stats.
+    """
     query1 = DB.getGuilds()
 
     for row in query1:
@@ -183,7 +201,7 @@ async def sendStat():
 
         if row[8] == "1":
             DB.updStat(row[0])
-    DB.commitQ()
+    DB.commitQ() # Commit all the changes made in the for loop 
 
 ##########
 ##########
