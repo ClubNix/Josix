@@ -5,11 +5,22 @@ import datetime as dt
 from database.database import DatabaseHandler
 
 class Stats(commands.Cog):
+    """
+    A Cog to manage the stats commands
+
+    The commands will generate stats from the database
+    """
     def __init__(self, bot):
         self.bot = bot
         self.DB = DatabaseHandler()
 
     async def getEmbedStat(self, guild : discord.Guild, row = None) -> discord.Embed:
+        """
+        This function returns an embed from the row (query) given which represents a server
+
+        Same as the function getEmbedStat in the index file
+        """
+
         queryM, queryR, queryC = self.DB.embedStat(guild)
         topMember = ""
 
@@ -62,6 +73,9 @@ class Stats(commands.Cog):
     @commands.command(description = "See the amount of discord account created each year in your server", aliases = ["dateaccounts", "dates_accounts"])
     @commands.guild_only()
     async def dateAccounts(self, ctx):
+        """
+        TODO : Will be deleted
+        """
         dates = {}
         total = 0
         baseStr = "[----------]"
@@ -93,6 +107,11 @@ class Stats(commands.Cog):
     @commands.command(aliases = ["guildInfo", "server_info"], description = "Your server data")
     @commands.guild_only()
     async def serverInfo(self, ctx):
+        """
+        Display the informations of a server : 
+        - name / owner / region
+        - Total of users / Total of the registered users (the number in the database)
+        """
         server = ctx.guild
         users = self.DB.countUserGuild(server.id)
 
@@ -117,6 +136,13 @@ class Stats(commands.Cog):
     @commands.command(aliases = ["channelstats", "channel_stats"], description = "Get the channel statistics")
     @commands.guild_only()
     async def channelStats(self, ctx, limit : int = 5):
+        """
+        Display the stats of a channel
+        - Name / creation date
+        - Total messages send
+        - The 5 most active members
+        - The 5 less active members
+        """
         chan = ctx.channel
         topMember = ""
         bottomMember = ""
@@ -138,7 +164,6 @@ class Stats(commands.Cog):
             else:
                 bottomMember += f"• {user.mention} : **{row[1]}**\n"
 
-
         embed = discord.Embed(title = "Channel Statistics", description = f"Statistics of the channel **{chan.name}**", color = 0x0089FF)
         embed.set_thumbnail(url = ctx.guild.icon_url)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
@@ -155,28 +180,40 @@ class Stats(commands.Cog):
     @commands.command(aliases = ["serverstats", "server_stats"], description = "Get your server statistics")
     @commands.guild_only()
     async def serverStats(self, ctx):
+        """
+        Display the syays of the server
+        """
         query = self.DB.getGuild(ctx.guild.id)
         embed = await self.getEmbedStat(ctx.guild, query[0])
         await ctx.send(embed = embed)
 
     @commands.command(aliases = ["userstats", "user_stats", "memberStats", "member_stats"], description = "Get a user statistics")
     async def userStats(self, ctx, id : int = None):
-        flags = {UserFlags.staff : "staff",
-                 UserFlags.partner : "partner",
-                 UserFlags.hypesquad : "hypesquad",
-                 UserFlags.bug_hunter : "bug_hunter",
-                 UserFlags.mfa_sms : "mfa_sms",
-                 UserFlags.premium_promo_dismissed : "premium_promo_dismissed",
-                 UserFlags.hypesquad_bravery : "hypesquad_bravery",
-                 UserFlags.hypesquad_brilliance : "hypesquad_brilliance",
-                 UserFlags.hypesquad_balance : "hypesquad_balance",
-                 UserFlags.early_supporter : "early_supporter",
-                 UserFlags.team_user : "team_user",
-                 UserFlags.system : "system",
-                 UserFlags.has_unread_urgent_messages : "has_unread_urgent_messages",
-                 UserFlags.bug_hunter_level_2 : "bug_hunter_level_2",
-                 UserFlags.verified_bot : "verified_bot",
-                 UserFlags.verified_bot_developer : "verified_bot_developer"}
+        """
+        Display the stats of the user 
+        - his name / discriminator / custom name on the server
+        - creation date / his a server booster (and since when) / all his badges (hypesquad, etc...)
+        - The total of servers registered in common with the bot / total registered messages send
+        """
+
+        flags = {
+            UserFlags.staff : "staff",
+            UserFlags.partner : "partner",
+            UserFlags.hypesquad : "hypesquad",
+            UserFlags.bug_hunter : "bug_hunter",
+            UserFlags.mfa_sms : "mfa_sms",
+            UserFlags.premium_promo_dismissed : "premium_promo_dismissed",
+            UserFlags.hypesquad_bravery : "hypesquad_bravery",
+            UserFlags.hypesquad_brilliance : "hypesquad_brilliance",
+            UserFlags.hypesquad_balance : "hypesquad_balance",
+            UserFlags.early_supporter : "early_supporter",
+            UserFlags.team_user : "team_user",
+            UserFlags.system : "system",
+            UserFlags.has_unread_urgent_messages : "has_unread_urgent_messages",
+            UserFlags.bug_hunter_level_2 : "bug_hunter_level_2",
+            UserFlags.verified_bot : "verified_bot",
+            UserFlags.verified_bot_developer : "verified_bot_developer"
+        }
 
         if id == None:
             user = ctx.author
@@ -240,8 +277,14 @@ class Stats(commands.Cog):
 
         await ctx.send(embed = embed)
 
+
     @commands.command(description = "Gives the top 10 users (limit can be changed) in a category (use help)", aliases = ["TOP"])
     async def top(self, ctx, category, limit : int = 10):
+        """
+        Give the top users of the given category
+        The user can set a limit (default 10), if the limit is not between 1 and 25 it's set to default
+        """
+
         if limit < 1 or limit > 25:
             await ctx.send("This limit is forbidden, use a number between 1 and 25")
 
@@ -284,9 +327,15 @@ class Stats(commands.Cog):
         else:
             await ctx.send("I don't recognize this category sorry, maybe you spelled it wrong, look at the `help` category to see more")
 
+
     @commands.command(description = "Get the activity of the user on all the channels in the server", aliases = ["useractivity", "user_activity"])
     @commands.guild_only()
     async def userActivity(self, ctx, idUser : int = None):
+        """
+        Display the activity of the user based of his messages in each text channels
+        Each channel get the number of messages send by the user
+        """
+
         user = None
         if idUser == None:
             user = ctx.author

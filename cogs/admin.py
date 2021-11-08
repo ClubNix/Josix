@@ -3,6 +3,13 @@ from discord.ext import commands
 from database.database import DatabaseHandler
 
 class Admin(commands.Cog):
+    """
+    Cog Admin
+
+    Regroup all the methods related to the administration.
+    The managers of the server. They can extract data from the database or modify it.
+    """
+
     def __init__(self, bot):
         """
         Initialize the bot given by the setup function
@@ -278,7 +285,15 @@ class Admin(commands.Cog):
             status = "auto refresh set to ON"
         else:
             new = "0"
-            status = "autkeyWord = server[0][7]" # get the keyword of the serverions(administrator = True)
+            status = "auto refresh set to OFF" 
+
+        """TODO : Enregistrer le nouveau statut"""
+        await ctx.send(status)
+            
+    @commands.command(description = "",
+                      aliases = [])
+    @commands.has_permissions(administrator = True)
+    @commands.guild_only()
     async def refresh(self, ctx):
         """
         A command to refresh the server stats (like the auto-refresh triggered in serverStats command)

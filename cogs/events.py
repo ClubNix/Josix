@@ -4,6 +4,13 @@ import datetime as dt
 from database.database import DatabaseHandler
 
 class Events(commands.Cog):
+    """
+    Cog for the events
+
+    An extension that manage all the events for the bot.
+    It's triggered when a messager is send, reaction added/removed/cleared, etc...
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.DB = DatabaseHandler()

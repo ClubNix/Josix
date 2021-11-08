@@ -4,11 +4,26 @@ import random
 import os
 
 class Games(commands.Cog):
+    """
+    A cog to manage all the games related commands
+
+    Regroups all the commands that allows to play games (mostly like in a mini casino)
+    From roll a dice to draw a card
+    """
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(description = "Let's get a look at your luck by throwing some dices", aliases = ["ROLL"])
     async def roll(self, ctx, numberRolls : int = 1, mini : int = 1, maxi : int = 6):
+        """
+        Roll a dice with the following parameters : 
+        - The number of rolls to use (maximum amount : 25)
+        - The minimum amount a dice can get (minimum 0)
+        - The maximum amount a dice can get (maximum 100)
+        
+        If the min/max valeus given are impossible, they are set to default
+        """
+
         if mini < 0:
             mini = 1
         if maxi > 100:
@@ -36,10 +51,18 @@ class Games(commands.Cog):
 
     @commands.command(description = "Heads or Tails ?", aliases = ["FLIP"])
     async def flip(self, ctx):
+        """
+        Choose Heads or Tails
+        """
         await ctx.send(f'> {random.choice(["Heads", "Tails"])}')
 
     @commands.command(description = "Draw a card", aliases = ["CARD", "draw", "DRAW"])
     async def card(self, ctx):
+        """
+        Draw a card and display it in an embed
+        The image is given from the deck folder
+        """
+
         cards = ("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J" , "Q", "K")
         colors = ("D", "S", "C", "H")
         card, color = random.choice(cards), random.choice(colors)
@@ -56,6 +79,14 @@ class Games(commands.Cog):
 
     @commands.command(description = "Play a game of roulette like you're at the casino !")
     async def roulette(self, ctx):
+        """
+        Launch a turn of roulette and gives several informations :
+        - The number
+        - The color of the number
+        - Which column
+        - Which dozen
+        """
+
         colors = ("🟩", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "⬛", "🟥",
                   "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛",
                   "🟥", "⬛", "🟥", "⬛", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥", "⬛", "🟥"
@@ -96,6 +127,10 @@ class Games(commands.Cog):
 
     @commands.command(description = "Do a game of Rock-Paper-Scissors against the bot !", aliases = ["RPS"])
     async def rps(self, ctx, gesture : str):
+        """
+        Do a round of rock-paper-scissors against the bot (full random)
+        """
+
         moves = ["rock", "paper", "scissors"]
         emojis = [":rock:", ":leaves:", ":scissors:"]
         results = ["You won", "You lost", "It's a tie"]
@@ -136,6 +171,10 @@ class Games(commands.Cog):
                                     "... ; ...",
                       aliases = ["CHOOSE"])
     async def choose(self, ctx, *message):
+        """
+        Choose a sentence between all the given sentences.
+        The user has to separate them with a ';'.
+        """
         message = " ".join(message)
         lst = message.split(";")
         await ctx.send("> " + random.choice(lst))
