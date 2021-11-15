@@ -4,13 +4,25 @@ import cogs.__init__ as init
 from database.database import DatabaseHandler
 
 class Usage(commands.Cog):
+    """
+    A cog to manage the usage commands
+
+    You can get all the commands that here to help the user
+    in his daily use with the bot
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.DB = DatabaseHandler()
 
     @commands.command(description = "Help command of the bot", aliases = ["HELP"])
     async def help(self, ctx, commandName = None):
-        if commandName == None:
+        """
+        Display an help embed with all the commands 
+        if a parameter is given it will display an embed of the help of the specific command
+        """
+
+        if commandName == None: 
             embed = discord.Embed(title = "Help command", description = f"Description of the commands, use `{self.bot.command_prefix}help [commandName]` to get more info about a specific command", color = 0x0089FF)
             embed.set_thumbnail(url = self.bot.user.avatar_url)
             embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
@@ -45,7 +57,7 @@ class Usage(commands.Cog):
             param = cmd.clean_params
             for val in param.values():
                 default = val.default
-                if str(default) != "<class 'inspect._empty'>":
+                if str(default) != "<class 'inspect._empty'>": #Check if the parameter has a default value
                     if default == None:
                         default = ""
                     else:
@@ -65,6 +77,10 @@ class Usage(commands.Cog):
 
     @commands.command(description = "Important informations about the bot", aliases = ["INFO", "informations"])
     async def info(self, ctx):
+        """
+        Display the important informations of the bot
+        """
+
         embed = discord.Embed(title = "Important informations", description = "Read this to be aware of how I work", color = 0x0089FF)
         embed.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
         embed.set_thumbnail(url = self.bot.user.avatar_url)
@@ -80,21 +96,16 @@ class Usage(commands.Cog):
         embed.add_field(name = "Disconnections",
                         value = "I can disconnect sometimes, remember to run the `load` commands to be sure that the server data is up-to-date !",
                         inline = False)
-        embed.add_field(name = "Help me 😭 :",
-                        value = "English is not the native language of my creator, if you find some errors in the sentences etc... report them ! \nSame thing if you find errors in the commands or get some ideas, it helps a lot !",
-                        inline = False)
         await ctx.send(embed = embed)
-
-    @commands.command(description = "Get the link to invite the bot", aliases = ["INVITE", "link", "LINK"])
-    async def invite(self, ctx):
-        await ctx.send("There's no link currently ¯\_(ツ)_/¯")
-
-    @commands.command(description = "To get the bio of my creator", aliases = ["BIO"])
-    async def bio(self, ctx):
-        await ctx.send("https://dsc.bio/hitsuji")
 
     @commands.command(description = "Some informations about me", aliases = ["ME", "bot", "BOT", "bot_info"])
     async def me(self, ctx):
+        """
+        Display the informations of the bot.
+        - the creation date / the version of the module
+        - The creator
+        - Total of users / servers / commands
+        """
         me = self.bot.get_user(237657579692621824)
         usersCount = self.DB.countUser()
         guildsCount = self.DB.countGuild()
@@ -116,6 +127,10 @@ class Usage(commands.Cog):
 
     @commands.command(description = "Delete all your data from the database", aliases = ["DELETE"])
     async def delete(self, ctx, user : discord.User = None):
+        """
+        Allow a user to delete his data from the database.
+        To use it it must mention himself to be sure he wants to perform this command
+        """
         if not user:
             await ctx.send("This command will delete all your data (and erase you from the database) ! To perform it you have to mention yourself !")
             return
@@ -129,11 +144,14 @@ class Usage(commands.Cog):
 
     @commands.command(description = "List the `load` commands you can use", aliases = ["LOAD"])
     async def load(self, ctx):
-        await ctx.send("""Load commands available :
-• `loadServer` (Equals to the 3 following commands in one)
-• `loadUsers`
-• `loadChannels`
-• `loadEmotes`""")
+        """
+        Display all the load types command that the user can use (available in the admin extension)
+        """
+        await ctx.send("Load commands available :\n" + 
+                       "• `loadServer` (Equals to the 3 following commands in one)\n" + 
+                       "• `loadUsers`\n" + 
+                       "• `loadChannels\n`" + 
+                       "• `loadEmotes`\n")
 
 def setup(bot):
     bot.add_cog(Usage(bot))
