@@ -33,5 +33,10 @@ def main(bot : commands.Bot):
 async def on_ready():
     print("\n----- J'aime les Stats ----- \n")
 
+@bot.command(hidden = True)
+async def stop(ctx):
+    await ctx.send("Stop !")
+    await bot.close()
+
 if __name__ == "__main__":
     main(bot)
