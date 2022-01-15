@@ -34,6 +34,7 @@ async def on_ready():
     print("\n----- J'aime les Stats ----- \n")
 
 @bot.command(hidden = True)
+@commands.is_owner() # Regarde si l'auteur est l'owner du bot
 async def stop(ctx):
     await ctx.send("Stop !")
     await bot.close()
