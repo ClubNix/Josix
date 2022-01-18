@@ -9,6 +9,5 @@ class Fun(commands.Cog):
     async def coucou(self, ctx):
         await ctx.send("Coucou !")
 
-
 def setup(bot):
     bot.add_cog(Fun(bot))

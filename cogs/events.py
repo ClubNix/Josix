@@ -10,7 +10,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         # Mention du bot présente dans le message envoyé
-        if self.bot.mention in message.content:
+        if self.bot.user.mention in message.content:
             # Envoie un message dans le salon du message reçu
             message.channel.send(":angry:")
 

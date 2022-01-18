@@ -4,6 +4,8 @@ from discord.ext import commands
 import json
 import os
 
+import cogs
+
 script_dir = os.path.dirname(__file__)
 file_path = os.path.join(script_dir, 'data.json')
 with open(file_path, 'r') as data:
@@ -25,7 +27,11 @@ bot = commands.Bot(command_prefix = "j!", #Le prefix des commandes
                    help_command = None, # Pour désactiver la commande help par défaut
                    intents = intents)
 
-def main(bot : commands.Bot):
+def main():
+    global bot
+    for name in cogs.FILES: #FILES dans __init__ donc accessible via l'import cogs
+        bot.load_extension("cogs." + name)
+        print("Extension " + name + " loaded")
     bot.run(TOKEN)
 
 # L'event se lance quand le bot démarre (il ne faut mettre aucun appel à l'API dedans !)
@@ -40,4 +46,4 @@ async def stop(ctx):
     await bot.close()
 
 if __name__ == "__main__":
-    main(bot)
+    main()
