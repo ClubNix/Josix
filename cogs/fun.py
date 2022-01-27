@@ -26,19 +26,37 @@ class Fun(commands.Cog):
     @commands.command(description = "Envoie une blague au hasard", aliases = ["blague", "JOKE"])
     async def joke(self, ctx, type=None):
         types = ["global", "dev", "dark", "limit", "beauf", "blondes"]
+        is_in_public = ctx.channel.category_id == 751114303314329704
+        if(not is_in_public):
+            if type is None:
+                blg  =  await blagues.random()
+            else:
+                if type not in types:
+                    await ctx.send("Cette catégorie n'existe pas !")
+                    await ctx.send("Catégories disponibles : " + ", ".join(types))
+                    return
+                blg = await blagues.random_categorized(type)
 
-        if type is None:
-            blg  =  await blagues.random()
+            await ctx.send(blg.joke)
+            await asyncio.sleep(1)
+            await ctx.send(blg.answer)
         else:
-            if type not in types:
-                await ctx.send("Cette catégorie n'existe pas !")
-                await ctx.send("Catégories disponibles : " + ", ".join(types))
-                return
-            blg = await blagues.random_categorized(type)
+            del types[3]
+            del types[2]
 
-        await ctx.send(blg.joke)
-        await asyncio.sleep(1)
-        await ctx.send(blg.answer)
+            if type is None:
+                blg  =  await blagues.random(disallow=["dark","limit"])
+            else:
+                if type not in types:
+                    await ctx.send("Cette catégorie n'existe pas !")
+                    await ctx.send("Catégories disponibles : " + ", ".join(types))
+                    return
+                blg = await blagues.random_categorized(type)
+
+            await ctx.send(blg.joke)
+            await asyncio.sleep(1)
+            await ctx.send(blg.answer)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
