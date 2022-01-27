@@ -23,6 +23,7 @@ class Fun(commands.Cog):
         await ctx.message.delete()
         await ctx.send(" ".join(args))
 
+<<<<<<< HEAD
     @commands.command(description = "Envoie une blague au hasard", aliases = ["blague", "JOKE"])
     async def joke(self, ctx, type=None):
         types = ["global", "dev", "dark", "limit", "beauf", "blondes"]
@@ -40,5 +41,7 @@ class Fun(commands.Cog):
         await asyncio.sleep(1)
         await ctx.send(blg.answer)
 
+=======
+>>>>>>> 8ca6f4e5ba0e5324df35286e2dc28417a390251a
 def setup(bot):
     bot.add_cog(Fun(bot))
