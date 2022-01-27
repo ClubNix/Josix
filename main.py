@@ -1,17 +1,13 @@
 import discord
 from discord.ext import commands
 
-import json
+from dotenv import load_dotenv
 import os
 
 import cogs
 
-script_dir = os.path.dirname(__file__)
-file_path = os.path.join(script_dir, 'data.json')
-with open(file_path, 'r') as data:
-    credentials = json.load(data)
-
-TOKEN = credentials["token"]
+load_dotenv()
+TOKEN = os.getenv("discord")
 
 # Quelles informations notre bot va utiliser
 intents = discord.Intents.none()
