@@ -5,6 +5,7 @@ import os
 import asyncio
 import requests 
 import json
+import random
 
 from dotenv import load_dotenv
 from blagues_api import *
@@ -12,6 +13,9 @@ from blagues_api import *
 load_dotenv()
 KEY = os.getenv("blagues")
 blagues = BlaguesAPI(KEY)
+
+SCRIPT_DIR = os.path.dirname(__file__)
+FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -60,8 +64,18 @@ class Fun(commands.Cog):
         await ctx.send(blg.answer)
 
     @commands.command(description = "Les privates joke du nix", aliases = ["ASKIP"])
-    async def askip(self, ctx):
-        pass
+    async def askip(self, ctx, user : str = None):
+        with open(FILE_PATH, 'r') as askip:
+            credentials = json.load(askip)
+
+        if user is None:
+            user = random.choice(list(credentials.keys()))
+        
+        try:
+            blg = random.choice(list(credentials[user].keys()))
+            await ctx.send(credentials[user][blg])
+        except KeyError as _:
+            await ctx.send("Ce membre est inconnu ou n'a pas d'askip du Nix")
 
 def setup(bot):
     bot.add_cog(Fun(bot))

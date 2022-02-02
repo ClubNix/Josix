@@ -1,4 +1,4 @@
-*.json
+data.json
 __pycache__/
 .vscode
 *.env

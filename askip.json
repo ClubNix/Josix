@@ -1,0 +1,45 @@
+{
+    "chelinka" : {
+        "frigo" : "Pour quitter un jeu, il faut débrancher le frigo !",
+        "dette" : "A fait perdre 200 crédits à tous les membres sur Monix",
+        "cotisation" : "Paye ta cotise !"
+    },
+
+    "hitsuji" : {
+        "alcool" : "'Demain, **JE BAISE**'"
+    },
+
+    "zen" : {
+        "home" : "le dossier /home a été nettoyé avec succès",
+        "partition" : "Tuto détruire sa parition Ubuntu et Kali en 5 minutes !"
+    },
+
+    "blackjack" : {
+        "kali" : "Si tu touches à Python, ta Kali tu l'as dans le fion",
+        "voiture" : "https://cdn.discordapp.com/attachments/936270704700170340/936338514503684106/SPOILER_IMG_1699.jpg"
+    },
+
+    "citulix" : {
+        "tag" : "@everyOne"
+    },
+
+    "enderend" : {
+        "voiture" : "https://cdn.discordapp.com/attachments/936270704700170340/936338514503684106/SPOILER_IMG_1699.jpg"
+    },
+
+    "gyoza" : {
+        "gagner" : "puissance 4 == 0"
+    },
+
+    "zykhi" : {
+        "xbox" : "J'ai acheté 5 manettes de Xbox, mais j'ai pas de Xbox...",
+        "cyberpunk" : "J'ai acheté Cyberpunk 2077 version collector sur PS4, mais j'ai pas de PS4..."
+    },
+
+    "global" : {
+        "scan" : "Le projet scanner",
+        "reseau" : "La connexion du nix entre 2019 et 2021 était :ok_hand:",
+        "m-word" : "**2€ !!!**",
+        "cyber" : "Simplement le club*nix en moins bien"
+    }
+}
