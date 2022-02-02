@@ -3,6 +3,9 @@ from discord.ext import commands
 
 import os
 import asyncio
+import requests 
+import json
+
 from dotenv import load_dotenv
 from blagues_api import *
 
@@ -24,39 +27,41 @@ class Fun(commands.Cog):
         await ctx.send(" ".join(args))
 
     @commands.command(description = "Envoie une blague au hasard", aliases = ["blague", "JOKE"])
-    async def joke(self, ctx, type=None):
-        types = ["global", "dev", "dark", "limit", "beauf", "blondes"]
+    async def joke(self, ctx, jokeType : str = None):
+        types = ["global", "dev", "beauf", "blondes", "geek", "dark", "limit"]
+        disallowCat = []
         is_in_public = ctx.channel.category_id == 751114303314329704
-        if(not is_in_public):
-            if type is None:
-                blg  =  await blagues.random()
-            else:
-                if type not in types:
-                    await ctx.send("Cette catégorie n'existe pas !")
-                    await ctx.send("Catégories disponibles : " + ", ".join(types))
-                    return
-                blg = await blagues.random_categorized(type)
+        blg = None
 
-            await ctx.send(blg.joke)
-            await asyncio.sleep(1)
-            await ctx.send(blg.answer)
+        if (is_in_public):
+            disallowCat.append(types.pop())
+            disallowCat.append(types.pop())
+
+        if jokeType is None:
+            blg = await blagues.random(disallow = disallowCat)
+
         else:
-            del types[3]
-            del types[2]
+            jokeType = jokeType.lower()
+            if jokeType not in types:
+                await ctx.send("Cette catégorie n'existe pas !")
+                await ctx.send("Catégories disponibles : " + ", ".join(types))
+                return
 
-            if type is None:
-                blg  =  await blagues.random(disallow=["dark","limit"])
-            else:
-                if type not in types:
-                    await ctx.send("Cette catégorie n'existe pas !")
-                    await ctx.send("Catégories disponibles : " + ", ".join(types))
-                    return
-                blg = await blagues.random_categorized(type)
+            if jokeType == "geek":
+                response = requests.get('https://geek-jokes.sameerkumar.website/api?format=json')
+                blg = response.json()["joke"]
+                await ctx.send(blg)
+                return
 
-            await ctx.send(blg.joke)
-            await asyncio.sleep(1)
-            await ctx.send(blg.answer)
+            blg = await blagues.random_categorized(jokeType)
 
+        await ctx.send(blg.joke)
+        await asyncio.sleep(1)
+        await ctx.send(blg.answer)
+
+    @commands.command(description = "Les privates joke du nix", aliases = ["ASKIP"])
+    async def askip(self, ctx):
+        pass
 
 def setup(bot):
     bot.add_cog(Fun(bot))
