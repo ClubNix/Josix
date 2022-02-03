@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from dotenv import load_dotenv
 import os
+import sys
 
 import cogs
 
@@ -40,6 +41,16 @@ async def on_ready():
 async def stop(ctx):
     await ctx.send("Stop !")
     await bot.close()
+
+@bot.command(hidden = True)
+@commands.is_owner()
+async def restart(ctx):
+    await ctx.send("Restart !")
+    await bot.close()
+    print("*******************\n" + 
+          "----- Restart -----\n" + 
+          "*******************\n")
+    os.execv(sys.executable, ['python3'] + sys.argv)
 
 if __name__ == "__main__":
     main()
