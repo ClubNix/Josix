@@ -35,7 +35,7 @@ Josix is a discord bot written with Pycord in Python. Mostly for fun its goal is
 	- Create a `.env` file with these informations :
 ```
 token = your_discord_bot_token_here
-blagues = Blagues_API_token_here
+jokes = Blagues_API_token_here
 ```
 > note : the "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only, except for the geek category).
 - Run the bot :
