@@ -113,19 +113,17 @@ class Fun(commands.Cog):
         """
 
         ############# deal with bad command usage
-
         if(user==None or askip_name==None or len(askip_text)==0):
-            await ctx.send("i can't understand :( try \"j!help add_askip\"")
+            await ctx.send("i can't understand... :( try \"j!help add_askip\"")
             return
-        joke_string = " ".join(askip_text)
-        
-        should_add = await self.vote_askip(ctx,ctx.message) # nicely asks everyone before.
 
+        joke_string = " ".join(askip_text)
+
+        should_add = await self.vote_askip(ctx,ctx.message) # nicely asks everyone before.
         if not should_add:
             return
 
         ############# append askip to the credentials json object
-        
         credentials = {}
         with open("askip.json", 'r') as askipfile:
             credentials = json.load(askipfile)
@@ -133,13 +131,10 @@ class Fun(commands.Cog):
         if(user not in credentials.keys()):                 # if the member is not registered in the json file
             credentials[user] = {}                          # create a new pair for it
             
-        if(name in credentials[user].keys()):
-            name = name + str(len(credentials[user]))       # pour éviter la réécriture des askip (à améliorer)
-
-        credentials[user][name] = joke_string                   # add joke
+        name = askip_name + str(len(credentials[user])) if(askip_name in credentials[user].keys()) else askip_name     # pour éviter la réécriture des askip (à améliorer)
+        credentials[user][name] = joke_string               # add joke
 
         ############# update the json file
-
         with open("askip.json", "w") as askipfile:
             askipfile.write(json.dumps(credentials))        # write new askip file
 
