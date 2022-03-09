@@ -106,7 +106,7 @@ class Fun(commands.Cog):
         return False
 
     @commands.command(description = "fills my collection of private jokes", aliases = ["ADDASKIP","addaskip"])
-    async def add_askip(self,ctx,user=None,joke_name=None, joke=None,*no_more_args):
+    async def add_askip(self,ctx,user=None,askip_name=None,*askip_text):
         """
             saves askip joke in askip.json
             ...but proceeds to nicely ask to us before
@@ -114,10 +114,11 @@ class Fun(commands.Cog):
 
         ############# deal with bad command usage
 
-        if(user==None or joke_name==None or joke==None or len(no_more_args)>0):
+        if(user==None or askip_name==None or len(askip_text)==0):
             await ctx.send("i can't understand :( try \"j!help add_askip\"")
             return
-
+        joke_string = " ".join(askip_text)
+        
         should_add = await self.vote_askip(ctx,ctx.message) # nicely asks everyone before.
 
         if not should_add:
@@ -135,7 +136,7 @@ class Fun(commands.Cog):
         if(name in credentials[user].keys()):
             name = name + str(len(credentials[user]))       # pour éviter la réécriture des askip (à améliorer)
 
-        credentials[user][name] = joke                   # add joke
+        credentials[user][name] = joke_string                   # add joke
 
         ############# update the json file
 
