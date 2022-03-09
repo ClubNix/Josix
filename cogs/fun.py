@@ -24,10 +24,10 @@ class Fun(commands.Cog):
     async def hello(self, ctx):
         await ctx.send("Hello !")
 
-    @commands.command(description="Repeat the given sentence", aliases=["repeat","echo"])
-    async def say(self,ctx,*args):
+    @commands.command(description="Send the message as if it is his own sentence", aliases=["repeat","echo"])
+    async def say(self,ctx,*text):
         await ctx.message.delete()
-        await ctx.send(" ".join(args))
+        await ctx.send(" ".join(text))
 
     @commands.command(description = "Send a random joke", aliases = ["blague", "JOKE"])
     async def joke(self, ctx, jokeType : str = None):
