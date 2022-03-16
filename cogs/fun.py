@@ -1,3 +1,5 @@
+from textwrap import indent
+from aiohttp import ClientResponseError
 import discord
 from discord.ext import commands
 
@@ -41,7 +43,11 @@ class Fun(commands.Cog):
             disallowCat.append(types.pop())
 
         if jokeType is None:
-            blg = await jokes.random(disallow = disallowCat)
+            try:
+                blg = await jokes.random(disallow = disallowCat)
+            except ClientResponseError as _:
+                await ctx.send("Your token is wrong")
+                return
 
         else:
             jokeType = jokeType.lower()
@@ -50,7 +56,11 @@ class Fun(commands.Cog):
                 await ctx.send("Available categories : " + ", ".join(types))
                 return
 
-            blg = await jokes.random_categorized(jokeType)
+            try:
+                blg = await jokes.random_categorized(jokeType)
+            except ClientResponseError as _:
+                await ctx.send("Your token is wrong")
+                return
 
         await ctx.send(blg.joke)
         await asyncio.sleep(1)
@@ -75,51 +85,55 @@ class Fun(commands.Cog):
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters
         should be saved in the askip json.
-        !!! n'ajoute que si plus de 2 votent en faveur & pas de refus
+        !!! Add it only if 2 members agrees and none disagrees
         """
 
-        msg = await ctx.send('is this a good askip ?',reference=message.to_reference())
-
         reacts = []
+        msg = await ctx.send('is this a good askip ? \nThe results will be gathered after 5 minutes',reference=message.to_reference())
+
         ############# add reaction choices
 
-        for reaction in ['❌','☑️']:
+        for reaction in ['❌','✅']:
             await msg.add_reaction(reaction)
 
         ############# function that will be called whenever there is a reaction add. 
         def check(reaction,user):
             if user == commands.bot:    # if the user is josix chan
                 return False            # ignore
+            reacts.append(str(reaction))
+            print(reacts)
             return str(reaction)=='❌'  # else, if anyone clicked X, return true (= stop waiting)
 
         try:    
-            await self.bot.wait_for('reaction_add', check=check,timeout=300)    # timeout = 15 minutes=900(it's ok for us, this is a coroutine)    
+            await self.bot.wait_for('reaction_add', check=check,timeout=30)    # timeout = 15 minutes=900(it's ok for us, this is a coroutine)    
         
         except asyncio.TimeoutError:                                            # once we have waited for 5 minutes
-            if(reacts.count('☑️')>=3 and reacts.count('❌')<=2):                 # if no one disagrees and at least 2 ppl aggree
-                await msg.edit(content="OK! askip added!")                      # send fin, return true
+            if(reacts.count('❌') < 1 and reacts.count('✅') > 1):                 # if no one disagrees and at least 2 ppl aggree
+                await msg.edit(content="OK! askip added!")  # send fin, return true
                 return True
-            msg.edit(content="no one agreed. i'm bored waiting. askip not added")
+            await msg.edit(content="no one agreed. i'm bored waiting. askip not added")
             return False
 
         await msg.edit(content="someone didn't agree... askip not added")
         return False
 
     @commands.command(description = "fills my collection of private jokes", aliases = ["ADDASKIP","addaskip"])
-    async def add_askip(self,ctx,user=None,askip_name=None,*askip_text):
+    async def add_askip(self, ctx, username=None, askip_name=None, *askip_text):
         """
             saves askip joke in askip.json
             ...but proceeds to nicely ask to us before
         """
 
         ############# deal with bad command usage
-        if(user==None or askip_name==None or len(askip_text)==0):
-            await ctx.send("i can't understand... :( try \"j!help add_askip\"")
+        if(username==None or askip_name==None or len(askip_text)==0):
+            await ctx.send("The command is incomplete see `j!help add_askip`\"")
             return
 
+        username = username.lower()
+        askip_name = askip_name.lower()
         joke_string = " ".join(askip_text)
 
-        should_add = await self.vote_askip(ctx,ctx.message) # nicely asks everyone before.
+        should_add = await self.vote_askip(ctx, ctx.message) # nicely asks everyone before.
         if not should_add:
             return
 
@@ -128,15 +142,15 @@ class Fun(commands.Cog):
         with open("askip.json", 'r') as askipfile:
             credentials = json.load(askipfile)
         
-        if(user not in credentials.keys()):                 # if the member is not registered in the json file
-            credentials[user] = {}                          # create a new pair for it
+        if(username not in credentials.keys()):                 # if the member is not registered in the json file
+            credentials[username] = {}                          # create a new pair for it
             
-        name = askip_name + str(len(credentials[user])) if(askip_name in credentials[user].keys()) else askip_name     # pour éviter la réécriture des askip (à améliorer)
-        credentials[user][name] = joke_string               # add joke
+        name = askip_name + str(len(credentials[username])) if(askip_name in credentials[username].keys()) else askip_name     # pour éviter la réécriture des askip (à améliorer)
+        credentials[username][name] = joke_string               # add joke
 
         ############# update the json file
         with open("askip.json", "w") as askipfile:
-            askipfile.write(json.dumps(credentials))        # write new askip file
+            askipfile.write(json.dumps(credentials, indent=4))        # write new askip file
 
 
 def setup(bot):
