@@ -9,7 +9,7 @@
   
 <p align="center">
   <a href="https://www.clubnix.fr/" alt="Club*Nix"><img src="https://img.shields.io/badge/A_project-Club*Nix-informational"/></a>
-  <a href="https://github.com/ClubNix/Josix/blob/master/LICENSE" alt="apache"><img src="https://img.shields.io/github/license/ClubNix/Votix.svg" /></a>
+  <a href="https://github.com/ClubNix/Josix/blob/master/LICENSE" alt="apache"><img src="https://img.shields.io/badge/Apache-2.0-green" /></a>
 </p>
 
 <p align="center">
