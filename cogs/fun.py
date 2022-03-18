@@ -66,10 +66,16 @@ class Fun(commands.Cog):
         await asyncio.sleep(1)
         await ctx.send(blg.answer)
 
+    @commands.command(description="See all the people that got one or more askip")
+    async def list_askip(self, ctx):
+        with open(FILE_PATH, 'r') as askip:
+            names = json.load(askip).keys()
+        await ctx.send("Available names : `" + "`, `".join(names) + "`")
+
     @commands.command(description = "All your private jokes", aliases = ["ASKIP"])
     async def askip(self, ctx, user : str = None):
         with open(FILE_PATH, 'r') as askip:
-            credentials = json.load(askip)
+                credentials = json.load(askip)
 
         if user is None:
             user = random.choice(list(credentials.keys()))
@@ -79,6 +85,7 @@ class Fun(commands.Cog):
             await ctx.send(credentials[user][blg])
         except KeyError as _:
             await ctx.send("Unknown member")
+            await ctx.send("Available names : `" + "`, `".join(credentials.keys()) + "`")
     
     async def vote_askip(self,ctx,message):
         """
@@ -118,6 +125,7 @@ class Fun(commands.Cog):
         return False
 
     @commands.command(description = "fills my collection of private jokes", aliases = ["ADDASKIP","addaskip"])
+    @commands.has_permissions(manage_messages=True)
     async def add_askip(self, ctx, username=None, askip_name=None, *askip_text):
         """
             saves askip joke in askip.json
