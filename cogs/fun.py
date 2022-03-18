@@ -112,7 +112,7 @@ class Fun(commands.Cog):
             return str(reaction)=='❌'  # else, if anyone clicked X, return true (= stop waiting)
 
         try:    
-            await self.bot.wait_for('reaction_add', check=check,timeout=30)    # timeout = 15 minutes=900(it's ok for us, this is a coroutine)    
+            await self.bot.wait_for('reaction_add', check=check,timeout=300)    # timeout = 15 minutes=900(it's ok for us, this is a coroutine)    
         
         except asyncio.TimeoutError:                                            # once we have waited for 5 minutes
             if(reacts.count('❌') < 1 and reacts.count('✅') > 1):                 # if no one disagrees and at least 2 ppl aggree
