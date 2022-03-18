@@ -1,5 +1,3 @@
-from textwrap import indent
-from aiohttp import ClientResponseError
 import discord
 from discord.ext import commands
 
@@ -8,6 +6,7 @@ import asyncio
 import json
 import random
 
+from aiohttp import ClientResponseError
 from dotenv import load_dotenv
 from blagues_api import *
 
