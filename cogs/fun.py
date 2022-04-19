@@ -159,6 +159,15 @@ class Fun(commands.Cog):
         with open("askip.json", "w") as askipfile:
             askipfile.write(json.dumps(credentials, indent=4))        # write new askip file
 
+    @commands.command(description="Get the avatar of someone")
+    async def avatar(self, ctx, user : discord.User = None):
+        if user is None:
+            user = ctx.author
+        embed = discord.Embed(title=f"The avatar of {user}", color=0x0089FF)
+        embed.set_image(url=user.avatar_url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
