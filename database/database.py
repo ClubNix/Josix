@@ -20,8 +20,13 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
-    def getUsers(self, limit : int = 10):
+    def getUsers(self, limit : int = 10) -> tuple:
         query = "SELECT * FROM josix.User LIMIT %s;"
         params = (limit,)
         self.cursor.execute(query, params)
         print(self.cursor.fetchall())
+
+    def getMsg(self, msgId : int) -> tuple:
+        query = f"SELECT * FROM josix.Msgreact WHERE msgId = {msgId};"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()

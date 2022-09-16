@@ -14,11 +14,16 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        msgId = payload.message_id
+        resMsg = self.db.getMsg(msgId)
+        print(resMsg)
+
+        return
         """
         Requête
         list = SELECT idMsg FROM MsgReact WHERE payload.guild_id == idGuild
         """
-        if payload.message_id in list:
+        if payload.message_id in []:
             userId = payload.user_id
             emojiId = payload.emoji
             """
@@ -42,7 +47,7 @@ class Events(commands.Cog):
         Requête
         list = SELECT idMsg FROM MsgReact WHERE payload.guild_id == idGuild
         """
-        if payload.message_id in list:
+        if payload.message_id in []:
             userId = payload.user_id
             emojiId = payload.emoji
             """
