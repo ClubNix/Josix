@@ -2,12 +2,36 @@ import discord
 from discord.ext import commands
 
 import asyncio
+import os
+import sys
+
 from database.database import DatabaseHandler
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = DatabaseHandler()
+
+    @commands.command(hidden = True)
+    @commands.is_owner() # Check if the author if the owner of the bot
+    async def stop(self, ctx):
+        await ctx.send("Stop !")
+        await self.bot.close()
+
+    @commands.command(hidden = True)
+    @commands.is_owner()
+    async def restart(self, ctx):
+        await ctx.send("Restart !")
+        await self.bot.close()
+        print("*******************\n" + 
+              "----- Restart -----\n" + 
+              "*******************\n"
+        )
+        os.execv(sys.executable, ['python3'] + sys.argv)
+
+    @commands.command()
+    async def test(self, ctx):
+        self.db.getUsers()
 
     async def getCouple(self, ctx, duos) -> tuple:
         msg = "For the first part, react to this message with the emoji you want to add in the reaction role !\n error :"
