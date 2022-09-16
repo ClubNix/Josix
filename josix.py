@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.commands.errors import ExtensionError
 
 from dotenv import load_dotenv
+import psycopg2 
 import os
 
 from cogs import FILES
