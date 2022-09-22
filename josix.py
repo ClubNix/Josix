@@ -1,12 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.errors import ExtensionError
+from discord import ExtensionError
 
 from dotenv import load_dotenv
-import psycopg2 
-import os
-
 from cogs import FILES
+
+import os
 
 load_dotenv()
 TOKEN = os.getenv("discord")
@@ -17,6 +16,7 @@ def main():
     intents.members = True
     intents.guilds = True
     intents.messages = True
+    intents.message_content = True
     intents.reactions = True
     intents.voice_states = True
 

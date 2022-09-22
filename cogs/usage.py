@@ -1,14 +1,15 @@
 import discord
 from discord.ext import commands
+import random
 
 from . import FILES
 
 class Usage(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot : commands.Bot):
         self.bot = bot
 
     @commands.command(description="The help command", aliases=["HELP"])
-    async def help(self, ctx, commandName = None):
+    async def help(self, ctx : commands.Context, commandName : str = None):
         if not commandName:
             helpEmbed = discord.Embed(title="Help embed", description=f"Use {self.bot.command_prefix}help [command_name] to see more info for a command", color = 0x0089FF)
             helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
@@ -36,8 +37,7 @@ class Usage(commands.Cog):
             command = self.bot.get_command(commandName)
             if not command:
                 await ctx.send(f":x: Unknown command, see {self.bot.command_prefix}help :x:")
-                return
-            
+                return   
 
             if len(command.aliases) == 0:
                 al = "No aliases"
@@ -73,9 +73,16 @@ class Usage(commands.Cog):
             
 
     @commands.command(description = "Give the latency of the bot", aliases = ["PING", "latency"])
-    async def ping(self, ctx):
+    async def ping(self, ctx : commands.Context):
         await ctx.send(f"Pong ! Wait, you really think you can ping me and i will answer instantly... well you're right...\nI have a latency of {round((self.bot.latency * 1000), 2)} ms")
         await ctx.send(f"{ctx.author.mention} ||Just a revenge||")
 
-def setup(bot):
+    @commands.command(description="Randomly choose a sentence from a list", aliases=["CHOOSE"])
+    async def choose(self, ctx : commands.Context, *, sentences : str):
+        values = sentences.split(";")
+        embed = discord.Embed(title="Result", description=random.choice(values))
+        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
+def setup(bot : commands.Bot):
     bot.add_cog(Usage(bot))
