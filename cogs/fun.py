@@ -78,6 +78,8 @@ class Fun(commands.Cog):
 
         if user is None:
             user = random.choice(list(credentials.keys()))
+        else:
+            user = user.lower()
         
         try:
             blg = random.choice(list(credentials[user].keys()))
