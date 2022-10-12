@@ -10,10 +10,13 @@ class Usage(commands.Cog):
 
     @commands.command(description="The help command", aliases=["HELP"])
     async def help(self, ctx : commands.Context, commandName : str = None):
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+        av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
+
         if not commandName:
             helpEmbed = discord.Embed(title="Help embed", description=f"Use {self.bot.command_prefix}help [command_name] to see more info for a command", color = 0x0089FF)
-            helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-            helpEmbed.set_thumbnail(url=self.bot.user.avatar_url)
+            helpEmbed.set_author(name=ctx.author, icon_url=av_aut)
+            helpEmbed.set_thumbnail(url=av_bot)
             for cogName in FILES:
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
@@ -64,8 +67,8 @@ class Usage(commands.Cog):
                     usage += f"<{val.name}> "
 
             embed2 = discord.Embed(title = "Help command", description = f"Description of the command **{command.name}**\n <> -> Forced parameters | [] -> Optional parameters", color = 0x0089FF)
-            embed2.set_thumbnail(url = self.bot.user.avatar_url)
-            embed2.set_author(name = ctx.author, icon_url = ctx.author.avatar_url)
+            embed2.set_thumbnail(url = av_bot)
+            embed2.set_author(name = ctx.author, icon_url = av_aut)
             embed2.add_field(name = "Aliases :", value = al)
             embed2.add_field(name = "Description :", value = desc, inline = False)
             embed2.add_field(name = "Usage :", value = usage)
@@ -81,7 +84,7 @@ class Usage(commands.Cog):
     async def choose(self, ctx : commands.Context, *, sentences : str):
         values = sentences.split(";")
         embed = discord.Embed(title="Result", description=random.choice(values))
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
 def setup(bot : commands.Bot):

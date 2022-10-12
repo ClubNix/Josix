@@ -14,7 +14,7 @@ class Admin(commands.Cog):
 
     @commands.command(hidden = True)
     @commands.is_owner() # Check if the author if the owner of the bot
-    async def stop(self, ctx):
+    async def stop(self, ctx : commands.Context):
         await ctx.send("Stop !")
         await self.bot.close()
 
