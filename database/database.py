@@ -16,7 +16,7 @@ class DatabaseHandler():
         except (Exception, psycopg2.DatabaseError, psycopg2.OperationalError) as error:
             print("Error on connection ***** ", end="")
             print(error)
-	    return
+            return
 
         self.conn = conn
         self.cursor = conn.cursor()
