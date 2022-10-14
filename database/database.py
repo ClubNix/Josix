@@ -1,4 +1,4 @@
-import psycopg2 
+import psycopg2
 import discord
 import os
 
@@ -13,10 +13,10 @@ class DatabaseHandler():
             )
 
             print("Connection realized ***** ", end="")
-        except (Exception, psycopg2.DatabaseError) as error:
+        except (Exception, psycopg2.DatabaseError, psycopg2.OperationalError) as error:
             print("Error on connection ***** ", end="")
             print(error)
-            exit(1)
+	    return
 
         self.conn = conn
         self.cursor = conn.cursor()
