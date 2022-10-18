@@ -6,7 +6,7 @@ class DatabaseHandler():
     def __init__(self) -> None:
         try:
             conn = psycopg2.connect(
-                host="localhost",
+                host=os.getenv("host"),
                 database=os.getenv("db_name"),
                 user=os.getenv("db_user"),
                 password=os.getenv("db_pwd")
