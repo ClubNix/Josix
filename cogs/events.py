@@ -4,6 +4,8 @@ from discord import RawReactionActionEvent
 
 from database.database import DatabaseHandler
 
+import logwrite as log
+
 class Events(commands.Cog):
     def __init__(self, bot : commands.Bot):
         self.bot = bot
@@ -42,8 +44,8 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("\nUsing py-cord version", discord.__version__)
-        print("\n----- J'aime les Stats ----- \n")
+        log.writeLog("Using py-cord version " + discord.__version__)
+        log.writeLog(" ----- J'aime les Stats ----- ")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload : RawReactionActionEvent):
@@ -52,8 +54,6 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload : RawReactionActionEvent):
         await self.updateRole(payload)
-
-
 
 def setup(bot : commands.Bot):
     bot.add_cog(Events(bot))

@@ -2,6 +2,8 @@ import psycopg2
 import discord
 import os
 
+import logwrite as log
+
 class DatabaseHandler():
     def __init__(self) -> None:
         try:
@@ -12,10 +14,9 @@ class DatabaseHandler():
                 password=os.getenv("db_pwd")
             )
 
-            print("Connection realized ***** ", end="")
+            log.writeLog(" - Connection on the database done - ")
         except (Exception, psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-            print("Error on connection ***** ", end="")
-            print(error)
+            log.writeError(log.formatError(error))
             return
 
         self.conn = conn

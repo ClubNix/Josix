@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from cogs import FILES
 
 import os
+import logwrite as log
 
 load_dotenv()
 TOKEN = os.getenv("discord")
@@ -30,10 +31,9 @@ def main():
     for name in FILES: # FILES in the __init__.py file
         try:
             bot.load_extension("cogs." + name)
-            print("Extension " + name + " loaded")
-        except ExtensionError as error:
-            print(error)
-
+            log.writeLog("Extension " + name + " Successfully loaded")
+        except (ModuleNotFoundError, ExtensionError) as error:
+            log.writeError(log.formatError(error))
     bot.run(TOKEN)
 
 if __name__ == "__main__":
