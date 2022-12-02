@@ -64,3 +64,11 @@ jokes = Blagues_API_token_here
 
 ## License
 Josix is under the [Apache 2-0 license](https://github.com/ClubNix/Josix/blob/master/LICENSE)
+
+
+## Attention
+
+Il faut aussi installer d'autres trucs : 
+- pip3 install psycopg2-binary
+- sudo apt install libpq-dev python3-dev
+- pip3 install psycopg2
