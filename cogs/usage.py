@@ -1,20 +1,28 @@
 import discord
 from discord.ext import commands
+from discord import ApplicationContext
+
+from typing import Optional
+from . import FILES
+
 import random
 
-from . import FILES
 
 class Usage(commands.Cog):
     def __init__(self, bot : commands.Bot):
         self.bot = bot
 
-    @commands.command(description="The help command", aliases=["HELP"])
-    async def help(self, ctx : commands.Context, commandName : str = None):
+    @commands.slash_command (description="Get the help", options=[discord.Option(input_type=str,
+                                                                                 name="command_name",
+                                                                                 description="Name of the command",
+                                                                                 default=None,
+                                                                                 required=False)])
+    async def help(self, ctx : ApplicationContext, command_name : Optional[str] = None):
         av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
 
-        if not commandName:
-            helpEmbed = discord.Embed(title="Help embed", description=f"Use {self.bot.command_prefix}help [command_name] to see more info for a command", color = 0x0089FF)
+        if not command_name:
+            helpEmbed = discord.Embed(title="Help embed", description=f"Use /help [command_name] to see more info for a command", color = 0x0089FF)
             helpEmbed.set_author(name=ctx.author, icon_url=av_aut)
             helpEmbed.set_thumbnail(url=av_bot)
             for cogName in FILES:
@@ -28,64 +36,60 @@ class Usage(commands.Cog):
                     lstCmd = "No commands available"
                 else:
                     for command in commands:
-                        if command.hidden:
-                            continue
-                        lstCmd += "`" + command.name + "`, "
+                        lstCmd += "`" + command.qualified_name + "`, "
                     lstCmd = lstCmd[:len(lstCmd)-2]
                 helpEmbed.add_field(name=cogName, value=lstCmd, inline=False)
-            await ctx.send(embed=helpEmbed)
+            await ctx.respond(embed=helpEmbed)
 
         else:
-            commandName = commandName.lower()
-            command = self.bot.get_command(commandName)
-            if not command:
-                await ctx.send(f":x: Unknown command, see {self.bot.command_prefix}help :x:")
-                return   
+            command_name = command_name.lower()
+            command : discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
 
-            if len(command.aliases) == 0:
-                al = "No aliases"
-            else:
-                al = ", ".join(command.aliases)
+            if not command:
+                await ctx.respond(f":x: Unknown command, see /help :x:")
+                return
 
             if command.description == "":
                 desc = "No description"
             else:
                 desc = command.description
 
-            usage = f"{self.bot.command_prefix}{command.name} "
-            param = command.clean_params
-            for val in param.values():
+            usage = f"/{command.name} "
+            param = command.options
+            options = ""
+            
+            for val in param:
                 default = val.default
-                if str(default) != "<class 'inspect._empty'>": #Check if the parameter has a default value
-                    if default == None:
-                        default = ""
-                    else:
-                        default = f" = {default}"
+                if default:
+                    default = f" = {default}"
+                else:
+                    default = ""
+                    
+                if val.required:
+                    usage += f"<{val.name}{default}> "
+                else:
                     usage += f"[{val.name}{default}] "
 
-                else:
-                    usage += f"<{val.name}> "
+                options += f"**{val.name}** : {val.description}\n"
+                    
 
-            embed2 = discord.Embed(title = "Help command", description = f"Description of the command **{command.name}**\n <> -> Forced parameters | [] -> Optional parameters", color = 0x0089FF)
+            embed2 = discord.Embed(title = "Help command", description = f"Description of the command **{command.name}**\n <> -> Required parameters | [] -> Optional parameters", color = 0x0089FF)
             embed2.set_thumbnail(url = av_bot)
             embed2.set_author(name = ctx.author, icon_url = av_aut)
-            embed2.add_field(name = "Aliases :", value = al)
-            embed2.add_field(name = "Description :", value = desc, inline = False)
-            embed2.add_field(name = "Usage :", value = usage)
-            await ctx.send(embed = embed2)
-            
+            embed2.add_field(name = "Description :", value = desc)
+            embed2.add_field(name = "Usage :", value = usage, inline = False)
+            embed2.add_field(name = "Options : ", value = options, inline = False)
+            await ctx.respond(embed = embed2)
 
-    @commands.command(description = "Give the latency of the bot", aliases = ["PING", "latency"])
-    async def ping(self, ctx : commands.Context):
-        await ctx.send(f"Pong ! Wait, you really think you can ping me and i will answer instantly... well you're right...\nI have a latency of {round((self.bot.latency * 1000), 2)} ms")
-        await ctx.send(f"{ctx.author.mention} ||Just a revenge||")
-
-    @commands.command(description="Randomly choose a sentence from a list", aliases=["CHOOSE"])
-    async def choose(self, ctx : commands.Context, *, sentences : str):
+    @commands.slash_command(description="Randomly choose a sentence from a list", options=[discord.Option(input_type=str,
+                                                                                                          name="sentences",
+                                                                                                          description="List of sentences separated by a `;`",
+                                                                                                          required=True)])
+    async def choose(self, ctx : ApplicationContext, sentences : str):
         values = sentences.split(";")
         embed = discord.Embed(title="Result", description=random.choice(values))
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
 def setup(bot : commands.Bot):
     bot.add_cog(Usage(bot))
