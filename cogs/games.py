@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-from numpy import mean
 from asyncio import TimeoutError
 from database.database import DatabaseHandler
 
@@ -72,7 +71,7 @@ class Games(commands.Cog):
                 self.db.addUser(foe.id)
             else:
                 eloList.append(playerStat[0])
-        foesElo = mean(eloList)
+        foesElo = sum((eloList)) / len(eloList)
 
         player1 = self.db.getPlayerStat(winner.id)
         if not player1:
