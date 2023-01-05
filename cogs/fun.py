@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import ApplicationContext
+from discord import option
 
 import os
 import json
@@ -149,28 +150,26 @@ class Fun(commands.Cog):
         await og.edit(content="someone didn't agree... askip not added")
         return False
 
-    @commands.slash_command(
-        description = "fills my collection of private jokes",
-        option=[
-            discord.Option(
-                input_type=str,
-                name="username",
-                description="Name of the user who get this askip",
-                required=True),
-            discord.Option(
-                input_type=str,
-                name="askip_name",
-                description="Name of the new askip",
-                required=True
-            ),
-            discord.Option(
-                input_type=str,
-                name="askip_text",
-                description="Content of the askip",
-                required=True
-            )]
-    )
+    @commands.slash_command(description = "fills my collection of private jokes")
     @commands.has_permissions(moderate_members=True)
+    @option(
+        input_type=str,
+        name="username",
+        description="Name of the user who get this askip",
+        required=True
+    )
+    @option(
+        input_type=str,
+        name="askip_name",
+        description="Name of the new askip",
+        required=True
+    )
+    @option(
+        input_type=str,
+        name="askip_text",
+        description="Content of the askip",
+        required=True
+    )
     async def add_askip(self, ctx : ApplicationContext, username : str, askip_name : str, askip_text : str):
         """
             saves askip joke in askip.json
@@ -198,19 +197,17 @@ class Fun(commands.Cog):
 
         ############# update the json file
         with open("askip.json", "w") as askipfile:
-            askipfile.write(json.dumps(credentials, indent=4))        # write new askip file
+            askipfile.write(json.dumps(credentials, indent=4))  # write new askip file
 
 
-    @commands.slash_command(
-        description="Get the avatar of someone",
-        options=[discord.Option(
-            input_type=discord.Member,
-            name="user",
-            description="Mention of the user you want to get the avatar",
-            default=None
-        )]
+    @commands.slash_command(description="Get the avatar of someone")
+    @option(
+        input_type=discord.User,
+        name="user",
+        description="Mention of the user you want to get the avatar from",
+        default=None
     )
-    async def avatar(self, ctx : ApplicationContext, user : discord.Member):
+    async def avatar(self, ctx : ApplicationContext, user : discord.User):
         if user is None:
             user = ctx.author
 
