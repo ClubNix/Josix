@@ -48,12 +48,14 @@ class Games(commands.Cog):
             self.db.updatePlayerStat(foe.id, newElo)
         return text
 
-    @commands.command(description="Add the results of your dart game in the database", aliases=["DART"])
+    #@commands.command(description="Add the results of your dart game in the database", aliases=["DART"])
     async def dart(self, ctx : commands.Context, winner : discord.User, *foes : discord.User):
         """
         Command to update scores after a dart match
         Take as first parameter the winner (@...#xxxx)
-        Take as second parameter, as many users as you, all considered as loosers
+        Take as second parameter, as many users as you want, all considered as loosers
+
+        The command is currently disabled
         """
 
         def checkReact(reaction : discord.Reaction, user : discord.User):

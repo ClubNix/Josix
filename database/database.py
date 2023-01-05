@@ -26,16 +26,21 @@ class DatabaseHandler():
     ############### Getters
     ###############
 
-    def getUsers(self, limit : int = 10) -> list:
-        query = "SELECT * FROM josix.User LIMIT %s;"
-        params = (limit,)
-        self.cursor.execute(query, params)
-        return self.cursor.fetchall()
+    def getGuild(self, guildId : int) -> tuple:
+        query = f"SELECT * FROM josix.Guild WHERE idGuild = {guildId};"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
 
     def getUser(self, userId : int) -> tuple:
         query = f"SELECT * FROM josix.User WHERE idUser = {userId};"
         self.cursor.execute(query)
         return self.cursor.fetchone()
+
+    def getUsers(self, limit : int = 10) -> list:
+        query = "SELECT * FROM josix.User LIMIT %s;"
+        params = (limit,)
+        self.cursor.execute(query, params)
+        return self.cursor.fetchall()
 
     def getPlayerStat(self, userId : int) -> tuple:
         query = f"SELECT elo, nbGames FROM josix.User WHERE idUser = {userId};"
@@ -68,6 +73,11 @@ class DatabaseHandler():
     ###############
     ############### Adders
     ###############
+
+    def addGuild(self, guildId : int, chanStat : int, nbMembers : int = 0, status : int = 0):
+        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanStat) VALUES({guildId},{nbMembers},'{status}',{chanStat})"
+        self.cursor.execute(query)
+        self.conn.commit()
 
     def addMsg(self, guildId : int, msgId : int) -> None:
         query = f"INSERT INTO josix.MsgReact VALUES({msgId},{guildId});"
