@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import ApplicationContext
+from discord import option
 
 import asyncio
 
@@ -101,17 +102,15 @@ class Admin(commands.Cog):
         await config.delete()
         return (reaction, role.id)
 
-    @commands.slash_command(
-        description="Set the message you replied to as a reaction role message",
-        options=[discord.Option(
-            input_type=int,
-            name="message_id",
-            description="ID of the message to which you want to add a reaction-role",
-            required=True
-        )]
+    @commands.slash_command(description="Set the message you replied to as a reaction role message")
+    @option(
+        input_type=int,
+        name="message_id",
+        description="ID of the message to which you want to add a reaction-role",
+        required=True
     )
-    async def create_react_role(self, ctx : ApplicationContext, msgId : int):
-        msg = await ctx.channel.fetch_message(msgId)
+    async def create_react_role(self, ctx : ApplicationContext, msg_id : int):
+        msg = await ctx.channel.fetch_message(msg_id)
         if msg is None:
             await ctx.respond("Wrong ID given for the message or not in this channel")
             return
@@ -120,31 +119,29 @@ class Admin(commands.Cog):
         if testGuild is None or len(testGuild) == 0:
             self.db.addGuild(ctx.guild_id, ctx.channel_id)
 
-        testMsg = self.db.getMsg(msgId)
+        testMsg = self.db.getMsg(msg_id)
         if testMsg is None or len(testMsg) == 0:
-            self.db.addMsg(ctx.guild_id, msgId)
+            self.db.addMsg(ctx.guild_id, msg_id)
 
-        duos = self.db.getCouples(msgId)
+        duos = self.db.getCouples(msg_id)
         couple = await self.createCouple(ctx, duos)
         if couple is None:
             return
 
-        self.db.addCouple(couple, msgId)
+        self.db.addCouple(couple, msg_id)
         await msg.add_reaction(couple[0])
         await ctx.respond("Done !")
 
-    @commands.slash_command(
-        description="Clear messages from the channel",
-        options=[discord.Option(
-            input_type=int,
-            name="limit",
-            description="Limit of messages to delete (default 10)",
-            default=10
-        )]
-    )
+    @commands.slash_command(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
+    @option(
+        input_type=int,
+        name="limit",
+        description="Limit of messages to delete (default 10)",
+        default=10
+    )
     async def clear(self, ctx: ApplicationContext, limit : int):
-        await ctx.channel.purge(limit=int(limit))
+        await ctx.channel.purge(limit=limit)
         await ctx.respond("Done !")
 
 
