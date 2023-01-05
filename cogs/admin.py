@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
+from discord import ApplicationContext
 
 import asyncio
-import os
-import sys
 
 from database.database import DatabaseHandler
 
@@ -12,28 +11,12 @@ class Admin(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler()
 
-    @commands.command(hidden = True)
-    @commands.is_owner() # Check if the author if the owner of the bot
-    async def stop(self, ctx : commands.Context):
-        await ctx.send("Stop !")
-        await self.bot.close()
+    async def createCouple(self, ctx : ApplicationContext, duos : list) -> tuple:
+        chan = ctx.channel
 
-    @commands.command(hidden = True)
-    @commands.is_owner()
-    async def restart(self, ctx : commands.Context):
-        await ctx.send("Restart !")
-        await self.bot.close()
-        print("*******************\n" + 
-              "----- Restart -----\n" + 
-              "*******************\n"
-        )
-        os.execv(sys.executable, ['python3'] + sys.argv)
-        
-
-    async def createCouple(self, ctx : commands.Context, duos : list) -> tuple:
         msg = "For the first part, react to this message with the emoji you want to add in the reaction role !\nError : "
         error = "None"
-        config = await ctx.send("Go !")
+        config = await chan.send("Go !")
 
         def checkReact(reaction : discord.Reaction, user : discord.User):
             return ctx.author.id == user.id and config.id == reaction.message.id
@@ -46,7 +29,7 @@ class Admin(commands.Cog):
         while not test:
             if count >= 3: # The user can fails 3 times before the end of the command
                 await config.delete()
-                await ctx.send("Too many fails, retry please")
+                await chan.send("Too many fails, retry please")
                 return None
 
             test = True
@@ -118,16 +101,28 @@ class Admin(commands.Cog):
         await config.delete()
         return (reaction, role.id)
 
-    @commands.command(description="Set the message you replied to as a reaction role message")
-    async def createReactRole(self, ctx : commands.Context, msgId : int):
-        msg = await ctx.fetch_message(msgId)
+    @commands.slash_command(
+        description="Set the message you replied to as a reaction role message",
+        options=[discord.Option(
+            input_type=int,
+            name="message_id",
+            description="ID of the message to which you want to add a reaction-role",
+            required=True
+        )]
+    )
+    async def create_react_role(self, ctx : ApplicationContext, msgId : int):
+        msg = await ctx.channel.fetch_message(msgId)
         if msg is None:
-            await ctx.message.reply("Wrong ID given for the message")
+            await ctx.respond("Wrong ID given for the message or not in this channel")
             return
 
-        res = self.db.getMsg(msgId)
-        if res is None or len(res) == 0:
-            self.db.addMsg(ctx.guild.id, msgId)
+        testGuild = self.db.getGuild(ctx.guild_id)
+        if testGuild is None or len(testGuild) == 0:
+            self.db.addGuild(ctx.guild_id, ctx.channel_id)
+
+        testMsg = self.db.getMsg(msgId)
+        if testMsg is None or len(testMsg) == 0:
+            self.db.addMsg(ctx.guild_id, msgId)
 
         duos = self.db.getCouples(msgId)
         couple = await self.createCouple(ctx, duos)
@@ -135,8 +130,22 @@ class Admin(commands.Cog):
             return
 
         self.db.addCouple(couple, msgId)
-        await ctx.message.delete()
         await msg.add_reaction(couple[0])
+        await ctx.respond("Done !")
+
+    @commands.slash_command(
+        description="Clear messages from the channel",
+        options=[discord.Option(
+            input_type=int,
+            name="limit",
+            description="Limit of messages to delete (default 10)",
+            default=10
+        )]
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def clear(self, ctx: ApplicationContext, limit : int):
+        await ctx.channel.purge(limit=int(limit))
+        await ctx.respond("Done !")
 
 
 def setup(bot : commands.Bot):

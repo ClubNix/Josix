@@ -2,22 +2,24 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext
 
-from typing import Optional
-from . import FILES
-
 import random
+
+from . import FILES
 
 
 class Usage(commands.Cog):
     def __init__(self, bot : commands.Bot):
         self.bot = bot
 
-    @commands.slash_command (description="Get the help", options=[discord.Option(input_type=str,
-                                                                                 name="command_name",
-                                                                                 description="Name of the command",
-                                                                                 default=None,
-                                                                                 required=False)])
-    async def help(self, ctx : ApplicationContext, command_name : Optional[str] = None):
+    @commands.slash_command(
+        description="Get the help menu",
+        options=[discord.Option(input_type=str,
+            name="command_name",
+            description="Name of the command",
+            default=None,
+        )]
+    )
+    async def help(self, ctx : ApplicationContext, command_name : str):
         av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
 
@@ -81,10 +83,14 @@ class Usage(commands.Cog):
             embed2.add_field(name = "Options : ", value = options, inline = False)
             await ctx.respond(embed = embed2)
 
-    @commands.slash_command(description="Randomly choose a sentence from a list", options=[discord.Option(input_type=str,
-                                                                                                          name="sentences",
-                                                                                                          description="List of sentences separated by a `;`",
-                                                                                                          required=True)])
+    @commands.slash_command(
+        description="Randomly choose a sentence from a list",
+        options=[discord.Option(input_type=str,
+            name="sentences",
+            description="List of sentences separated by a `;`",
+            required=True
+        )]
+    )
     async def choose(self, ctx : ApplicationContext, sentences : str):
         values = sentences.split(";")
         embed = discord.Embed(title="Result", description=random.choice(values))
