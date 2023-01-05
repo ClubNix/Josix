@@ -5,11 +5,11 @@ from asyncio import TimeoutError
 from database.database import DatabaseHandler
 
 class Games(commands.Cog):
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler()
 
-    def updateElo(self, oldElo : int, foeElo : int, win : bool):
+    def updateElo(self, oldElo: int, foeElo: int, win: bool):
         """
         Elo calculations from Pokemon Showdown 
         - https://github.com/smogon/pokemon-showdown/blob/master/server/ladders-remote.ts
@@ -40,7 +40,7 @@ class Games(commands.Cog):
         newElo = int(oldElo + modifier)
         return max(newElo, 1000)
 
-    def updateFoes(self, foes : tuple[discord.User], eloList : list, winnerElo : int) -> str:
+    def updateFoes(self, foes: tuple[discord.User], eloList: list, winnerElo: int) -> str:
         text = ""
         for i, foe in enumerate(foes):
             newElo = self.updateElo(eloList[i], winnerElo, False)
@@ -49,7 +49,7 @@ class Games(commands.Cog):
         return text
 
     #@commands.command(description="Add the results of your dart game in the database", aliases=["DART"])
-    async def dart(self, ctx : commands.Context, winner : discord.User, *foes : discord.User):
+    async def dart(self, ctx: commands.Context, winner: discord.User, *foes: discord.User):
         """
         Command to update scores after a dart match
         Take as first parameter the winner (@...#xxxx)
@@ -112,5 +112,5 @@ class Games(commands.Cog):
         await ctx.send(embed=embed)
         
 
-def setup(bot : commands.Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(Games(bot))

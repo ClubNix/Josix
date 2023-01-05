@@ -20,11 +20,11 @@ SCRIPT_DIR = os.path.dirname(__file__)
 FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
 
 class Fun(commands.Cog):
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.slash_command(description="The bot greets you")
-    async def hello(self, ctx : ApplicationContext):
+    async def hello(self, ctx: ApplicationContext):
         await ctx.respond("Hello !")
 
     @commands.slash_command(
@@ -36,7 +36,7 @@ class Fun(commands.Cog):
             required=True
         )]
     )
-    async def say(self,ctx : ApplicationContext, text : str):
+    async def say(self, ctx: ApplicationContext, text: str):
         await ctx.delete()
         await ctx.respond("".join(text))
 
@@ -49,7 +49,7 @@ class Fun(commands.Cog):
             default=None
         )]
     )
-    async def joke(self, ctx : ApplicationContext, jokeType : str):
+    async def joke(self, ctx: ApplicationContext, jokeType: str):
         types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
 
         disallowCat = []
@@ -83,7 +83,7 @@ class Fun(commands.Cog):
         await ctx.respond(blg.joke + "\n" + blg.answer)
 
     @commands.slash_command(description="See all the people that got one or more askip")
-    async def list_askip(self, ctx : ApplicationContext):
+    async def list_askip(self, ctx: ApplicationContext):
         with open(FILE_PATH, 'r') as askip:
             names = json.load(askip).keys()
         await ctx.respond("Available names : `" + "`, `".join(names) + "`")
@@ -97,7 +97,7 @@ class Fun(commands.Cog):
             required=False
         )]
     )
-    async def askip(self, ctx : ApplicationContext, user : str = None):
+    async def askip(self, ctx: ApplicationContext, user: str = None):
         with open(FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
 
@@ -113,7 +113,7 @@ class Fun(commands.Cog):
             await ctx.respond("Unknown member")
             await ctx.respond("Available names : `" + "`, `".join(credentials.keys()) + "`")
     
-    async def vote_askip(self,ctx : ApplicationContext, message : discord.Message):
+    async def vote_askip(self, ctx: ApplicationContext):
         """
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters
@@ -170,7 +170,7 @@ class Fun(commands.Cog):
         description="Content of the askip",
         required=True
     )
-    async def add_askip(self, ctx : ApplicationContext, username : str, askip_name : str, askip_text : str):
+    async def add_askip(self, ctx: ApplicationContext, username: str, askip_name: str, askip_text: str):
         """
             saves askip joke in askip.json
             ...but proceeds to nicely ask to us before
@@ -180,7 +180,7 @@ class Fun(commands.Cog):
         askip_name = askip_name.lower()
         joke_string = "".join(askip_text)
 
-        should_add = await self.vote_askip(ctx, ctx.message) # nicely asks everyone before.
+        should_add = await self.vote_askip(ctx) # nicely asks everyone before.
         if not should_add:
             return
 
@@ -207,7 +207,7 @@ class Fun(commands.Cog):
         description="Mention of the user you want to get the avatar from",
         default=None
     )
-    async def avatar(self, ctx : ApplicationContext, user : discord.User):
+    async def avatar(self, ctx: ApplicationContext, user: discord.User):
         if user is None:
             user = ctx.author
 
@@ -217,5 +217,5 @@ class Fun(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot : commands.Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(Fun(bot))

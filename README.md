@@ -36,8 +36,19 @@ Josix is a discord bot written with Pycord in Python. Mostly for fun its goal is
 ```
 discord = your_discord_bot_token_here
 jokes = Blagues_API_token_here
+db_name = your_database_name
+db_user = user_for_bot_in_database
+db_pwd = password_for_your_bot
+host = address_of_the_database
+home = your_home_directory
+logs = log_repository_in_your_home
+log_file = log_file
+error_file = error_file
 ```
-> note : the "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only).
+
+> the "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only).
+> the home, logs, log/error_file fields are here to get logs and get nothing in your terminal
+
 - Run the bot :
 `python3 josix.py`
 
@@ -59,16 +70,15 @@ jokes = Blagues_API_token_here
 }
 ```
 
+## Warning
+You can get an error on installing psycopg2, enter the following commands :
+- pip3 install psycopg2-binary
+- sudo apt install libpq-dev python3-dev
+
+And then you can retry to install psycopg2
+
 ## Documentation
 ...
 
 ## License
 Josix is under the [Apache 2-0 license](https://github.com/ClubNix/Josix/blob/master/LICENSE)
-
-
-## Attention
-
-Il faut aussi installer d'autres trucs : 
-- pip3 install psycopg2-binary
-- sudo apt install libpq-dev python3-dev
-- pip3 install psycopg2

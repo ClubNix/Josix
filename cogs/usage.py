@@ -8,7 +8,7 @@ from . import FILES
 
 
 class Usage(commands.Cog):
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.slash_command(
@@ -19,7 +19,7 @@ class Usage(commands.Cog):
             default=None,
         )]
     )
-    async def help(self, ctx : ApplicationContext, command_name : str):
+    async def help(self, ctx: ApplicationContext, command_name: str):
         av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
 
@@ -45,7 +45,7 @@ class Usage(commands.Cog):
 
         else:
             command_name = command_name.lower()
-            command : discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
+            command: discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
 
             if not command:
                 await ctx.respond(f":x: Unknown command, see /help :x:")
@@ -91,11 +91,11 @@ class Usage(commands.Cog):
             required=True
         )]
     )
-    async def choose(self, ctx : ApplicationContext, sentences : str):
+    async def choose(self, ctx: ApplicationContext, sentences: str):
         values = sentences.split(";")
         embed = discord.Embed(title="Result", description=random.choice(values))
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.respond(embed=embed)
 
-def setup(bot : commands.Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(Usage(bot))

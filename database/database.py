@@ -26,40 +26,40 @@ class DatabaseHandler():
     ############### Getters
     ###############
 
-    def getGuild(self, guildId : int) -> tuple:
+    def getGuild(self, guildId: int) -> tuple:
         query = f"SELECT * FROM josix.Guild WHERE idGuild = {guildId};"
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getUser(self, userId : int) -> tuple:
+    def getUser(self, userId: int) -> tuple:
         query = f"SELECT * FROM josix.User WHERE idUser = {userId};"
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getUsers(self, limit : int = 10) -> list:
+    def getUsers(self, limit: int = 10) -> list:
         query = "SELECT * FROM josix.User LIMIT %s;"
         params = (limit,)
         self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
-    def getPlayerStat(self, userId : int) -> tuple:
+    def getPlayerStat(self, userId: int) -> tuple:
         query = f"SELECT elo, nbGames FROM josix.User WHERE idUser = {userId};"
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getMsg(self, msgId : int) -> tuple:
+    def getMsg(self, msgId: int) -> tuple:
         query = f"SELECT * FROM josix.Msgreact WHERE idMsg = {msgId};"
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getRoleFromReact(self, msgId : int, emojiName : str) -> tuple:
+    def getRoleFromReact(self, msgId: int, emojiName: str) -> tuple:
         query = f"""SELECT idRole FROM josix.ReactCouple rc
                     INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
                     WHERE mc.idMsg = {msgId} AND rc.nomEmoji = '{emojiName}';"""
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getCouples(self, msgId : int = None) -> list:
+    def getCouples(self, msgId: int = None) -> list:
         if not msgId:
             query = f"""SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
                         INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
@@ -74,17 +74,17 @@ class DatabaseHandler():
     ############### Adders
     ###############
 
-    def addGuild(self, guildId : int, chanStat : int, nbMembers : int = 0, status : int = 0):
+    def addGuild(self, guildId: int, chanStat: int, nbMembers: int = 0, status: int = 0):
         query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanStat) VALUES({guildId},{nbMembers},'{status}',{chanStat})"
         self.cursor.execute(query)
         self.conn.commit()
 
-    def addMsg(self, guildId : int, msgId : int) -> None:
+    def addMsg(self, guildId: int, msgId: int) -> None:
         query = f"INSERT INTO josix.MsgReact VALUES({msgId},{guildId});"
         self.cursor.execute(query)
         self.conn.commit()
 
-    def addCouple(self, couple : tuple, msgId : int) -> None:
+    def addCouple(self, couple: tuple, msgId: int) -> None:
         if len(couple) != 2:
             return
             
@@ -96,12 +96,12 @@ class DatabaseHandler():
         self.cursor.execute(query2)
         self.conn.commit()
 
-    def addUser(self, userId) -> None:
+    def addUser(self, userId: int) -> None:
         query = f"INSERT INTO josix.User (idUser, elo, nbGames) VALUES ({userId}, 1000, 0);"
         self.cursor.execute(query)
         self.conn.commit()
 
-    def addDartLog(self, guildId : int, winner : discord.User, foes : tuple[discord.User]):
+    def addDartLog(self, guildId: int, winner: discord.User, foes: tuple[discord.User]):
         text = ""
         for foe in foes:
             text += foe.name + "', '"
@@ -115,7 +115,7 @@ class DatabaseHandler():
     ############### Modifiers
     ###############
 
-    def updatePlayerStat(self, userId : int, newElo : int) -> None:
+    def updatePlayerStat(self, userId: int, newElo: int) -> None:
         query = f"""UPDATE josix.User
                     SET elo = {newElo}, nbGames = nbGames + 1
                     WHERE idUser = {userId};"""

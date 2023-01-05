@@ -8,21 +8,21 @@ import asyncio
 from database.database import DatabaseHandler
 
 class Admin(commands.Cog):
-    def __init__(self, bot : commands.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler()
 
-    async def createCouple(self, ctx : ApplicationContext, duos : list) -> tuple:
+    async def createCouple(self, ctx: ApplicationContext, duos: list) -> tuple:
         chan = ctx.channel
 
         msg = "For the first part, react to this message with the emoji you want to add in the reaction role !\nError : "
         error = "None"
         config = await chan.send("Go !")
 
-        def checkReact(reaction : discord.Reaction, user : discord.User):
+        def checkReact(reaction: discord.Reaction, user: discord.User):
             return ctx.author.id == user.id and config.id == reaction.message.id
 
-        def checkRole(message : discord.Message):
+        def checkRole(message: discord.Message):
             return message.author.id == ctx.author.id and config.channel.id == message.channel.id
 
         test = False
@@ -60,7 +60,7 @@ class Admin(commands.Cog):
 
             except asyncio.TimeoutError as _:
                 test = False
-                error = "You've been too long too answer, retry"
+                error = "You've been too long to answer, retry"
                 count += 1
                 continue
 
@@ -102,14 +102,20 @@ class Admin(commands.Cog):
         await config.delete()
         return (reaction, role.id)
 
-    @commands.slash_command(description="Set the message you replied to as a reaction role message")
+    @commands.slash_command(description="Set the message as a reaction role message")
     @option(
-        input_type=int,
+        input_type=str,
         name="message_id",
         description="ID of the message to which you want to add a reaction-role",
         required=True
     )
-    async def create_react_role(self, ctx : ApplicationContext, msg_id : int):
+    async def create_react_role(self, ctx: ApplicationContext, id: str):
+        try:
+            msg_id = int(id)
+        except ValueError as _:
+            ctx.respond("Wrong value")
+            return
+
         msg = await ctx.channel.fetch_message(msg_id)
         if msg is None:
             await ctx.respond("Wrong ID given for the message or not in this channel")
@@ -123,6 +129,8 @@ class Admin(commands.Cog):
         if testMsg is None or len(testMsg) == 0:
             self.db.addMsg(ctx.guild_id, msg_id)
 
+        res = await ctx.respond("Launching reaction role creation...")
+
         duos = self.db.getCouples(msg_id)
         couple = await self.createCouple(ctx, duos)
         if couple is None:
@@ -130,20 +138,22 @@ class Admin(commands.Cog):
 
         self.db.addCouple(couple, msg_id)
         await msg.add_reaction(couple[0])
-        await ctx.respond("Done !")
+        await res.edit_original_response(content="Done !")
 
     @commands.slash_command(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
     @option(
         input_type=int,
         name="limit",
-        description="Limit of messages to delete (default 10)",
+        description="Limit of messages to delete (default 10, can't be more than 50)",
         default=10
     )
-    async def clear(self, ctx: ApplicationContext, limit : int):
+    async def clear(self, ctx: ApplicationContext, limit: int):
+        if limit < 0 or 50 < limit:
+            limit = 10 
         await ctx.channel.purge(limit=limit)
         await ctx.respond("Done !")
 
 
-def setup(bot : commands.Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
