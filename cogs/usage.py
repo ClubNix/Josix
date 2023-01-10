@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import ApplicationContext
+from discord import option
 
 import random
 
@@ -96,6 +97,27 @@ class Usage(commands.Cog):
         embed = discord.Embed(title="Result", description=random.choice(values))
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.respond(embed=embed)
+
+    @commands.slash_command(description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
+    @option(
+        name="lock",
+        description="Lock the thread (moderator only)",
+        type=bool,
+        default=False
+    )
+    async def close(self, ctx: ApplicationContext, lock: bool):
+        thread = ctx.channel
+        if not (isinstance(thread, discord.Thread) and isinstance(thread.parent, discord.ForumChannel)):
+            await ctx.respond("You can only close a thread created in the forum")
+            return
+    
+        testMod = ctx.author.guild_permissions >= discord.Permissions(17179869184)
+        if (ctx.author != thread.owner and not testMod) or (lock and not testMod): 
+            await ctx.respond("You don't have the required permissions to do this")
+
+        await ctx.respond(f"Closing the thread.\nLocking : {lock}")
+        await thread.archive(locked=lock)
+        
 
 def setup(bot: commands.Bot):
     bot.add_cog(Usage(bot))

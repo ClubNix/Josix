@@ -41,12 +41,10 @@ class Events(commands.Cog):
                 await member.remove_roles(role)
             else:
                 await member.add_roles(role)
-                
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.writeLog("Using py-cord version " + discord.__version__)
-        log.writeLog(" ----- J'aime les Stats ----- ")
+##### ================================================== #####
+##### ================================================== #####
+##### ================================================== #####
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
@@ -55,6 +53,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
         await self.updateRole(payload)
+
+    @commands.Cog.listener()
+    async def on_thread_create(self, thread: discord.Thread):
+        if not isinstance(thread.parent, discord.ForumChannel):
+            return
+        await thread.send("This thread is now open. You can close it automatically by using `/close`")
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Union[ApplicationCommandError, ApplicationCommandInvokeError]):
