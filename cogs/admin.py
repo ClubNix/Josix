@@ -2,28 +2,14 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext
 from discord import option
-from discord import NotFound, InvalidArgument
+from discord import NotFound, InvalidArgument, HTTPException
 
 import asyncio
 import re
+import logwrite as log
 
 from database.database import DatabaseHandler
 
-EMOJI_PATTERN = re.compile(
-    "(["
-    "\U0001F1E0-\U0001F1FF"  # flags (iOS)
-    "\U0001F300-\U0001F5FF"  # symbols & pictographs
-    "\U0001F600-\U0001F64F"  # emoticons
-    "\U0001F680-\U0001F6FF"  # transport & map symbols
-    "\U0001F700-\U0001F77F"  # alchemical symbols
-    "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
-    "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
-    "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
-    "\U0001FA00-\U0001FA6F"  # Chess Symbols
-    "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
-    "\U00002702-\U000027B0"  # Dingbats
-    "])"
-)
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -120,6 +106,7 @@ class Admin(commands.Cog):
         await config.delete()
         return (reaction, role.id)
 
+
     @commands.slash_command(description="Set the message as a reaction role message")
     @option(
         input_type=str,
@@ -193,21 +180,19 @@ class Admin(commands.Cog):
         required=True
     )
     async def add_couple(self, ctx: ApplicationContext, msg_p: str, emoji: str, role: discord.Role):
-        values = EMOJI_PATTERN.search(emoji)
         roleId = role.id
         msgId = 0
         new = False
-        emjName = ""
+        testEmj = None
         testMsg = None
         testGuild = None
         duos = None
         msg: discord.Message = None
 
-        if not values:
-            ctx.respond("Wrong emoji given")
+        testEmj = re.compile("[<>:]")
+        if testEmj.match(emoji):
+            await ctx.respond("You can't use a custom emoji")
             return
-        else:
-            emjName = values.group(0)
 
         try:
             msgId = int(msg_p)
@@ -220,33 +205,42 @@ class Admin(commands.Cog):
             await ctx.respond("Unknown message")
             return
 
-        testGuild = self.db.getGuild(ctx.guild_id)
-        if testGuild is None or len(testGuild) == 0:
-            self.db.addGuild(ctx.guild_id, ctx.channel_id)
+        try:
+            await msg.add_reaction(emoji)
+        except (NotFound, InvalidArgument, HTTPException):
+            await ctx.respond("Unknown error with the emoji")
+            return
 
-        testMsg = self.db.getMsg(msgId)
-        if testMsg is None or len(testMsg) == 0:
-            self.db.addMsg(ctx.guild_id, msgId)
-            new = True
+        try:
+            testGuild = self.db.getGuild(ctx.guild_id)
+            if testGuild is None or len(testGuild) == 0:
+                self.db.addGuild(ctx.guild_id, ctx.channel_id)
+
+            testMsg = self.db.getMsg(msgId)
+            if testMsg is None or len(testMsg) == 0:
+                self.db.addMsg(ctx.guild_id, msgId)
+                new = True
+        except Exception as e:
+            await msg.clear_reaction(emoji)
+            log.writeError(str(e))
 
         duos = self.db.getCouples(msgId)
         for duo in duos:
-            if emjName == duo[0] or roleId == duo[1]:
-                await ctx.respond("The emoji or the role is already used in the message")
-
+            if emoji == duo[0]:
+                await ctx.respond("The emoji is already used in the message")
                 if new:
                     self.db.delMsg(msgId)
                 return
 
-        try:
-            await msg.add_reaction(emjName)
-        except (NotFound, InvalidArgument):
-            await ctx.respond("Unknown error with the emoji")
-            if new:
-                await self.db.delMsg(msgId)
-            return
+            elif roleId == duo[1]:
+                await ctx.respond("The role is already used in the message")
+                await msg.clear_reaction(emoji)
+                if new:
+                    self.db.delMsg(msgId)
+                return
 
-        self.db.addCouple((emjName, roleId), msgId)
+
+        self.db.addCouple((emoji, roleId), msgId)
         await ctx.respond("Done !")
 
 
