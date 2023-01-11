@@ -12,7 +12,7 @@ class Events(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler()
 
-    async def updateRole(self, payload: RawReactionActionEvent):
+    async def updateRole(self, payload: RawReactionActionEvent, add: bool):
         emoji = payload.emoji
         if emoji.is_custom_emoji():
             return
@@ -37,10 +37,13 @@ class Events(commands.Cog):
             roleId = resRoles[0]
             role = guild.get_role(roleId)
 
-            if member.get_role(roleId):
-                await member.remove_roles(role)
+            if add:
+                if not member.get_role(roleId):
+                    await member.add_roles(role)
             else:
-                await member.add_roles(role)
+                if member.get_role(roleId):
+                    await member.remove_roles(role)
+
 
 ##### ================================================== #####
 ##### ================================================== #####
@@ -48,11 +51,11 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
-        await self.updateRole(payload)
+        await self.updateRole(payload, True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
-        await self.updateRole(payload)
+        await self.updateRole(payload, False)
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):

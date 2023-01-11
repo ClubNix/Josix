@@ -2,10 +2,28 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext
 from discord import option
+from discord import NotFound, InvalidArgument
 
 import asyncio
+import re
 
 from database.database import DatabaseHandler
+
+EMOJI_PATTERN = re.compile(
+    "(["
+    "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+    "\U0001F300-\U0001F5FF"  # symbols & pictographs
+    "\U0001F600-\U0001F64F"  # emoticons
+    "\U0001F680-\U0001F6FF"  # transport & map symbols
+    "\U0001F700-\U0001F77F"  # alchemical symbols
+    "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+    "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+    "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+    "\U0001FA00-\U0001FA6F"  # Chess Symbols
+    "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+    "\U00002702-\U000027B0"  # Dingbats
+    "])"
+)
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -152,6 +170,83 @@ class Admin(commands.Cog):
         if limit < 0 or 50 < limit:
             limit = 10 
         await ctx.channel.purge(limit=limit)
+        await ctx.respond("Done !")
+
+    @commands.slash_command(description="Add a couple of reaction-role to the message")
+    @commands.has_permissions(manage_messages=True)
+    @option(
+        input_type=str,
+        name="msg_id",
+        description="ID of the message you want to add the couple",
+        required=True
+    )
+    @option(
+        input_type=str,
+        name="emoji",
+        description="Emoji of the couple (no custom)",
+        required=True
+    )
+    @option(
+        input_type=discord.Role,
+        name="role",
+        description="Mention of the role of the couple",
+        required=True
+    )
+    async def add_couple(self, ctx: ApplicationContext, msg_p: str, emoji: str, role: discord.Role):
+        values = EMOJI_PATTERN.search(emoji)
+        roleId = role.id
+        msgId = 0
+        new = False
+        emjName = ""
+        testMsg = None
+        testGuild = None
+        duos = None
+        msg: discord.Message = None
+
+        if not values:
+            ctx.respond("Wrong emoji given")
+            return
+        else:
+            emjName = values.group(0)
+
+        try:
+            msgId = int(msg_p)
+        except ValueError:
+            await ctx.respond("Incorrect value given for the message_id parameter")
+            return
+
+        msg = await ctx.channel.fetch_message(msgId)
+        if not msg:
+            await ctx.respond("Unknown message")
+            return
+
+        testGuild = self.db.getGuild(ctx.guild_id)
+        if testGuild is None or len(testGuild) == 0:
+            self.db.addGuild(ctx.guild_id, ctx.channel_id)
+
+        testMsg = self.db.getMsg(msgId)
+        if testMsg is None or len(testMsg) == 0:
+            self.db.addMsg(ctx.guild_id, msgId)
+            new = True
+
+        duos = self.db.getCouples(msgId)
+        for duo in duos:
+            if emjName == duo[0] or roleId == duo[1]:
+                await ctx.respond("The emoji or the role is already used in the message")
+
+                if new:
+                    self.db.delMsg(msgId)
+                return
+
+        try:
+            await msg.add_reaction(emjName)
+        except (NotFound, InvalidArgument):
+            await ctx.respond("Unknown error with the emoji")
+            if new:
+                await self.db.delMsg(msgId)
+            return
+
+        self.db.addCouple((emjName, roleId), msgId)
         await ctx.respond("Done !")
 
 

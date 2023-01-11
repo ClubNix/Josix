@@ -121,3 +121,12 @@ class DatabaseHandler():
                     WHERE idUser = {userId};"""
         self.cursor.execute(query)
         self.conn.commit()
+
+    ###############
+    ############### Deleters
+    ###############
+
+    def delMsg(self, msgId: int) -> None:
+        query = f"DELETE FROM MsgReact WHERE idMsg = {msgId};"
+        self.cursor.execute(query)
+        self.conn.commit()
