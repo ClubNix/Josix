@@ -70,6 +70,17 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
+    def getUserInGuild(self, userId: int, guildId: int) -> tuple:
+        query = f"""SELECT idUser AS "user", idGuild AS "guild" FROM josix.UserGuild
+                    WHERE idUser = {userId} AND idGuild  = {guildId};"""
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def checkBD(self) -> list:
+        query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild" FROM josix.User u
+                    INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                    WHERE idmsgId"""
+
     ###############
     ############### Adders
     ###############
@@ -98,6 +109,11 @@ class DatabaseHandler():
 
     def addUser(self, userId: int) -> None:
         query = f"INSERT INTO josix.User (idUser, elo, nbGames) VALUES ({userId}, 1000, 0);"
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def addUserGuild(self, userId: int, guildId: int) -> None:
+        query = f"""INSERT INTO josix.UserGuild(idUser, idGuild) VALUES ({userId},{guildId});"""
         self.cursor.execute(query)
         self.conn.commit()
 
@@ -130,3 +146,14 @@ class DatabaseHandler():
         query = f"DELETE FROM MsgReact WHERE idMsg = {msgId};"
         self.cursor.execute(query)
         self.conn.commit()
+        
+    def changeNewsChan(self, guildId: int, chanId: int) -> None:
+        query = f"""UPDATE josix.Guild
+                    SET chanNews = {chanId}
+                    WHERE idGuild = {guildId};"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def updateUserBD(self, userId: int, day: int, month: int) -> None:
+        query = f"""UPDATE josix.User
+                    SET hbDate = """

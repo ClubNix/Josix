@@ -82,36 +82,72 @@ class Fun(commands.Cog):
 
         await ctx.respond(blg.joke + "\n" + blg.answer)
 
-    @commands.slash_command(description="See all the people that got one or more askip")
-    async def list_askip(self, ctx: ApplicationContext):
-        with open(FILE_PATH, 'r') as askip:
-            names = json.load(askip).keys()
-        await ctx.respond("Available names : `" + "`, `".join(names) + "`")
-
     @commands.slash_command(
-        description = "All your private jokes",
+        description="See all the people that got one or more askip",
         options=[discord.Option(
             input_type=str,
             name="username",
-            description="Name of the user you want a askip from",
-            required=False
+            description="List all the askip of a specific user",
+            default=None
         )]
     )
-    async def askip(self, ctx: ApplicationContext, user: str = None):
+    async def list_askip(self, ctx: ApplicationContext, user: str):
+        data = None
+
+        if user:
+            user = user.lower()
+            with open(FILE_PATH, 'r') as askip:
+                lst = json.load(askip)
+                try:
+                    data = lst[user].keys()
+                except KeyError:
+                    cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
+                    await ctx.invoke(cmd, user=None)
+                    return
+
+        else:
+            with open(FILE_PATH, 'r') as askip:
+                data = json.load(askip).keys()
+        await ctx.respond("Available names : `" + "`, `".join(data) + "`")
+
+    @commands.slash_command(
+        description = "Get a private joke from your group",
+        options=[
+            discord.Option(
+                input_type=str,
+                name="username",
+                description="Name of the user you want an askip from (take a random user if no user is given)",
+                default=None
+            ),
+            discord.Option(
+                input_type=str,
+                name="askip_name",
+                description="Name of an askip you searching (take a random askip if no name is given)",
+                default=None
+            )
+        ]
+    )
+    async def askip(self, ctx: ApplicationContext, user: str, askip_name: str):
         with open(FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
 
-        if user is None:
+        if not user:
+            if not askip_name:
+                 ctx.respond("To choose a specific askip you need to specify the user")
+                 return
             user = random.choice(list(credentials.keys()))
         else:
             user = user.lower()
         
         try:
-            blg = random.choice(list(credentials[user].keys()))
+            if askip_name:
+                blg = askip_name
+            else:
+                blg = random.choice(list(credentials[user].keys()))
+
             await ctx.respond(credentials[user][blg])
-        except KeyError as _:
-            await ctx.respond("Unknown member")
-            await ctx.respond("Available names : `" + "`, `".join(credentials.keys()) + "`")
+        except KeyError:
+            await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     
     async def vote_askip(self, ctx: ApplicationContext):
         """
@@ -178,7 +214,6 @@ class Fun(commands.Cog):
 
         username = username.lower()
         askip_name = askip_name.lower()
-        joke_string = "".join(askip_text)
 
         should_add = await self.vote_askip(ctx) # nicely asks everyone before.
         if not should_add:
@@ -193,7 +228,7 @@ class Fun(commands.Cog):
             credentials[username] = {}                          # create a new pair for it
             
         name = askip_name + str(len(credentials[username])) if(askip_name in credentials[username].keys()) else askip_name     # pour éviter la réécriture des askip (à améliorer)
-        credentials[username][name] = joke_string               # add joke
+        credentials[username][name] = askip_text               # add joke
 
         ############# update the json file
         with open("askip.json", "w") as askipfile:

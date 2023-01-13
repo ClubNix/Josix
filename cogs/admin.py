@@ -243,6 +243,18 @@ class Admin(commands.Cog):
         self.db.addCouple((emoji, roleId), msgId)
         await ctx.respond("Done !")
 
+    @commands.slash_command(description="Set this channel as an announcement channel for the bot")
+    @commands.has_permissions(manage_channels=True)
+    async def set_news_channel(self, ctx: ApplicationContext):
+        testGuild = None
+        idGuild = ctx.guild_id
+        idChan = ctx.channel_id
+
+        testGuild = self.db.getGuild(idGuild)
+        if not testGuild or len(testGuild) == 0:
+            self.db.addGuild(idGuild, idChan, ctx.guild.member_count)
+        else:
+            self.db.changeNewsChan(idGuild, idChan)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))

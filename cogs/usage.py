@@ -1,16 +1,18 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import ApplicationContext
 from discord import option
 
 import random
+import datetime
 
 from . import FILES
-
+from database.database import DatabaseHandler
 
 class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.db = DatabaseHandler()
 
     @commands.slash_command(
         description="Get the help menu",
@@ -119,6 +121,51 @@ class Usage(commands.Cog):
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
         
+    @commands.slash_command(description="Add your birthday in the database !")
+    @option(
+        input_type=int,
+        name="day",
+        description="Day number of your birthday",
+        required=True
+    )
+    @option(
+        input_type=int,
+        name="month",
+        description="Month number of your birthday",
+        required=True
+    )
+    async def add_birthday(self, ctx: ApplicationContext, day: int, month: int):
+        month_days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        testReject = not ((1 <= month and month <= 12) and (1 <= day and day <= month_days[month-1]))
+        userId = ctx.author.id
+        testUser = None
+        testGuild = None
+        testBoth = None
+        bdYear = 0
+
+        if testReject:
+            ctx.respond("Invalid date !")
+            return
+
+        testUser = self.db.getUser(userId)
+        if not testUser or len(testUser) == 0:
+            self.db.addUser(userId)
+
+        testGuild = self.db.getUser(userId)
+        if not testGuild or len(testGuild) == 0:
+            self.db.addGuild(userId)
+
+        testBoth = self.db.getUser(userId, ctx.guild_id)
+        if not testBoth or len(testBoth) == 0:
+            self.db.addUserGuild(userId, ctx.guild_id)
+
+        bdYear = datetime.date.today().year - 1
+        self.db.updateUserBD(userId, day, month, bdYear)
+        ctx.respond("Your birthday has been added !")
+
+    @tasks.loop(hours=1.0)
+    async def checkBirthday(self):
+        bd = self.db.checkBD()
 
 def setup(bot: commands.Bot):
     bot.add_cog(Usage(bot))
