@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument
 from discord import RawReactionActionEvent, ApplicationContext, DiscordException
+from discord import Forbidden, NotFound
 
 from database.database import DatabaseHandler
 
@@ -66,7 +68,19 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: ApplicationContext, error: DiscordException):
         log.writeError(str(error))
-        await ctx.respond("An error occured")
+
+        if isinstance(error, Forbidden):
+            await ctx.respond("Ho no i can't do something :(")
+        elif isinstance(error, NotFound):
+            await ctx.respond("Bip Boup **Error 404**")
+        elif isinstance(error, BotMissingPermissions):
+            await ctx.respond("HEY ! Gimme more permissions...")
+        elif isinstance(error, MissingPermissions):
+            await ctx.respond("Sorry but you lack permissions (skill issue)")
+        elif isinstance(error, MissingRequiredArgument):
+            await ctx.respond("An argument is missing in your command (skill issue n°2)")
+        else:
+            await ctx.respond("Unknown error occured")
         
 
 def setup(bot: commands.Bot):
