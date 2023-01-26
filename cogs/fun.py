@@ -40,47 +40,55 @@ class Fun(commands.Cog):
         await ctx.delete()
         await ctx.respond("".join(text))
 
-    @commands.slash_command(
-        description = "Send a random joke",
-        options=[discord.Option(
-            input_type=str,
-            name="joke_type",
-            description="Category of the joke",
-            default=None
-        )]
+    @commands.slash_command(description="Send a random joke")
+    @option(
+        input_type=int,
+        name="joke_type",
+        description="Category of the joke",
+        default=None,
+        choices=[
+            discord.OptionChoice(name="None 🎲", value=-1),
+            discord.OptionChoice(name="Global 🤡", value=0),
+            discord.OptionChoice(name="Dev 💻", value=1),
+            discord.OptionChoice(name="Beauf 🍺", value=2),
+            discord.OptionChoice(name="Blondes 👱‍♀️", value=3),
+            discord.OptionChoice(name="Dark 😈", value=4),
+            discord.OptionChoice(name="Limit 🍑", value=5),
+        ]
     )
-    async def joke(self, ctx: ApplicationContext, jokeType: str):
-        types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
-
+    async def joke(self, ctx: ApplicationContext, joke_type: int):
+        # To prevent some jokes in a category, put the, ID of the category here
+        is_in_public = ctx.channel.category_id == 751114303314329704 
         disallowCat = []
-        is_in_public = ctx.channel.category_id == 751114303314329704
+        types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
         blg = None
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
 
         if (is_in_public):
             disallowCat.append(types.pop())
             disallowCat.append(types.pop())
 
-        if jokeType is None:
+            if joke_type >= 4:
+                await ctx.respond("You are not permitted to use this type of joke here")
+                return
+
+        if joke_type is None or joke_type == -1:
             try:
-                blg = await jokes.random(disallow = disallowCat)
-            except ClientResponseError as _:
+                blg = await jokes.random(disallow=disallowCat)
+            except ClientResponseError:
                 await ctx.respond("Token error")
                 return
 
         else:
-            jokeType = jokeType.lower()
-            if jokeType not in types:
-                await ctx.respond("Unknown category")
-                await ctx.respond("Available categories : " + ", ".join(types))
-                return
-
             try:
-                blg = await jokes.random_categorized(jokeType)
-            except ClientResponseError as _:
-                await ctx.respond("Your token is wrong")
+                blg = await jokes.random_categorized(types[joke_type])
+            except ClientResponseError:
+                await ctx.respond("Token error")
                 return
 
-        await ctx.respond(blg.joke + "\n" + blg.answer)
+        embed = discord.Embed(title=blg.joke, description=f"||{blg.answer}||", color=0x0089FF)
+        embed.set_author(name=ctx.author, icon_url=av_aut)
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(
         description="See all the people that got one or more askip",
@@ -134,7 +142,6 @@ class Fun(commands.Cog):
         if askip_name and not username:
             await ctx.respond("To choose a specific askip you need to specify the user")
             return
-
             
         if username:
             username = username.lower()

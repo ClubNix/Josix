@@ -1,9 +1,8 @@
 import discord
 from discord.ext import commands
-from discord import RawReactionActionEvent, ApplicationCommandError, ApplicationCommandInvokeError
+from discord import RawReactionActionEvent, ApplicationContext, DiscordException
 
 from database.database import DatabaseHandler
-from typing import Union
 
 import logwrite as log
 
@@ -49,6 +48,7 @@ class Events(commands.Cog):
 ##### ================================================== #####
 ##### ================================================== #####
 
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
         await self.updateRole(payload, True)
@@ -64,9 +64,9 @@ class Events(commands.Cog):
         await thread.send("This thread is now open. You can close it automatically by using `/close`")
 
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Union[ApplicationCommandError, ApplicationCommandInvokeError]):
-        await ctx.respond("An error occured")
+    async def on_application_command_error(self, ctx: ApplicationContext, error: DiscordException):
         log.writeError(str(error))
+        await ctx.respond("An error occured")
         
 
 def setup(bot: commands.Bot):
