@@ -239,9 +239,9 @@ class Admin(commands.Cog):
                     self.db.delMsg(msgId)
                 return
 
-
         self.db.addCouple((emoji, roleId), msgId)
         await ctx.respond("Done !")
+        
 
     @commands.slash_command(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)

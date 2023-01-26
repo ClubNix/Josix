@@ -127,25 +127,27 @@ class Fun(commands.Cog):
             )
         ]
     )
-    async def askip(self, ctx: ApplicationContext, user: str, askip_name: str):
+    async def askip(self, ctx: ApplicationContext, username: str, askip_name: str):
         with open(FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
 
-        if not user:
-            if not askip_name:
-                 ctx.respond("To choose a specific askip you need to specify the user")
-                 return
-            user = random.choice(list(credentials.keys()))
+        if askip_name and not username:
+            await ctx.respond("To choose a specific askip you need to specify the user")
+            return
+
+            
+        if username:
+            username = username.lower()
         else:
-            user = user.lower()
+            username = random.choice(list(credentials.keys()))
         
         try:
             if askip_name:
                 blg = askip_name
             else:
-                blg = random.choice(list(credentials[user].keys()))
+                blg = random.choice(list(credentials[username].keys()))
 
-            await ctx.respond(credentials[user][blg])
+            await ctx.respond(credentials[username][blg])
         except KeyError:
             await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     

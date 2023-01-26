@@ -77,16 +77,46 @@ class DatabaseHandler():
         return self.cursor.fetchone()
 
     def checkBD(self) -> list:
-        query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild" FROM josix.User u
+        query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild",
+                           EXTRACT(MONTH FROM u.hbDate) AS "month",
+                           EXTRACT(DAY FROM u.hbDate) AS "day" FROM josix.User u
                     INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE idmsgId"""
+                    WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW());"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def getNewsChan(self, userId: int) -> list:
+        query = f"""SELECT chanNews FROM josix.Guild g
+                                    INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
+                    WHERE idUser = {userId} AND chanNews IS NOT NULL;"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def getBirthdays(self, guildId: int) -> list:
+        query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
+                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                    WHERE ug.idGuild = {guildId};"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def getBDMonth(self, guildId: int, month: int) -> list:
+        query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
+                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                    WHERE ug.idGuild = {guildId} AND EXTRACT(MONTH FROM u.hbDate) = {month};"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def getBDUser(self, userId: int) -> tuple:
+        query = f"""SELECT hbDate FROM josix.User WHERE idUser = {userId};"""
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
 
     ###############
     ############### Adders
     ###############
 
-    def addGuild(self, guildId: int, chanStat: int, nbMembers: int = 0, status: int = 0):
-        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanStat) VALUES({guildId},{nbMembers},'{status}',{chanStat})"
+    def addGuild(self, guildId: int, chanStat: int = 0, nbMembers: int = 0, status: int = 0):
+        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanNews) VALUES({guildId},{nbMembers},'{status}',{chanStat})"
         self.cursor.execute(query)
         self.conn.commit()
 
@@ -138,6 +168,28 @@ class DatabaseHandler():
         self.cursor.execute(query)
         self.conn.commit()
 
+    def changeNewsChan(self, guildId: int, chanId: int) -> None:
+        query = f"""UPDATE josix.Guild
+                    SET chanNews = {chanId}
+                    WHERE idGuild = {guildId};"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def updateUserBD(self, userId: int, day: int, month: int, year: int) -> None:
+        newBd = f"'{year}-{month}-{day}'"
+        query = f"""UPDATE josix.User
+                    SET hbDate = {newBd}
+                    WHERE idUser = {userId};"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def resetBd(self, userId: int) -> None:
+        query = f"""UPDATE josix.User
+                    SET hbDate = hbDate - INTERVAL '1 year'
+                    WHERE idUser = {userId};"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
     ###############
     ############### Deleters
     ###############
@@ -146,14 +198,3 @@ class DatabaseHandler():
         query = f"DELETE FROM MsgReact WHERE idMsg = {msgId};"
         self.cursor.execute(query)
         self.conn.commit()
-        
-    def changeNewsChan(self, guildId: int, chanId: int) -> None:
-        query = f"""UPDATE josix.Guild
-                    SET chanNews = {chanId}
-                    WHERE idGuild = {guildId};"""
-        self.cursor.execute(query)
-        self.conn.commit()
-
-    def updateUserBD(self, userId: int, day: int, month: int) -> None:
-        query = f"""UPDATE josix.User
-                    SET hbDate = """

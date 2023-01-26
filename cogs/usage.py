@@ -13,6 +13,7 @@ class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler()
+        self.checkBirthday.start()
 
     @commands.slash_command(
         description="Get the help menu",
@@ -151,21 +152,103 @@ class Usage(commands.Cog):
         if not testUser or len(testUser) == 0:
             self.db.addUser(userId)
 
-        testGuild = self.db.getUser(userId)
+        testGuild = self.db.getGuild(ctx.guild_id)
         if not testGuild or len(testGuild) == 0:
-            self.db.addGuild(userId)
+            self.db.addGuild(ctx.guild_id)
 
-        testBoth = self.db.getUser(userId, ctx.guild_id)
+        testBoth = self.db.getUserInGuild(userId, ctx.guild_id)
         if not testBoth or len(testBoth) == 0:
             self.db.addUserGuild(userId, ctx.guild_id)
 
-        bdYear = datetime.date.today().year - 1
-        self.db.updateUserBD(userId, day, month, bdYear)
-        ctx.respond("Your birthday has been added !")
+        today = datetime.date.today()
+        if today.month < month or (today.month == month and today.day <= day):
+            bdYear = today.year
+        else:
+            bdYear = today.year - 1
 
-    @tasks.loop(hours=1.0)
+        self.db.updateUserBD(userId, day, month, bdYear)
+        await ctx.respond("Your birthday has been added !")
+
+
+
+    def getMonthField(self, embed: discord.Embed, idGuild:int, monthInt: int):
+        months=["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        res=[]
+
+        values = self.db.getBDMonth(idGuild, monthInt)
+        if values == None or len(values) == 0:
+            return embed
+
+        for val in values:
+            res.append(f"`{val[0]}/{val[1]}` (<@{val[2]}>)")
+
+        return embed.add_field(name=months[monthInt-1], value=" , ".join(res))
+
+
+    @commands.slash_command(description="See all the birthdays of this server")
+    @option(
+        input_type=int,
+        name="month",
+        description="Number of the month you want to get all the birthdays from",
+        min_value=1,
+        max_value=12,
+        default=None
+    )
+    async def birthdays(self, ctx: ApplicationContext, month: int): 
+        embed = discord.Embed(
+            title=f"Birthdays of **{ctx.guild.name}**",
+            description="All the birthdays form the server",
+            color=0x0089FF
+        )
+
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+        embed.set_author(name=ctx.author, icon_url=av_aut)
+
+        if month:
+            embed = self.getMonthField(embed, ctx.guild_id, month)
+        else:
+            for i in range(12):
+                embed = self.getMonthField(embed, ctx.guild_id, i+1)
+        await ctx.respond(embed=embed)
+
+    @commands.slash_command(description="Get the birthday of a user")
+    @option(
+        input_type=discord.User,
+        name="user",
+        description="Mention of the user",
+        required=True
+    )
+    async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
+        res = self.db.getBDUser(user.id)
+        if not res or len(res) == 0:
+            await ctx.respond("User not registered")
+            return
+
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+        embed = discord.Embed(title=f"Birthday of {user}", color=0x0089FF)
+        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.add_field(name="Date", value=res[0])
+        await ctx.respond(embed=embed)
+
+
+    @tasks.loop(minutes=1.0)
     async def checkBirthday(self):
         bd = self.db.checkBD()
+
+        for value in bd:
+            idUser = value[0]
+            results = self.db.getNewsChan(idUser)
+
+            for row in results:
+                chan = self.bot.get_channel(row[0])
+                if not chan:
+                    continue
+
+
+                today = datetime.date.today()
+                self.db.updateUserBD(idUser, today.day, today.month, today.year)
+                await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Usage(bot))
