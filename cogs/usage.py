@@ -114,7 +114,7 @@ class Usage(commands.Cog):
             await ctx.respond("You can only close a thread created in the forum")
             return
     
-        testMod = ctx.author.guild_permissions >= discord.Permissions(17179869184) # Check if permissions are greater than manage_threads
+        testMod = ctx.author.guild_permissions.manage_threads() # Check if permissions are greater than manage_threads
         if (ctx.author != thread.owner and not testMod) or (lock and not testMod): 
             await ctx.respond("You don't have the required permissions to do this")
             return
@@ -135,7 +135,13 @@ class Usage(commands.Cog):
         description="Month number of your birthday",
         required=True
     )
-    async def add_birthday(self, ctx: ApplicationContext, day: int, month: int):
+    @option(
+        input_type=discord.User,
+        name="user",
+        description="Mention of the user's birthday you want to add",
+        default=None
+    )
+    async def add_birthday(self, ctx: ApplicationContext, day: int, month: int, user: discord.User):
         month_days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         testReject = not ((1 <= month and month <= 12) and (1 <= day and day <= month_days[month-1]))
         userId = ctx.author.id
@@ -145,8 +151,15 @@ class Usage(commands.Cog):
         bdYear = 0
 
         if testReject:
-            ctx.respond("Invalid date !")
+            await ctx.respond("Invalid date !")
             return
+
+        if user:
+            if ctx.author.guild_permissions.moderate_members():
+                userId = user.id
+            else:
+                await ctx.respond("Sorry but you lack permissions (skill issue)")
+                return
 
         testUser = self.db.getUser(userId)
         if not testUser or len(testUser) == 0:
@@ -231,7 +244,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         bd = self.db.checkBD()
 
