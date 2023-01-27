@@ -255,6 +255,8 @@ class Admin(commands.Cog):
             self.db.addGuild(idGuild, idChan, ctx.guild.member_count)
         else:
             self.db.changeNewsChan(idGuild, idChan)
+        await ctx.respond("this channel will now host my news !")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
