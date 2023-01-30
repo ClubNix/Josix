@@ -155,7 +155,7 @@ class Usage(commands.Cog):
             return
 
         if user:
-            if ctx.author.guild_permissions.moderate_members():
+            if ctx.author.guild_permissions.moderate_members:
                 userId = user.id
             else:
                 await ctx.respond("Sorry but you lack permissions (skill issue)")
