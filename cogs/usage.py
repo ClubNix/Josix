@@ -248,7 +248,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
         bd = self.db.checkBD(today.day, today.month)
