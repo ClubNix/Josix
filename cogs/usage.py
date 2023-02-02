@@ -149,17 +149,21 @@ class Usage(commands.Cog):
         testGuild = None
         testBoth = None
         bdYear = 0
+        stringRes = ""
 
         if testReject:
             await ctx.respond("Invalid date !")
             return
 
-        if user:
+        if user and user != ctx.author:
             if ctx.author.guild_permissions.moderate_members:
                 userId = user.id
+                stringRes = f"Birthday added for **{user.name}** !"
             else:
                 await ctx.respond("Sorry but you lack permissions (skill issue)")
                 return
+        else:
+            stringRes = "Your birthday has been added !"
 
         testUser = self.db.getUser(userId)
         if not testUser or len(testUser) == 0:
@@ -180,7 +184,7 @@ class Usage(commands.Cog):
             bdYear = today.year - 1
 
         self.db.updateUserBD(userId, day, month, bdYear)
-        await ctx.respond("Your birthday has been added !")
+        await ctx.respond(stringRes)
 
 
 
@@ -244,9 +248,10 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-    @tasks.loop(hours=6.0)
+    @tasks.loop(minutes=1.0)
     async def checkBirthday(self):
-        bd = self.db.checkBD()
+        today = datetime.date.today()
+        bd = self.db.checkBD(today.day, today.month)
 
         for value in bd:
             idUser = value[0]

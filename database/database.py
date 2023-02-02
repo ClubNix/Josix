@@ -76,12 +76,14 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def checkBD(self) -> list:
+    def checkBD(self, day: int, month: int) -> list:
         query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild",
                            EXTRACT(MONTH FROM u.hbDate) AS "month",
-                           EXTRACT(DAY FROM u.hbDate) AS "day" FROM josix.User u
-                    INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW());"""
+                           EXTRACT(DAY FROM u.hbDate) AS "day"
+                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                    WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW()) AND
+                          EXTRACT(DAY FROM u.hbDate) = {day} AND
+                          EXTRACT(MONTH FROM u.hbDate) = {month};"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
@@ -95,14 +97,16 @@ class DatabaseHandler():
     def getBirthdays(self, guildId: int) -> list:
         query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
                     FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE ug.idGuild = {guildId};"""
+                    WHERE ug.idGuild = {guildId}
+                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
     def getBDMonth(self, guildId: int, month: int) -> list:
         query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
                     FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE ug.idGuild = {guildId} AND EXTRACT(MONTH FROM u.hbDate) = {month};"""
+                    WHERE ug.idGuild = {guildId} AND EXTRACT(MONTH FROM u.hbDate) = {month}
+                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
