@@ -11,6 +11,7 @@ import blagues_api
 from aiohttp import ClientResponseError
 from asyncio import TimeoutError
 from dotenv import load_dotenv
+from json import JSONDecodeError
 
 load_dotenv()
 KEY = os.getenv("jokes")
@@ -22,6 +23,10 @@ FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
 class Fun(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    def checkJson(self, file: dict) -> bool:
+        return (file.keys() is None) or (len(file.keys()) > 0)
+        
 
     @commands.slash_command(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
@@ -57,7 +62,7 @@ class Fun(commands.Cog):
         ]
     )
     async def joke(self, ctx: ApplicationContext, joke_type: int):
-        # To prevent some jokes in a category, put the, ID of the category here
+        # To prevent some jokes in a category, put the ID of the category here
         is_in_public = ctx.channel.category_id == 751114303314329704 
         disallowCat = []
         types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
@@ -102,21 +107,31 @@ class Fun(commands.Cog):
     async def list_askip(self, ctx: ApplicationContext, user: str):
         data = None
 
-        if user:
-            user = user.lower()
-            with open(FILE_PATH, 'r') as askip:
-                lst = json.load(askip)
-                try:
-                    data = lst[user].keys()
-                except KeyError:
-                    cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
-                    await ctx.invoke(cmd, user=None)
-                    return
+        try:
+            if user:
+                user = user.lower()
 
-        else:
-            with open(FILE_PATH, 'r') as askip:
-                data = json.load(askip).keys()
-        await ctx.respond("Available names : `" + "`, `".join(data) + "`")
+                with open(FILE_PATH, 'r') as askip:
+                    lst = json.load(askip)
+                    try:
+                        if not self.checkJson(lst[user]):
+                            await ctx.respond("Empty value")
+                            return
+
+                        data = lst[user].keys()
+                    except KeyError:
+                        cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
+                        await ctx.invoke(cmd, user=None)
+                        return
+
+            else:
+                with open(FILE_PATH, 'r') as askip:
+                    data = json.load(askip).keys()
+            await ctx.respond("Available names : `" + "`, `".join(data) + "`")
+
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
 
     @commands.slash_command(
         description = "Get a private joke from your group",
@@ -136,8 +151,16 @@ class Fun(commands.Cog):
         ]
     )
     async def askip(self, ctx: ApplicationContext, username: str, askip_name: str):
-        with open(FILE_PATH, 'r') as askip:
+        try:
+            with open(FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
+                if not self.checkJson(credentials):
+                    await ctx.respond("Empty value or json file")
+                    return 
+
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
 
         if askip_name and not username:
             await ctx.respond("To choose a specific askip you need to specify the user")
@@ -147,6 +170,10 @@ class Fun(commands.Cog):
             username = username.lower()
         else:
             username = random.choice(list(credentials.keys()))
+
+        if not self.checkJson(credentials[username]):
+            await ctx.respond("Empty value or json file")
+            return
         
         try:
             if askip_name:
@@ -230,8 +257,13 @@ class Fun(commands.Cog):
 
         ############# append askip to the credentials json object
         credentials = {}
-        with open("askip.json", 'r') as askipfile:
-            credentials = json.load(askipfile)
+    
+        try:
+            with open("askip.json", 'r') as askipfile:
+                credentials = json.load(askipfile)
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
         
         if(username not in credentials.keys()):                 # if the member is not registered in the json file
             credentials[username] = {}                          # create a new pair for it

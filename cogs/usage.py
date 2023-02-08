@@ -114,7 +114,7 @@ class Usage(commands.Cog):
             await ctx.respond("You can only close a thread created in the forum")
             return
     
-        testMod = ctx.author.guild_permissions.manage_threads() # Check if permissions are greater than manage_threads
+        testMod = ctx.author.guild_permissions.manage_threads # Check if permissions are greater than manage_threads
         if (ctx.author != thread.owner and not testMod) or (lock and not testMod): 
             await ctx.respond("You don't have the required permissions to do this")
             return
