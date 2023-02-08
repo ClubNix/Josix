@@ -102,6 +102,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
+    @commands.guild_only()
     @option(
         name="lock",
         description="Lock the thread (moderator only)",
@@ -123,6 +124,7 @@ class Usage(commands.Cog):
         await thread.archive(locked=lock)
         
     @commands.slash_command(description="Add your birthday in the database !")
+    @commands.guild_only()
     @option(
         input_type=int,
         name="day",
@@ -203,6 +205,7 @@ class Usage(commands.Cog):
 
 
     @commands.slash_command(description="See all the birthdays of this server")
+    @commands.guild_only()
     @option(
         input_type=int,
         name="month",
@@ -229,6 +232,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Get the birthday of a user")
+    @commands.guild_only()
     @option(
         input_type=discord.User,
         name="user",

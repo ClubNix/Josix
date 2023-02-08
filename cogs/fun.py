@@ -32,6 +32,17 @@ class Fun(commands.Cog):
     async def hello(self, ctx: ApplicationContext):
         await ctx.respond("Hello !")
 
+    @commands.slash_command(description="Ping the bot !")
+    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    async def ping(self, ctx: ApplicationContext):
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+
+        embed = discord.Embed(title="Pong !", color=0x0089FF)
+        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_thumbnail(url="https://media.giphy.com/media/fvA1ieS8rEV8Y/giphy.gif")
+        embed.add_field(name="", value=f"Ping : {round(self.bot.latency*1000, 2)} ms")
+        await ctx.respond(embed=embed)
+
     @commands.slash_command(
         description="Send the message with the bot as the author and delete yours",
         options=[discord.Option(
@@ -104,6 +115,7 @@ class Fun(commands.Cog):
             default=None
         )]
     )
+    @commands.guild_only()
     async def list_askip(self, ctx: ApplicationContext, user: str):
         data = None
 
@@ -150,6 +162,7 @@ class Fun(commands.Cog):
             )
         ]
     )
+    @commands.guild_only()
     async def askip(self, ctx: ApplicationContext, username: str, askip_name: str):
         try:
             with open(FILE_PATH, 'r') as askip:
@@ -224,6 +237,7 @@ class Fun(commands.Cog):
 
     @commands.slash_command(description = "fills my collection of private jokes")
     @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
     @option(
         input_type=str,
         name="username",

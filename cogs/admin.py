@@ -108,6 +108,7 @@ class Admin(commands.Cog):
 
 
     @commands.slash_command(description="Set the message as a reaction role message")
+    @commands.guild_only()
     @option(
         input_type=str,
         name="message_id",
@@ -147,6 +148,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     @option(
         input_type=int,
         name="limit",
@@ -161,6 +163,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Add a couple of reaction-role to the message")
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     @option(
         input_type=str,
         name="msg_id",
@@ -245,6 +248,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
         testGuild = None
         idGuild = ctx.guild_id
