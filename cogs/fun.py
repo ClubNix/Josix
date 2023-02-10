@@ -25,7 +25,7 @@ class Fun(commands.Cog):
         self.bot = bot
 
     def checkJson(self, file: dict) -> bool:
-        return (file.keys() is None) or (len(file.keys()) > 0)
+        return (file.keys()) or (len(file.keys()) > 0)
         
 
     @commands.slash_command(description="The bot greets you")

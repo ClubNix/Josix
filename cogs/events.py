@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, CommandOnCooldown
+from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, CommandOnCooldown, NotOwner
 from discord import RawReactionActionEvent, ApplicationContext, DiscordException
 from discord import Forbidden, NotFound
 
 from database.database import DatabaseHandler
 
 import logwrite as log
+import psycopg2
 
 class Events(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -82,6 +83,8 @@ class Events(commands.Cog):
         elif isinstance(error, CommandOnCooldown):
             error : CommandOnCooldown = error
             await ctx.respond(f"Too fast bro, wait {round(error.retry_after, 2)} seconds to retry this command")
+        elif isinstance(error, NotOwner):
+            await ctx.respond("This command is only for my master ! (skill issue n°3)")
         else:
             await ctx.respond("Unknown error occured")
             log.writeError(str(error))
