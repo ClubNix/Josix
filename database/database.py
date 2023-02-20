@@ -40,13 +40,14 @@ class DatabaseHandler():
             self.conn.rollback()
             return str(error)
 
-    def backup(self):
-        self.cursor.execute("SELECT * FROM information_schema.tables WHERE table_schema = 'josix';")
+    def backup(self, table: str):
+        checkTable = f"AND table_name = '{table}'" if len(table) > 0 else ""
+        self.cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' {checkTable};")
         res = self.cursor.fetchall()
 
         with open(FILE_PATH, "w") as f:
-            for row in res:
-                table_name = row[2]
+            for rowTable in res:
+                table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")
 
                 self.cursor.execute("SELECT * FROM josix.%s" % (table_name))  # change the query according to your needs

@@ -135,7 +135,7 @@ class Owner(commands.Cog):
     )
     @commands.is_owner()
     async def backup_database(self, ctx: ApplicationContext, table: str):
-        self.db.backup()
+        self.db.backup(table)
         await ctx.respond("Backup done !")
 
     @commands.slash_command(
