@@ -7,6 +7,10 @@ from . import FILES
 from database.database import DatabaseHandler
 
 import logwrite as log
+import os
+
+SCRIPT_DIR = os.path.dirname(__file__)
+FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 
 class Owner(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -146,6 +150,18 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def execute(self, ctx: ApplicationContext, query: str):
         await ctx.respond(self.db.execute(query))
+
+    @commands.slash_command(description="Execute the backup file")
+    @commands.is_owner()
+    async def backup_execute(self, ctx: ApplicationContext):
+        with open(FILE_PATH, 'r') as f:
+            lines = f.readlines()
+
+        for line in lines:
+            self.db.execute(line)
+        
+        await ctx.respond("Backup execute done !")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Owner(bot))
