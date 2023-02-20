@@ -116,21 +116,21 @@ class Fun(commands.Cog):
         )]
     )
     @commands.guild_only()
-    async def list_askip(self, ctx: ApplicationContext, user: str):
+    async def list_askip(self, ctx: ApplicationContext, username: str):
         data = None
 
         try:
-            if user:
-                user = user.lower()
+            if username:
+                username = username.lower()
 
                 with open(FILE_PATH, 'r') as askip:
                     lst = json.load(askip)
                     try:
-                        if not self.checkJson(lst[user]):
+                        if not self.checkJson(lst[username]):
                             await ctx.respond("Empty value")
                             return
 
-                        data = lst[user].keys()
+                        data = lst[username].keys()
                     except KeyError:
                         cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
                         await ctx.invoke(cmd, user=None)

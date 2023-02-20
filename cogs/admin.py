@@ -115,9 +115,9 @@ class Admin(commands.Cog):
         description="ID of the message to which you want to add a reaction-role",
         required=True
     )
-    async def create_react_role(self, ctx: ApplicationContext, id: str):
+    async def create_react_role(self, ctx: ApplicationContext, message_id: str):
         try:
-            msg_id = int(id)
+            msg_id = int(message_id)
         except ValueError as _:
             ctx.respond("Wrong value")
             return
@@ -182,7 +182,7 @@ class Admin(commands.Cog):
         description="Mention of the role of the couple",
         required=True
     )
-    async def add_couple(self, ctx: ApplicationContext, msg_p: str, emoji: str, role: discord.Role):
+    async def add_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
         roleId = role.id
         msgId = 0
         new = False
@@ -198,7 +198,7 @@ class Admin(commands.Cog):
             return
 
         try:
-            msgId = int(msg_p)
+            msgId = int(msg_id)
         except ValueError:
             await ctx.respond("Incorrect value given for the message_id parameter")
             return

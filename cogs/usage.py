@@ -35,8 +35,9 @@ class Usage(commands.Cog):
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
 
-                if not cog:
+                if not cog or (cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
+
                 commands = cog.get_commands()
                 if len(commands) == 0:
                     lstCmd = "No commands available"
@@ -52,6 +53,10 @@ class Usage(commands.Cog):
             command: discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
 
             if not command:
+                await ctx.respond(f":x: Unknown command, see /help :x:")
+                return
+
+            if command.cog and command.cog.qualified_name.lower() == "owner" and not await self.bot.is_owner(ctx.author):
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 
@@ -180,10 +185,10 @@ class Usage(commands.Cog):
             self.db.addUserGuild(userId, ctx.guild_id)
 
         today = datetime.date.today()
-        if today.month < month or (today.month == month and today.day <= day):
-            bdYear = today.year
-        else:
+        if today.month < month or (today.month == month and today.day < day):
             bdYear = today.year - 1
+        else:
+            bdYear = today.year
 
         self.db.updateUserBD(userId, day, month, bdYear)
         await ctx.respond(stringRes)

@@ -7,7 +7,6 @@ from discord import Forbidden, NotFound
 from database.database import DatabaseHandler
 
 import logwrite as log
-import psycopg2
 
 class Events(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -51,6 +50,9 @@ class Events(commands.Cog):
 ##### ================================================== #####
 ##### ================================================== #####
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        log.writeLog(f"==> Bot ready : py-cord v{discord.__version__}\n")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
