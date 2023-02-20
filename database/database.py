@@ -58,8 +58,8 @@ class DatabaseHandler():
                 insert_prefix = 'INSERT INTO josix.%s (%s) VALUES ' % (table_name, ', '.join(column_names))
                 rows = self.cursor.fetchall()
 
-                row_data = []
                 for row in rows:
+                    row_data = []
                     for rd in row:
                         if rd is None:
                             row_data.append('NULL')
@@ -69,9 +69,7 @@ class DatabaseHandler():
                             row_data.append("'%s'" % (rd.strftime('%Y-%m-%d %H:%M:%S')))
                         else:
                             row_data.append(repr(rd))
-
-                # this is the text that will be put in the SQL file. You can change it if you wish.
-                f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
+                    f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
 
 
     ###############
