@@ -18,23 +18,26 @@ class Owner(commands.Cog):
         self.db = DatabaseHandler()
 
     def load(self, name):
+        name = "cogs." + name
         try:
             self.bot.load_extension(name)
-            log.writeLog(f"\n==> Loaded extension : {name}")
+            log.writeLog(f"### Loaded extension : {name}")
         except (ModuleNotFoundError, ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed) as error:
             log.writeError(log.formatError(error))
 
     def unload(self, name):
+        name = "cogs." + name
         try:
             self.bot.unload_extension(name)
-            log.writeLog(f"\n==> Unloaded extension : {name}")
+            log.writeLog(f"### Unloaded extension : {name}")
         except (ModuleNotFoundError, ExtensionNotFound, ExtensionNotLoaded) as error:
             log.writeError(log.formatError(error))
 
     def reload(self, name):
+        name = "cogs." + name
         try:
             self.bot.reload_extension(name)
-            log.writeLog(f"\n==> Reloaded extension : {name}")
+            log.writeLog(f"### Reloaded extension : {name}")
         except (ModuleNotFoundError, ExtensionNotFound, ExtensionNotLoaded, NoEntryPointError, ExtensionFailed) as error:
             log.writeError(log.formatError(error))
 
@@ -64,6 +67,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def load_cog(self, ctx: ApplicationContext, name: str):
         self.load(name)
+        await ctx.respond("Load done !")
 
 
     @commands.slash_command(
@@ -78,6 +82,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def unload_cog(self, ctx: ApplicationContext, name: str):
         self.unload(name)
+        await ctx.respond("Unload done !")
 
 
 # --------------------------------------------- #
@@ -95,6 +100,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def reload_cog(self, ctx: ApplicationContext, name: str):
         self.reload(name)
+        await ctx.respond("Reload done !")
 
     @commands.slash_command(description="Load all the cogs")
     async def load_all(self, ctx: ApplicationContext):
@@ -103,6 +109,7 @@ class Owner(commands.Cog):
                 continue
 
             self.load(name)
+        await ctx.respond("Load done !")
 
     @commands.slash_command(description="Unoad all the cogs")
     async def unload_all(self, ctx: ApplicationContext):
@@ -111,6 +118,7 @@ class Owner(commands.Cog):
                 continue
 
             self.unload(name)
+        await ctx.respond("Unload done !")
 
     @commands.slash_command(description="Reload all the cogs")
     async def reload_all(self, ctx: ApplicationContext):
@@ -119,6 +127,7 @@ class Owner(commands.Cog):
                 continue
 
             self.reload(name)
+        await ctx.respond("Reload done !")
 
 
 # ---------------------------------------- #
