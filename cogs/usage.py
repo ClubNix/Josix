@@ -273,8 +273,8 @@ class Usage(commands.Cog):
 
 
                 today = datetime.date.today()
-                self.db.updateUserBD(idUser, today.day, today.month, today.year)
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
+                self.db.updateUserBD(idUser, today.day, today.month, today.year)
 
 
 def setup(bot: commands.Bot):

@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
+from discord.errors import NotFound, Forbidden
 from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, CommandOnCooldown, NotOwner
 from discord import RawReactionActionEvent, ApplicationContext, DiscordException
-from discord import Forbidden, NotFound
 
 from database.database import DatabaseHandler
 
