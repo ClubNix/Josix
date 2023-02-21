@@ -156,6 +156,7 @@ class Admin(commands.Cog):
         default=10
     )
     async def clear(self, ctx: ApplicationContext, limit: int):
+        await ctx.defer(ephemeral=False, invisible=False)
         if limit < 0 or 50 < limit:
             limit = 10 
         await ctx.channel.purge(limit=limit)
@@ -183,6 +184,8 @@ class Admin(commands.Cog):
         required=True
     )
     async def add_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
+        await ctx.defer(ephemeral=False, invisible=False)
+
         roleId = role.id
         msgId = 0
         new = False
@@ -250,6 +253,8 @@ class Admin(commands.Cog):
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        
         testGuild = None
         idGuild = ctx.guild_id
         idChan = ctx.channel_id

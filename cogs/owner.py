@@ -7,7 +7,7 @@ from database.database import DatabaseHandler
 import os
 
 SCRIPT_DIR = os.path.dirname(__file__)
-FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
+FILE_PATH = os.path.join(SCRIPT_DIR, '../database/backup.sql')
 
 class Owner(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -33,6 +33,7 @@ class Owner(commands.Cog):
     )
     @commands.is_owner()
     async def backup_database(self, ctx: ApplicationContext, table: str):
+        await ctx.defer(ephemeral=False, invisible=False)
         self.db.backup(table)
         await ctx.respond("Backup done !")
 
@@ -47,14 +48,16 @@ class Owner(commands.Cog):
     )
     @commands.is_owner()
     async def execute(self, ctx: ApplicationContext, query: str):
+        await ctx.defer(ephemeral=False, invisible=False)
         await ctx.respond(self.db.execute(query))
 
     @commands.slash_command(description="Execute the backup file")
     @commands.is_owner()
     async def backup_execute(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+
         with open(FILE_PATH, 'r') as f:
             lines = f.readlines()
-
         for line in lines:
             self.db.execute(line)
         
