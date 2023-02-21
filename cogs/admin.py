@@ -108,15 +108,16 @@ class Admin(commands.Cog):
 
 
     @commands.slash_command(description="Set the message as a reaction role message")
+    @commands.guild_only()
     @option(
         input_type=str,
         name="message_id",
         description="ID of the message to which you want to add a reaction-role",
         required=True
     )
-    async def create_react_role(self, ctx: ApplicationContext, id: str):
+    async def create_react_role(self, ctx: ApplicationContext, message_id: str):
         try:
-            msg_id = int(id)
+            msg_id = int(message_id)
         except ValueError as _:
             ctx.respond("Wrong value")
             return
@@ -147,6 +148,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     @option(
         input_type=int,
         name="limit",
@@ -161,6 +163,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Add a couple of reaction-role to the message")
     @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
     @option(
         input_type=str,
         name="msg_id",
@@ -179,7 +182,7 @@ class Admin(commands.Cog):
         description="Mention of the role of the couple",
         required=True
     )
-    async def add_couple(self, ctx: ApplicationContext, msg_p: str, emoji: str, role: discord.Role):
+    async def add_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
         roleId = role.id
         msgId = 0
         new = False
@@ -195,7 +198,7 @@ class Admin(commands.Cog):
             return
 
         try:
-            msgId = int(msg_p)
+            msgId = int(msg_id)
         except ValueError:
             await ctx.respond("Incorrect value given for the message_id parameter")
             return
@@ -245,6 +248,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
         testGuild = None
         idGuild = ctx.guild_id

@@ -1,8 +1,12 @@
 import psycopg2
 import discord
 import os
-
+import datetime
 import logwrite as log
+
+
+SCRIPT_DIR = os.path.dirname(__file__)
+FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 
 class DatabaseHandler():
     def __init__(self) -> None:
@@ -15,16 +19,64 @@ class DatabaseHandler():
             )
 
             log.writeLog(" - Connection on the database done - ")
-        except (Exception, psycopg2.DatabaseError, psycopg2.OperationalError) as error:
+        except psycopg2.Error as error:
             log.writeError(log.formatError(error))
             return
 
         self.conn = conn
         self.cursor = conn.cursor()
 
+    def execute(self, query: str) -> str:
+        try:
+            self.cursor.execute(query)
+            self.conn.commit()
+
+            try:
+                return str(self.cursor.fetchall())
+            except psycopg2.ProgrammingError:
+                return "Query executed : nothing to fetch"
+
+        except psycopg2.Error as error:
+            self.conn.rollback()
+            return str(error)
+
+    def backup(self, table: str):
+        checkTable = f"AND table_name = '{table}'" if len(table) > 0 else ""
+        self.cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' {checkTable};")
+        res = self.cursor.fetchall()
+
+        with open(FILE_PATH, "w") as f:
+            for rowTable in res:
+                table_name = rowTable[0]
+                f.write("\n-- Records for table : josix." + table_name + "\n")
+
+                self.cursor.execute("SELECT * FROM josix.%s" % (table_name))  # change the query according to your needs
+                column_names = []
+                columns_descr = self.cursor.description
+
+                for c in columns_descr:
+                    column_names.append(c[0])
+                insert_prefix = 'INSERT INTO josix.%s (%s) VALUES ' % (table_name, ', '.join(column_names))
+                rows = self.cursor.fetchall()
+
+                for row in rows:
+                    row_data = []
+                    for rd in row:
+                        if rd is None:
+                            row_data.append('NULL')
+                        elif isinstance(rd, datetime.date):
+                            row_data.append("'%s'" % (rd.strftime('%Y-%m-%d')))
+                        elif isinstance(rd, datetime.datetime):
+                            row_data.append("'%s'" % (rd.strftime('%Y-%m-%d %H:%M:%S')))
+                        else:
+                            row_data.append(repr(rd))
+                    f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
+
+
     ###############
     ############### Getters
     ###############
+
 
     def getGuild(self, guildId: int) -> tuple:
         query = f"SELECT * FROM josix.Guild WHERE idGuild = {guildId};"

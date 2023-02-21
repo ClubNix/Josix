@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument
+from discord.errors import NotFound, Forbidden
+from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, CommandOnCooldown, NotOwner
 from discord import RawReactionActionEvent, ApplicationContext, DiscordException
-from discord import Forbidden, NotFound
 
 from database.database import DatabaseHandler
 
@@ -50,6 +50,9 @@ class Events(commands.Cog):
 ##### ================================================== #####
 ##### ================================================== #####
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        log.writeLog(f"==> Bot ready : py-cord v{discord.__version__}\n")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
@@ -67,8 +70,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: ApplicationContext, error: DiscordException):
-        log.writeError(str(error))
-
         if isinstance(error, Forbidden):
             await ctx.respond("Ho no i can't do something :(")
         elif isinstance(error, NotFound):
@@ -79,8 +80,16 @@ class Events(commands.Cog):
             await ctx.respond("Sorry but you lack permissions (skill issue)")
         elif isinstance(error, MissingRequiredArgument):
             await ctx.respond("An argument is missing in your command (skill issue n°2)")
+        elif isinstance(error, NoPrivateMessage):
+            await ctx.respond("This command can only be used in a server (get some friends)")
+        elif isinstance(error, CommandOnCooldown):
+            error : CommandOnCooldown = error
+            await ctx.respond(f"Too fast bro, wait {round(error.retry_after, 2)} seconds to retry this command")
+        elif isinstance(error, NotOwner):
+            await ctx.respond("This command is only for my master ! (skill issue n°3)")
         else:
             await ctx.respond("Unknown error occured")
+            log.writeError(str(error))
         
 
 def setup(bot: commands.Bot):

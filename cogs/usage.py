@@ -35,8 +35,9 @@ class Usage(commands.Cog):
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
 
-                if not cog:
+                if not cog or (cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
+
                 commands = cog.get_commands()
                 if len(commands) == 0:
                     lstCmd = "No commands available"
@@ -52,6 +53,10 @@ class Usage(commands.Cog):
             command: discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
 
             if not command:
+                await ctx.respond(f":x: Unknown command, see /help :x:")
+                return
+
+            if command.cog and command.cog.qualified_name.lower() == "owner" and not await self.bot.is_owner(ctx.author):
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 
@@ -102,6 +107,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
+    @commands.guild_only()
     @option(
         name="lock",
         description="Lock the thread (moderator only)",
@@ -114,7 +120,7 @@ class Usage(commands.Cog):
             await ctx.respond("You can only close a thread created in the forum")
             return
     
-        testMod = ctx.author.guild_permissions.manage_threads() # Check if permissions are greater than manage_threads
+        testMod = ctx.author.guild_permissions.manage_threads # Check if permissions are greater than manage_threads
         if (ctx.author != thread.owner and not testMod) or (lock and not testMod): 
             await ctx.respond("You don't have the required permissions to do this")
             return
@@ -123,6 +129,7 @@ class Usage(commands.Cog):
         await thread.archive(locked=lock)
         
     @commands.slash_command(description="Add your birthday in the database !")
+    @commands.guild_only()
     @option(
         input_type=int,
         name="day",
@@ -178,10 +185,10 @@ class Usage(commands.Cog):
             self.db.addUserGuild(userId, ctx.guild_id)
 
         today = datetime.date.today()
-        if today.month < month or (today.month == month and today.day <= day):
-            bdYear = today.year
-        else:
+        if today.month < month or (today.month == month and today.day < day):
             bdYear = today.year - 1
+        else:
+            bdYear = today.year
 
         self.db.updateUserBD(userId, day, month, bdYear)
         await ctx.respond(stringRes)
@@ -203,6 +210,7 @@ class Usage(commands.Cog):
 
 
     @commands.slash_command(description="See all the birthdays of this server")
+    @commands.guild_only()
     @option(
         input_type=int,
         name="month",
@@ -229,6 +237,7 @@ class Usage(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Get the birthday of a user")
+    @commands.guild_only()
     @option(
         input_type=discord.User,
         name="user",
@@ -264,8 +273,8 @@ class Usage(commands.Cog):
 
 
                 today = datetime.date.today()
-                self.db.updateUserBD(idUser, today.day, today.month, today.year)
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
+                self.db.updateUserBD(idUser, today.day, today.month, today.year)
 
 
 def setup(bot: commands.Bot):

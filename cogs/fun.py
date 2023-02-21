@@ -11,6 +11,7 @@ import blagues_api
 from aiohttp import ClientResponseError
 from asyncio import TimeoutError
 from dotenv import load_dotenv
+from json import JSONDecodeError
 
 load_dotenv()
 KEY = os.getenv("jokes")
@@ -23,9 +24,24 @@ class Fun(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    def checkJson(self, file: dict) -> bool:
+        return (file.keys()) or (len(file.keys()) > 0)
+        
+
     @commands.slash_command(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
         await ctx.respond("Hello !")
+
+    @commands.slash_command(description="Ping the bot !")
+    @commands.cooldown(1, 3.0, commands.BucketType.user)
+    async def ping(self, ctx: ApplicationContext):
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+
+        embed = discord.Embed(title="Pong !", color=0x0089FF)
+        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_thumbnail(url="https://media.giphy.com/media/fvA1ieS8rEV8Y/giphy.gif")
+        embed.add_field(name="", value=f"Ping : {round(self.bot.latency*1000, 2)} ms")
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(
         description="Send the message with the bot as the author and delete yours",
@@ -57,7 +73,7 @@ class Fun(commands.Cog):
         ]
     )
     async def joke(self, ctx: ApplicationContext, joke_type: int):
-        # To prevent some jokes in a category, put the, ID of the category here
+        # To prevent some jokes in a category, put the ID of the category here
         is_in_public = ctx.channel.category_id == 751114303314329704 
         disallowCat = []
         types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
@@ -99,24 +115,35 @@ class Fun(commands.Cog):
             default=None
         )]
     )
-    async def list_askip(self, ctx: ApplicationContext, user: str):
+    @commands.guild_only()
+    async def list_askip(self, ctx: ApplicationContext, username: str):
         data = None
 
-        if user:
-            user = user.lower()
-            with open(FILE_PATH, 'r') as askip:
-                lst = json.load(askip)
-                try:
-                    data = lst[user].keys()
-                except KeyError:
-                    cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
-                    await ctx.invoke(cmd, user=None)
-                    return
+        try:
+            if username:
+                username = username.lower()
 
-        else:
-            with open(FILE_PATH, 'r') as askip:
-                data = json.load(askip).keys()
-        await ctx.respond("Available names : `" + "`, `".join(data) + "`")
+                with open(FILE_PATH, 'r') as askip:
+                    lst = json.load(askip)
+                    try:
+                        if not self.checkJson(lst[username]):
+                            await ctx.respond("Empty value")
+                            return
+
+                        data = lst[username].keys()
+                    except KeyError:
+                        cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
+                        await ctx.invoke(cmd, user=None)
+                        return
+
+            else:
+                with open(FILE_PATH, 'r') as askip:
+                    data = json.load(askip).keys()
+            await ctx.respond("Available names : `" + "`, `".join(data) + "`")
+
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
 
     @commands.slash_command(
         description = "Get a private joke from your group",
@@ -135,9 +162,18 @@ class Fun(commands.Cog):
             )
         ]
     )
+    @commands.guild_only()
     async def askip(self, ctx: ApplicationContext, username: str, askip_name: str):
-        with open(FILE_PATH, 'r') as askip:
+        try:
+            with open(FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
+                if not self.checkJson(credentials):
+                    await ctx.respond("Empty value or json file")
+                    return 
+
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
 
         if askip_name and not username:
             await ctx.respond("To choose a specific askip you need to specify the user")
@@ -147,6 +183,10 @@ class Fun(commands.Cog):
             username = username.lower()
         else:
             username = random.choice(list(credentials.keys()))
+
+        if not self.checkJson(credentials[username]):
+            await ctx.respond("Empty value or json file")
+            return
         
         try:
             if askip_name:
@@ -197,6 +237,7 @@ class Fun(commands.Cog):
 
     @commands.slash_command(description = "fills my collection of private jokes")
     @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
     @option(
         input_type=str,
         name="username",
@@ -230,8 +271,13 @@ class Fun(commands.Cog):
 
         ############# append askip to the credentials json object
         credentials = {}
-        with open("askip.json", 'r') as askipfile:
-            credentials = json.load(askipfile)
+    
+        try:
+            with open("askip.json", 'r') as askipfile:
+                credentials = json.load(askipfile)
+        except JSONDecodeError:
+            await ctx.respond("Empty json file")
+            return
         
         if(username not in credentials.keys()):                 # if the member is not registered in the json file
             credentials[username] = {}                          # create a new pair for it

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import ExtensionError, ExtensionFailed
+from discord import ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed
 
 from dotenv import load_dotenv
 from cogs import FILES
@@ -31,7 +31,7 @@ def main():
         try:
             bot.load_extension("cogs." + name)
             log.writeLog("Extension " + name + " Successfully loaded")
-        except (ModuleNotFoundError, ExtensionError, ExtensionFailed) as error:
+        except (ModuleNotFoundError, ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed) as error:
             log.writeError(log.formatError(error))
 
     bot.run(TOKEN)
