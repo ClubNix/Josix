@@ -198,7 +198,7 @@ class Fun(commands.Cog):
         except KeyError:
             await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     
-    async def vote_askip(self, ctx: ApplicationContext):
+    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str):
         """
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters
@@ -206,8 +206,38 @@ class Fun(commands.Cog):
         !!! Add it only if 2 members agrees and none disagrees
         """
 
+        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+        waitColor = 0x237bd9
+        yesColor = 0x1cb82b
+        noColor = 0xc90e3a
+
+        askEmbed = discord.Embed(
+            title="Is this a good askip ?",
+            description="The results will be gathered after 5 minutes 🕘",
+            color=waitColor
+        )
+        askEmbed.set_author(name=ctx.author, icon_url=av_aut)
+        askEmbed.add_field(
+            name="Conditions",
+            value="To add this askip i need two agreements (✅) and no disagreement (❌)",
+            inline=False
+        )
+        askEmbed.add_field(
+            name="Summary",
+            value=f"User : `{ask_aut}` \nName : `{ask_name}` \nContent : `{ask_text}`"
+        )
+
+        yesEmbed = askEmbed.copy()
+        
+
+        yesEmbed.description = "Results gathered, askip added ! ✅"
+        yesEmbed.color = yesColor
+
+        noEmbed = askEmbed.copy()
+        noEmbed.color = noColor
+
         reacts = []
-        msg : discord.Interaction = await ctx.respond('is this a good askip ? \nThe results will be gathered after 5 minutes')
+        msg : discord.Interaction = await ctx.respond(embed=askEmbed)
         og = await msg.original_response()
 
         ############# add reaction choices
@@ -218,7 +248,7 @@ class Fun(commands.Cog):
         ############# function that will be called whenever there is a reaction add. 
         def check(reaction,user):
             if user == commands.bot:    # if the user is josix chan
-                return False            # ignore
+                return False                                  # ignore
             reacts.append(str(reaction))
             return str(reaction)=='❌'  # else, if anyone clicked X, return true (= stop waiting)
 
@@ -227,12 +257,15 @@ class Fun(commands.Cog):
         
         except TimeoutError:                                                    # once we have waited for 5 minutes
             if(reacts.count('❌') < 1 and reacts.count('✅') > 1):              # if no one disagrees and at least 2 ppl aggree
-                await og.edit(content="OK! askip added!")  # send fin, return true
+                await og.edit(embed=yesEmbed)  # send fin, return true
                 return True
-            await og.edit(content="no one agreed. i'm bored waiting. askip not added")
+
+            noEmbed.description = "No one agreed. i'm bored waiting. askip not added ! ❌"
+            await og.edit(embed=noEmbed)
             return False
 
-        await og.edit(content="someone didn't agree... askip not added")
+        noEmbed.description = "Someone didn't agree, askip not added ! ❌"
+        await og.edit(embed=noEmbed)
         return False
 
     @commands.slash_command(description = "fills my collection of private jokes")
@@ -264,12 +297,6 @@ class Fun(commands.Cog):
 
         username = username.lower()
         askip_name = askip_name.lower()
-
-        should_add = await self.vote_askip(ctx) # nicely asks everyone before.
-        if not should_add:
-            return
-
-        ############# append askip to the credentials json object
         credentials = {}
     
         try:
@@ -278,12 +305,24 @@ class Fun(commands.Cog):
         except JSONDecodeError:
             await ctx.respond("Empty json file")
             return
+
+        try:
+            if askip_name in credentials[username].keys():
+                await ctx.respond("This askip already exists")
+                return
+        except KeyError:
+            pass
+
+        should_add = await self.vote_askip(ctx, username, askip_name, askip_text) # nicely asks everyone before.
+        if not should_add:
+            return
+
+        ############# append askip to the credentials json object
         
         if(username not in credentials.keys()):                 # if the member is not registered in the json file
             credentials[username] = {}                          # create a new pair for it
-            
-        name = askip_name + str(len(credentials[username])) if(askip_name in credentials[username].keys()) else askip_name     # pour éviter la réécriture des askip (à améliorer)
-        credentials[username][name] = askip_text               # add joke
+
+        credentials[username][askip_name] = askip_text               # add joke
 
         ############# update the json file
         with open("askip.json", "w") as askipfile:
