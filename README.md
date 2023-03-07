@@ -18,7 +18,7 @@
 
 # What is Josix
 
-Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/). Mostly for fun its goal is just general purpose like :
+Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/). Mostly for fun its goal is at first just general purpose for the server of the Club\*Nix (join [here](https://discord.gg/PX7ceVqQkj)) like :
 - ⚙️ Reaction role 
 - 💾 Postgre database backup
 - 🎂 Birthday reminder
@@ -49,8 +49,8 @@ log_file = log_file
 error_file = error_file
 ```
 
-> the "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only).
-> the home, logs, log/error_file fields are here to get logs and get nothing in your terminal
+> The "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only). <br>
+> The home, logs, log/error_file fields are here to get logs and get nothing in your terminal
 
 - Run the bot :
 `python3 josix.py`
