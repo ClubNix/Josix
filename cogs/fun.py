@@ -6,8 +6,8 @@ from discord import option
 import os
 import json
 import random
-import blagues_api
 
+from blagues_api import BlaguesAPI
 from aiohttp import ClientResponseError
 from asyncio import TimeoutError
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ from json import JSONDecodeError
 
 load_dotenv()
 KEY = os.getenv("jokes")
-jokes = blagues_api.BlaguesAPI(KEY)
+jokes = BlaguesAPI(KEY)
 
 SCRIPT_DIR = os.path.dirname(__file__)
 FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')

@@ -1,11 +1,11 @@
 
 
 <h1 align="center">
-  <img src="https://cdn.discordapp.com/attachments/693166692838408333/708425236730609704/1569691438417.png" alt="icon_josix"  height="200" width="200">
+  <img src="https://cdn.discordapp.com/attachments/933118079028826145/951590071948177488/josix.png" alt="icon_josix"  height="200" width="200">
   <br>
   Josix by Club*Nix
   <br>
-  </h1>
+</h1>
   
 <p align="center">
   <a href="https://www.clubnix.fr/" alt="Club*Nix"><img src="https://img.shields.io/badge/A_project-Club*Nix-informational"/></a>
@@ -18,10 +18,13 @@
 
 # What is Josix
 
-Josix is a discord bot written with Pycord in Python. Mostly for fun its goal is doing stats for the server and giving many options to help the users :
-- Reaction role 
-- private jokes register
-- etc...
+Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/). Mostly for fun its goal is just general purpose like :
+- ⚙️ Reaction role 
+- 💾 Postgre database backup
+- 🎂 Birthday reminder
+- 🧠 Private jokes register
+- 😂 Joke generator
+
 
 # Install and lauch 
 - Clone the repository :
@@ -78,7 +81,7 @@ You can get an error on installing psycopg2, enter the following commands :
 And then you can retry to install psycopg2
 
 ## Documentation
-...
+We promise we will document our code
 
 ## License
 Josix is under the [Apache 2-0 license](https://github.com/ClubNix/Josix/blob/master/LICENSE)
