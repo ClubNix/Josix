@@ -12,10 +12,25 @@ LOGS_PATH = HOME_PATH + os.getenv("logs")
 LOG_FILE = LOGS_PATH + os.getenv("log_file")
 ERROR_FILE = LOGS_PATH + os.getenv("error_file")
 
+LOG_COLOR = '\033[94m'
+ERROR_COLOR = '\033[91m'
+END_FORMAT = '\033[0m :' 
+
+
+# Adjust the log to keep only the message and not the color format
+def adjustLog(msg: str, isError: bool) -> str:
+    if msg == "\n":
+        return msg
+
+    if isError:
+        return msg.replace(ERROR_COLOR, "").replace(END_FORMAT, " : ")
+    else:
+        return msg.replace(LOG_COLOR, "").replace(END_FORMAT, " : ")
+
 #write a function to write to the log file a msg in and a timestamp in blue like this, example : 2016-01-01 00:00:00 : msg
 def writeLog(msg : str):
     with open(LOG_FILE, 'a') as f:
-        f.write('\033[94m' + str(datetime.now()) + '\033[0m : ' + msg + '\n')
+        f.write(LOG_COLOR + str(datetime.now()) + END_FORMAT + msg + '\n')
 
 #format the error to a string to get the file, line and message without whole traceback
 def formatError(e : Exception) -> str:
@@ -25,4 +40,4 @@ def formatError(e : Exception) -> str:
 #write a function to write to the error file a msg in red in and a timestamp like this, example : 2016-01-01 00:00:00 : msg
 def writeError(msg : str):
     with open(ERROR_FILE, 'a') as f:
-        f.write('\033[91m' + str(datetime.now()) + '\033[0m : ' + msg + '\n')
+        f.write(ERROR_COLOR + str(datetime.now()) + END_FORMAT + msg + '\n')
