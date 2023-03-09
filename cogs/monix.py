@@ -1,5 +1,6 @@
 import discord 
 from discord.ext import commands
+from discord import ApplicationContext, option
 
 import requests as r
 import urllib3
@@ -48,7 +49,6 @@ class Monix(commands.Cog):
             }
         except KeyError:
             raise MonixAPIError("Error on Josix login")
-        print(self.session.headers)
 
 
     def request(
@@ -101,6 +101,41 @@ class Monix(commands.Cog):
 
         # Return the data
         return data
+
+
+##### -----------------------------
+#####
+##### Bot commands
+#####
+##### -----------------------------
+
+
+
+    @commands.slash_command(description="See all the products")
+    @commands.cooldown(1, 30, commands.BucketType.user)
+    @option(
+        input_type=int,
+        name="count",
+        description="The number of products you want to see",
+        default=10
+    )
+    async def see_products(self, ctx: ApplicationContext, count: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        data = self.request(
+            target="/products/",
+            method=HTTPMethod.GET
+        )
+
+        res = ""
+        countMax = 0
+        for product in data["data"]:
+            res += f"{product['id']} : {product['name']} / {product['price']} <:monixCoin:1029767611761823784> / {product['stock']}\n"
+            countMax += 1
+            if countMax >= count:
+                break
+
+        await ctx.respond(res)
 
 
 def setup(bot: commands.Bot):
