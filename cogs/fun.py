@@ -183,12 +183,12 @@ class Fun(commands.Cog):
             username = username.lower()
         else:
             username = random.choice(list(credentials.keys()))
-
-        if not self.checkJson(credentials[username]):
-            await ctx.respond("Empty value or json file")
-            return
         
         try:
+            if not self.checkJson(credentials[username]):
+                await ctx.respond("Empty value or json file")
+                return
+                
             if askip_name:
                 blg = askip_name
             else:

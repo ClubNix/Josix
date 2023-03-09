@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import ApplicationContext
+from discord import ApplicationContext, option
 
 from database.database import DatabaseHandler
 from logwrite import LOG_FILE, ERROR_FILE, adjustLog
@@ -66,7 +66,7 @@ class Owner(commands.Cog):
 
     @commands.slash_command(description="Display the last logs")
     @commands.is_owner()
-    @discord.option(
+    @option(
         input_type=int,
         name="count",
         description="Number of lines to get",
@@ -82,7 +82,7 @@ class Owner(commands.Cog):
 
     @commands.slash_command(description="Display the last errors")
     @commands.is_owner()
-    @discord.option(
+    @option(
         input_type=int,
         name="count",
         description="Number of lines to get",
