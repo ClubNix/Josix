@@ -35,7 +35,7 @@ class Usage(commands.Cog):
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
 
-                if not cog or (cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
+                if not cog or cogName.lower() == "events" or (cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
 
                 commands = cog.get_commands()
