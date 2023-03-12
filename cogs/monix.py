@@ -327,5 +327,34 @@ class Monix(commands.Cog):
             embed.add_field(name="Bottom " + name_type, value="".join(map(str, bottom)))
         await ctx.respond(embed=embed)
 
+
+    @commands.slash_command(description="Ranking of the most consumed products during the last 7 days")
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def products_ranking(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        data = self.request(
+            "/history/",
+            HTTPMethod.GET,
+        )
+
+        test = data['data']
+        print(test[0])
+        print(test[len(test)-1])
+        await ctx.respond("Done !")
+
+    @commands.slash_command(description="Ranking of the biggest consumers during the last 7 days")
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def members_ranking(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        data = self.request(
+            "/history/",
+            HTTPMethod.GET,
+        )
+
+        test = data['data']
+        print(test[0])
+        print(test[len(test)-1])
+        await ctx.respond("Done !")
+
 def setup(bot: commands.Bot):
     bot.add_cog(Monix(bot))
