@@ -44,7 +44,13 @@ class Monix(commands.Cog):
         self.base_url = "https://monix.clubnix.fr/api"
         self.session = Session()
         self.session.verify = False
-        
+        self.generate_token()
+
+    def generate_token(self) -> None:
+        """
+        Method to get the token of the bot and implements it in headers.
+        Check if the token is valid with a basic call to the API
+        """
         authentication = self.request(
             target="/auth/login",
             method=HTTPMethod.POST,
@@ -62,6 +68,17 @@ class Monix(commands.Cog):
         except KeyError:
             raise MonixAPIError("Error on Josix login")
 
+        try:
+            checkToken = self.session.request(
+                HTTPMethod.GET.value,
+                self.base_url + "/users/1",
+                json=None,
+            )
+            if checkToken.status_code == 403:
+                raise MonixAPIError("Invalid token generated")
+        except Exception:
+            raise MonixAPIError("Unable to connect to the API")
+        
 
     def request(
         self,
@@ -96,7 +113,11 @@ class Monix(commands.Cog):
             except Exception:
                 raise MonixAPIError(data.text)
         elif data.status_code == 403:
-            raise MonixAPIError("Access denied (403 Forbidden)")
+            if str.lower(data.text["message"]).startswith("token"):
+                self.generate_token()
+                return self.request(target, method, json)
+            else:
+                raise MonixAPIError("Access Forbidden check credentials")
         elif data.status_code < 200 or data.status_code >= 300:
             raise MonixAPIError(f"Wrong status code obtained : {data.status_code}")
 
