@@ -79,8 +79,9 @@ error_file = error_file
 You can get an error on installing psycopg2, enter the following commands :
 - pip3 install psycopg2-binary
 - sudo apt install libpq-dev python3-dev
-
 And then you can retry to install psycopg2
+<br>
+Disable the monix extension by deleting the corresponding line in `cogs/__init.py__`. This extension can only work in our network.
 
 ## Documentation
 We promise we will document our code
