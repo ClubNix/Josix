@@ -143,7 +143,7 @@ class Monix(commands.Cog):
         res = ""
         countMax = 0
         for product in data["data"]:
-            res += f"{product['id']} : {product['name']} / {product['price']} <:monixCoin:1029767611761823784> / {product['stock']}\n"
+            res += f"{product['name']} : {product['price']} <:monixCoin:1029767611761823784> (**{product['stock']}** in stocks)\n"
             countMax += 1
             if countMax >= count:
                 break
@@ -301,7 +301,9 @@ class Monix(commands.Cog):
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(name="Top " + name_type, value="".join(map(str, top)))
-        embed.add_field(name="Bottom " + name_type, value="".join(map(str, bottom)))
+
+        if value_type == 0:
+            embed.add_field(name="Bottom " + name_type, value="".join(map(str, bottom)))
         await ctx.respond(embed=embed)
 
 def setup(bot: commands.Bot):
