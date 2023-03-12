@@ -15,7 +15,6 @@ from json import JSONDecodeError
 
 load_dotenv()
 KEY = os.getenv("jokes")
-jokes = BlaguesAPI(KEY)
 
 SCRIPT_DIR = os.path.dirname(__file__)
 FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
@@ -23,6 +22,7 @@ FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
 class Fun(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.jokes = BlaguesAPI(KEY)
 
     def checkJson(self, file: dict) -> bool:
         return (file.keys()) or (len(file.keys()) > 0)
@@ -73,6 +73,8 @@ class Fun(commands.Cog):
         ]
     )
     async def joke(self, ctx: ApplicationContext, joke_type: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        
         # To prevent some jokes in a category, put the ID of the category here
         is_in_public = ctx.channel.category_id == 751114303314329704 
         disallowCat = []
@@ -90,14 +92,14 @@ class Fun(commands.Cog):
 
         if joke_type is None or joke_type == -1:
             try:
-                blg = await jokes.random(disallow=disallowCat)
+                blg = await self.jokes.random(disallow=disallowCat)
             except ClientResponseError:
                 await ctx.respond("Token error")
                 return
 
         else:
             try:
-                blg = await jokes.random_categorized(types[joke_type])
+                blg = await self.jokes.random_categorized(types[joke_type])
             except ClientResponseError:
                 await ctx.respond("Token error")
                 return
