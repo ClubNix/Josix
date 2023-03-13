@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, option
 
+import datetime
+
 from enum import Enum
 from dotenv import load_dotenv
 from os import getenv
@@ -27,7 +29,7 @@ class MonixAPIError(Exception):
     Exception for every Monix API errors
     """
 
-@dataclass(frozen=True)
+@dataclass()
 class Element:
     """Class for an element"""
     name: str
@@ -125,8 +127,7 @@ class Monix(commands.Cog):
         try:
             data = data.json()
         except ValueError:
-            print(data.text)
-            raise MonixAPIError("Unable to parse JSON response")
+            raise MonixAPIError(f"Unable to parse JSON response : {data.text}")
 
         # Raise an exception if an error occurred
         if type(data) == dict and "error" in data:
@@ -257,7 +258,7 @@ class Monix(commands.Cog):
             for index, elmt in enumerate(bottom):
                 if recordVal < elmt.value:
                     return index
-            return len(bottom)    
+            return len(bottom)
 
 
     @commands.slash_command(description="Leaderboard of the most and least rich members in Monix")
@@ -328,33 +329,109 @@ class Monix(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-    @commands.slash_command(description="Ranking of the most consumed products during the last 7 days")
-    @commands.cooldown(1, 60, commands.BucketType.user)
-    async def products_ranking(self, ctx: ApplicationContext):
-        await ctx.defer(ephemeral=False, invisible=False)
+
+    def getHistoryValues(self, isMember: bool) -> dict[int, Element]:
         data = self.request(
             "/history/",
             HTTPMethod.GET,
         )
 
-        test = data['data']
-        print(test[0])
-        print(test[len(test)-1])
-        await ctx.respond("Done !")
+        today = datetime.date.today()
+        records = data['data']
+        elements: dict[int, Element] = {}
+        idUser = 0
+        nameUser = ""
+        valTransac = 0 
+
+        for record in records:
+            dateRecord = datetime.datetime.strptime(record['date'].split("T")[0], "%Y-%m-%d").date()
+            if (today - dateRecord).days > 7:
+                break
+
+            try:
+                if isMember:
+                    idUser, nameUser, valTransac = record['User']['id'], record['User']['username'], record['movement']
+                else:
+                    idUser, nameUser = record['Product']['id'], record['Product']['name']
+                    valTransac = int(-(record['movement'] / record['Product']['price']))
+
+                # We want to look at how many credits a member lost or how many products have been sold
+                if (isMember and valTransac >= 0) or (not isMember and valTransac <= 0):
+                    continue
+
+                elmt = elements.get(idUser)
+                if elmt is None:
+                    elements[idUser] = Element(nameUser, valTransac, isMember)
+                else:
+                    elements[idUser].value += valTransac
+            except KeyError as e:
+                continue
+
+        return elements
+
+
+    def sortElements(self, elements: list[Element], isMember: bool) -> list[Element]:
+        n = len(elements)
+        if n == 1:
+            return elements
+        
+        arraySorted = False
+        for i in range(n):
+            arraySorted = True
+            for j in range(n-1-i):
+                if isMember:
+                    if elements[j].value > elements[j+1].value:
+                        elements[j], elements[j+1] = elements[j+1], elements[j]
+                        arraySorted = False
+                else:
+                    if elements[j].value < elements[j+1].value:
+                        elements[j], elements[j+1] = elements[j+1], elements[j]
+                        arraySorted = False
+            if arraySorted:
+                break
+
+        return elements
+
+
+    @commands.slash_command(description="Ranking of the most consumed products during the last 7 days")
+    @commands.cooldown(1, 60, commands.BucketType.user)
+    async def products_ranking(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        elements = self.getHistoryValues(False)
+
+        if len(elements.keys()) == 0:
+            await ctx.respond("No transaction found during the last 7 days")
+            return
+        
+        sortedElmts = self.sortElements(list(elements.values()), False)[:10]
+        embed = discord.Embed(
+            title="Monix Ranking",
+            description="Biggest consumed products",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.add_field(name="Rank", value="".join(map(str, sortedElmts)))
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Ranking of the biggest consumers during the last 7 days")
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def members_ranking(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        data = self.request(
-            "/history/",
-            HTTPMethod.GET,
-        )
+        elements = self.getHistoryValues(True)
 
-        test = data['data']
-        print(test[0])
-        print(test[len(test)-1])
-        await ctx.respond("Done !")
+        if len(elements.keys()) == 0:
+            await ctx.respond("No transaction found during the last 7 days")
+            return
+        
+        sortedElmts = self.sortElements(list(elements.values()), True)[:10]
+        embed = discord.Embed(
+            title="Monix Ranking",
+            description="Biggest monix consumers",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.add_field(name="Rank", value="".join(map(str, sortedElmts)))
+        await ctx.respond(embed=embed)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Monix(bot))
