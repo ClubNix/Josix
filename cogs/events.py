@@ -89,7 +89,10 @@ class Events(commands.Cog):
             await ctx.respond("This command is only for my master ! (skill issue n°3)")
         else:
             await ctx.respond("Unknown error occured")
-            log.writeError(str(error))
+            try:
+                log.writeError(log.formatError(error))
+            except Exception:
+                log.writeError(str(error))
         
 
 def setup(bot: commands.Bot):
