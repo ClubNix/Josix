@@ -30,8 +30,8 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 
 # Install and lauch 
 - Clone the repository :
-`git clone git@github.com:ClubNix/Josix.git`
-`cd Josix`
+  - `git clone git@github.com:ClubNix/Josix.git`
+  - `cd Josix`
 
 - Get all the required packages :
 `pip install -r requirements.txt`
@@ -81,9 +81,10 @@ error_file = error_file
 You can get an error on installing psycopg2, enter the following commands :
 - pip3 install psycopg2-binary
 - sudo apt install libpq-dev python3-dev
+
 And then you can retry to install psycopg2
 <br>
-Disable the monix extension by deleting the corresponding line in `cogs/__init.py__` . This extension can only work in our network.
+Disable the monix extension by deleting the corresponding line in `cogs/__init__.py`. This extension can only work in our network.
 
 ## Documentation
 We promise we will document our code
