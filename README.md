@@ -49,8 +49,6 @@ monix_log = username_for_monix (only for us)
 monix_psswd = password_for_monix (only for us)
 home = your_home_directory
 logs = log_repository_in_your_home
-log_file = log_file
-error_file = error_file
 ```
 
 > The "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only). <br>

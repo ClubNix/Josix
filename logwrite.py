@@ -9,12 +9,12 @@ load_dotenv()
 #GLOBAL PATHS
 HOME_PATH = os.getenv("home")
 LOGS_PATH = HOME_PATH + os.getenv("logs")
-LOG_FILE = LOGS_PATH + os.getenv("log_file")
-ERROR_FILE = LOGS_PATH + os.getenv("error_file")
+LOG_FILE = LOGS_PATH + "josixout.log"
+ERROR_FILE = LOGS_PATH + "josixerr.log"
 
 LOG_COLOR = '\033[94m'
 ERROR_COLOR = '\033[91m'
-END_FORMAT = '\033[0m :' 
+END_FORMAT = '\033[0m : ' 
 
 
 # Adjust the log to keep only the message and not the color format
