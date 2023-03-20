@@ -6,7 +6,7 @@
   Josix by Club*Nix
   <br>
 </h1>
-  
+
 <p align="center">
   <a href="https://www.clubnix.fr/" alt="Club*Nix"><img src="https://img.shields.io/badge/A_project-Club*Nix-informational"/></a>
   <a href="https://github.com/ClubNix/Josix/blob/master/LICENSE" alt="apache"><img src="https://img.shields.io/badge/Apache-2.0-green" /></a>
@@ -54,9 +54,6 @@ logs = log_repository_in_your_home
 > The "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only). <br>
 > The home, logs, log/error_file fields are here to get logs and get nothing in your terminal
 
-- Run the bot :
-`python3 josix.py`
-
 - Add your own private jokes :
 	- Create a file `askip.json` (if you want to change the name you have to change it in the `fun.py` file)
 	- Fill it with your private jokes like this :
@@ -74,6 +71,10 @@ logs = log_repository_in_your_home
 	}
 }
 ```
+
+- Run the bot :
+`python3 josix.py`
+
 
 ## Warning
 You can get an error on installing psycopg2, enter the following commands :
