@@ -3,15 +3,16 @@ from discord.ext import commands
 from discord import ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed
 
 from dotenv import load_dotenv
+from os import getenv
 from cogs import FILES
 
-import os
 import logwrite as log
 
-load_dotenv()
-TOKEN = os.getenv("discord")
 
 class Josix(commands.Bot):
+    load_dotenv()
+    _TOKEN = getenv("discord")
+
     def __init__(self, intents: discord.Intents):
         super().__init__(
             description = "Josix !", 
@@ -29,6 +30,9 @@ class Josix(commands.Bot):
             except (ModuleNotFoundError, ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed) as error:
                 log.writeError(log.formatError(error))
 
+    def run(self):
+        super().run(Josix._TOKEN)
+
 if __name__ == "__main__":
     # The informations available for the bot
     intents = discord.Intents.none()
@@ -39,4 +43,4 @@ if __name__ == "__main__":
     intents.reactions = True
 
     josix = Josix(intents)
-    josix.run(TOKEN)
+    josix.run()

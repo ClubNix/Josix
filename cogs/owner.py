@@ -7,10 +7,10 @@ from logwrite import LOG_FILE, ERROR_FILE, adjustLog
 
 import os
 
-SCRIPT_DIR = os.path.dirname(__file__)
-SQL_FILE = os.path.join(SCRIPT_DIR, '../database/backup.sql')
-
 class Owner(commands.Cog):
+    _SCRIPT_DIR = os.path.dirname(__file__)
+    _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
+    
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler()
@@ -57,7 +57,7 @@ class Owner(commands.Cog):
     async def backup_execute(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
-        with open(SQL_FILE, 'r') as f:
+        with open(Owner._SQL_FILE, 'r') as f:
             lines = f.readlines()
         for line in lines:
             self.db.execute(line)

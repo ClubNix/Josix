@@ -12,14 +12,6 @@ from requests import Session
 from urllib3.exceptions import InsecureRequestWarning
 from dataclasses import dataclass
 
-
-disable_warnings(InsecureRequestWarning)
-load_dotenv()
-
-JOSIX_LOGIN = getenv("monix_log")
-JOSIX_PSSWD = getenv("monix_psswd") 
-LOG_STOCK = getenv("home") + getenv("logs") + "stocks.txt"
-
 class HTTPMethod(Enum):
     GET = "GET"
     POST = "POST"
@@ -29,18 +21,23 @@ class MonixAPIError(Exception):
     Exception for every Monix API errors
     """
 
-@dataclass()
-class Element:
-    """Class for an element"""
-    name: str
-    value: int
-    isMember: bool
-
-    def __str__(self) -> str:
-        return f"• {self.name} (**{self.value}**" + (" coins)" if self.isMember else ")") +"\n" 
-
-
 class Monix(commands.Cog):
+    @dataclass()
+    class Element:
+        """Class for an element"""
+        name: str
+        value: int
+        isMember: bool
+
+        def __str__(self) -> str:
+            return f"• {self.name} (**{self.value}**" + (" coins)" if self.isMember else ")") +"\n" 
+
+    disable_warnings(InsecureRequestWarning)
+    load_dotenv()
+    _JOSIX_LOGIN = getenv("monix_log")
+    _JOSIX_PSSWD = getenv("monix_psswd") 
+    _LOG_STOCK = getenv("home") + getenv("logs") + "stocks.txt"
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.base_url = "https://monix.clubnix.fr/api"
@@ -57,8 +54,8 @@ class Monix(commands.Cog):
             target="/auth/login",
             method=HTTPMethod.POST,
             json={
-                "username":JOSIX_LOGIN,
-                "password":JOSIX_PSSWD
+                "username":Monix._JOSIX_LOGIN,
+                "password":Monix._JOSIX_PSSWD
             }
         )
 
@@ -193,7 +190,7 @@ class Monix(commands.Cog):
 
         nbStocks = 0
         if get_stocks:
-            with open(LOG_STOCK, "w") as f:
+            with open(Monix._LOG_STOCK, "w") as f:
                 for product in data["data"]:
                     nbStocks += product["stock"]
                     f.write(f"{product['name']} : {product['stock']}\n")
@@ -287,8 +284,8 @@ class Monix(commands.Cog):
         name_type = "members" if value_type == 0 else "products"
         name_record = "username" if value_type == 0 else "name"
         name_data = "balance" if value_type == 0 else "stock"
-        top: list[Element] = []
-        bottom: list[Element] = []
+        top: list[Monix.Element] = []
+        bottom: list[Monix.Element] = []
 
         for record in data["data"]:
             recordVal = record[name_data]
@@ -300,7 +297,7 @@ class Monix(commands.Cog):
             if record["id"] == 1 and value_type == 0:
                 continue
 
-            newElmt = Element(record[name_record], recordVal, value_type==0)
+            newElmt = Monix.Element(record[name_record], recordVal, value_type==0)
             checkT = self.compareTop(top, recordVal)
             if checkT > -1:
                 top.insert(checkT, newElmt)
@@ -338,7 +335,7 @@ class Monix(commands.Cog):
 
         today = datetime.date.today()
         records = data['data']
-        elements: dict[int, Element] = {}
+        elements: dict[int, Monix.Element] = {}
         idUser = 0
         nameUser = ""
         valTransac = 0 
@@ -361,7 +358,7 @@ class Monix(commands.Cog):
 
                 elmt = elements.get(idUser)
                 if elmt is None:
-                    elements[idUser] = Element(nameUser, valTransac, isMember)
+                    elements[idUser] = Monix.Element(nameUser, valTransac, isMember)
                 else:
                     elements[idUser].value += valTransac
             except KeyError as e:

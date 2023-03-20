@@ -13,16 +13,16 @@ from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
 
-load_dotenv()
-KEY = os.getenv("jokes")
-
-SCRIPT_DIR = os.path.dirname(__file__)
-FILE_PATH = os.path.join(SCRIPT_DIR, '../askip.json')
 
 class Fun(commands.Cog):
+    load_dotenv()
+    _KEY = os.getenv("jokes")
+    _SCRIPT_DIR = os.path.dirname(__file__)
+    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../askip.json')
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.jokes = BlaguesAPI(KEY)
+        self.jokes = BlaguesAPI(Fun._KEY)
 
     def checkJson(self, file: dict) -> bool:
         return (file.keys()) or (len(file.keys()) > 0)
@@ -125,7 +125,7 @@ class Fun(commands.Cog):
             if username:
                 username = username.lower()
 
-                with open(FILE_PATH, 'r') as askip:
+                with open(Fun._FILE_PATH, 'r') as askip:
                     lst = json.load(askip)
                     try:
                         if not self.checkJson(lst[username]):
@@ -139,7 +139,7 @@ class Fun(commands.Cog):
                         return
 
             else:
-                with open(FILE_PATH, 'r') as askip:
+                with open(Fun._FILE_PATH, 'r') as askip:
                     data = json.load(askip).keys()
             await ctx.respond("Available names : `" + "`, `".join(data) + "`")
 
@@ -167,7 +167,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def askip(self, ctx: ApplicationContext, username: str, askip_name: str):
         try:
-            with open(FILE_PATH, 'r') as askip:
+            with open(Fun._FILE_PATH, 'r') as askip:
                 credentials = json.load(askip)
                 if not self.checkJson(credentials):
                     await ctx.respond("Empty value or json file")
