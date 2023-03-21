@@ -200,7 +200,7 @@ class Monix(commands.Cog):
             for product in data["data"]:
                 nbStocks += product["stock"]
 
-        if nbStocks < 150:
+        if nbStocks < 50:
             roleT = ctx.guild.get_role(1017914272585629788)  # Role of the treasurer
             text = roleT.mention if roleT else "Role not found"
 
