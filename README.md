@@ -24,7 +24,7 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 - 🎂 Birthday reminder
 - 🧠 Private jokes register
 - 😂 Joke generator
-- 🔓 Log system (basic log + error log) with custom display
+- 🔓 Log system (basic log + error log) with custom display with error formating
 - 💰 Commands to use our food system API, [Monix](https://github.com/ClubNix/monix-2.0)
 
 

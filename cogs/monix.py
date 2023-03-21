@@ -136,9 +136,9 @@ class Monix(commands.Cog):
         return data
 
     # -----------------------------
-    #####
+    #
     # Bot commands
-    #####
+    #
     # -----------------------------
 
     @commands.slash_command(description="See all the products")
