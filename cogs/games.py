@@ -108,7 +108,7 @@ class Games(commands.Cog):
 
         embed = discord.Embed(title="Dart Game", description="Results of last dart game", color=0x0089FF)
         embed.set_author(name=ctx.author)
-        embed.set_thumbnail(url=(ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar))
+        embed.set_thumbnail(url=ctx.author.display_avatar)
         embed.add_field(name="Winner", value=f"{winner.mention} : {elo1} + {newElo1 - elo1} -> **{newElo1}**",
                         inline=False)
         embed.add_field(name="Loser(s)", value=text)

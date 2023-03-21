@@ -34,10 +34,8 @@ class Fun(commands.Cog):
     @commands.slash_command(description="Ping the bot !")
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def ping(self, ctx: ApplicationContext):
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
-
         embed = discord.Embed(title="Pong !", color=0x0089FF)
-        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.set_thumbnail(url="https://media.giphy.com/media/fvA1ieS8rEV8Y/giphy.gif")
         embed.add_field(name="", value=f"Ping : {round(self.bot.latency*1000, 2)} ms")
         await ctx.respond(embed=embed)
@@ -79,7 +77,6 @@ class Fun(commands.Cog):
         disallowCat = []
         types = ["global", "dev", "beauf", "blondes", "dark", "limit"]
         blg = None
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
 
         if (is_in_public):
             disallowCat.append(types.pop())
@@ -104,7 +101,7 @@ class Fun(commands.Cog):
                 return
 
         embed = discord.Embed(title=blg.joke, description=f"||{blg.answer}||", color=0x0089FF)
-        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -210,7 +207,6 @@ class Fun(commands.Cog):
         !!! Add it only if 2 members agrees and none disagrees
         """
 
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         waitColor = 0x237bd9
         yesColor = 0x1cb82b
         noColor = 0xc90e3a
@@ -220,7 +216,7 @@ class Fun(commands.Cog):
             description="The results will be gathered after 5 minutes 🕘",
             color=waitColor
         )
-        askEmbed.set_author(name=ctx.author, icon_url=av_aut)
+        askEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         askEmbed.add_field(
             name="Conditions",
             value="To add this askip i need two agreements (✅) and no disagreement (❌)",
@@ -345,11 +341,7 @@ class Fun(commands.Cog):
             user = ctx.author
 
         embed = discord.Embed(title=f"The avatar of {user}", color=0x0089FF)
-        embed.set_image(url=user.avatar.url if user.avatar else user.default_avatar)
-        embed.set_author(
-            name=ctx.author,
-            icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
-        )
+        embed.set_image(url=user.display_avatar)
         await ctx.respond(embed=embed)
 
 

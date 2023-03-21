@@ -25,15 +25,12 @@ class Usage(commands.Cog):
                                 )]
     )
     async def help(self, ctx: ApplicationContext, command_name: str):
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
-        av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
-
         if not command_name:
             helpEmbed = discord.Embed(title="Help embed",
                                       description=f"Use /help [command_name] to see more info for a command",
                                       color=0x0089FF)
-            helpEmbed.set_author(name=ctx.author, icon_url=av_aut)
-            helpEmbed.set_thumbnail(url=av_bot)
+            helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+            helpEmbed.set_thumbnail(url=self.bot.user.display_avatar)
             for cogName in FILES:
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
@@ -93,8 +90,8 @@ class Usage(commands.Cog):
                                    description=f"Description of the command **{command.name}**\n <> -> Required "
                                                f"parameters | [] -> Optional parameters",
                                    color=0x0089FF)
-            embed2.set_thumbnail(url=av_bot)
-            embed2.set_author(name=ctx.author, icon_url=av_aut)
+            embed2.set_thumbnail(url=self.bot.user.display_avatar)
+            embed2.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
             embed2.add_field(name="Description :", value=desc)
             embed2.add_field(name="Usage :", value=usage, inline=False)
             embed2.add_field(name="Options : ", value=options, inline=False)
@@ -111,7 +108,7 @@ class Usage(commands.Cog):
     async def choose(self, ctx: ApplicationContext, sentences: str):
         values = sentences.split(";")
         embed = discord.Embed(title="Result", description=random.choice(values))
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -232,9 +229,7 @@ class Usage(commands.Cog):
             description="All the birthdays form the server",
             color=0x0089FF
         )
-
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
-        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
 
         if month:
             embed = self.getMonthField(embed, ctx.guild_id, month)
@@ -257,9 +252,8 @@ class Usage(commands.Cog):
             await ctx.respond("User not registered")
             return
 
-        av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         embed = discord.Embed(title=f"Birthday of {user}", color=0x0089FF)
-        embed.set_author(name=ctx.author, icon_url=av_aut)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(name="Date", value=res[0])
         await ctx.respond(embed=embed)
 
