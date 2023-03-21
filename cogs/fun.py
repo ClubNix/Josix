@@ -26,7 +26,6 @@ class Fun(commands.Cog):
 
     def checkJson(self, file: dict) -> bool:
         return (file.keys()) or (len(file.keys()) > 0)
-        
 
     @commands.slash_command(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
@@ -134,7 +133,10 @@ class Fun(commands.Cog):
 
                         data = lst[username].keys()
                     except KeyError:
-                        cmd = self.bot.get_application_command("list_askip", type=discord.commands.core.ApplicationCommand)
+                        cmd = self.bot.get_application_command(
+                            "list_askip",
+                            type=discord.commands.core.ApplicationCommand
+                        )
                         await ctx.invoke(cmd, user=None)
                         return
 
@@ -148,7 +150,7 @@ class Fun(commands.Cog):
             return
 
     @commands.slash_command(
-        description = "Get a private joke from your group",
+        description="Get a private joke from your group",
         options=[
             discord.Option(
                 input_type=str,
@@ -230,7 +232,6 @@ class Fun(commands.Cog):
         )
 
         yesEmbed = askEmbed.copy()
-        
 
         yesEmbed.description = "Results gathered, askip added ! ✅"
         yesEmbed.color = yesColor
@@ -239,26 +240,28 @@ class Fun(commands.Cog):
         noEmbed.color = noColor
 
         reacts = []
-        msg : discord.Interaction = await ctx.respond(embed=askEmbed)
+        msg: discord.Interaction = await ctx.respond(embed=askEmbed)
         og = await msg.original_response()
 
-        ############# add reaction choices
+        # add reaction choices
 
-        for reaction in ['✅','❌']:
+        for reaction in ['✅', '❌']:
             await og.add_reaction(reaction)
 
-        ############# function that will be called whenever there is a reaction add. 
-        def check(reaction,user):
+        # function that will be called whenever there is a reaction add.
+        def check(reaction, user):
             if user == commands.bot:    # if the user is josix chan
                 return False                                  # ignore
             reacts.append(str(reaction))
-            return str(reaction)=='❌'  # else, if anyone clicked X, return true (= stop waiting)
+            return str(reaction) == '❌'  # else, if anyone clicked X, return true (= stop waiting)
 
-        try:    
-            await self.bot.wait_for('reaction_add', check=check,timeout=300)    # timeout = 15 minutes=900(it's ok for us, this is a coroutine)    
+        try:
+            # timeout = 15 minutes=900(it's ok for us, this is a coroutine)
+            await self.bot.wait_for('reaction_add', check=check, timeout=300)
         
-        except TimeoutError:                                                    # once we have waited for 5 minutes
-            if(reacts.count('❌') < 1 and reacts.count('✅') > 1):              # if no one disagrees and at least 2 ppl aggree
+        except TimeoutError:  # once we have waited for 5 minutes
+            # if no one disagrees and at least 2 ppl aggree
+            if(reacts.count('❌') < 1 and reacts.count('✅') > 1):
                 await og.edit(embed=yesEmbed)  # send fin, return true
                 return True
 
@@ -270,7 +273,7 @@ class Fun(commands.Cog):
         await og.edit(embed=noEmbed)
         return False
 
-    @commands.slash_command(description = "fills my collection of private jokes")
+    @commands.slash_command(description="fills my collection of private jokes")
     @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -315,21 +318,20 @@ class Fun(commands.Cog):
         except KeyError:
             pass
 
-        should_add = await self.vote_askip(ctx, username, askip_name, askip_text) # nicely asks everyone before.
+        should_add = await self.vote_askip(ctx, username, askip_name, askip_text)  # nicely asks everyone before.
         if not should_add:
             return
 
-        ############# append askip to the credentials json object
+        # append askip to the credentials json object
         
-        if(username not in credentials.keys()):                 # if the member is not registered in the json file
-            credentials[username] = {}                          # create a new pair for it
+        if(username not in credentials.keys()):  # if the member is not registered in the json file
+            credentials[username] = {}  # create a new pair for it
 
-        credentials[username][askip_name] = askip_text               # add joke
+        credentials[username][askip_name] = askip_text  # add joke
 
-        ############# update the json file
+        # update the json file
         with open("askip.json", "w") as askipfile:
             askipfile.write(json.dumps(credentials, indent=4))  # write new askip file
-
 
     @commands.slash_command(description="Get the avatar of someone")
     @option(
@@ -344,7 +346,10 @@ class Fun(commands.Cog):
 
         embed = discord.Embed(title=f"The avatar of {user}", color=0x0089FF)
         embed.set_image(url=user.avatar.url if user.avatar else user.default_avatar)
-        embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar)
+        embed.set_author(
+            name=ctx.author,
+            icon_url=ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
+        )
         await ctx.respond(embed=embed)
 
 

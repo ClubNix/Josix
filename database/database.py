@@ -8,6 +8,7 @@ import logwrite as log
 SCRIPT_DIR = os.path.dirname(__file__)
 FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 
+
 class DatabaseHandler():
     def __init__(self) -> None:
         try:
@@ -42,7 +43,9 @@ class DatabaseHandler():
 
     def backup(self, table: str):
         checkTable = f"AND table_name = '{table}'" if len(table) > 0 else ""
-        self.cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' {checkTable};")
+        self.cursor.execute(
+            f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' {checkTable};"
+        )
         res = self.cursor.fetchall()
 
         with open(FILE_PATH, "w") as f:
@@ -72,11 +75,9 @@ class DatabaseHandler():
                             row_data.append(repr(rd))
                     f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
 
-
     ###############
-    ############### Getters
+    # Getters
     ###############
-
 
     def getGuild(self, guildId: int) -> tuple:
         query = f"SELECT * FROM josix.Guild WHERE idGuild = {guildId};"
@@ -168,11 +169,12 @@ class DatabaseHandler():
         return self.cursor.fetchone()
 
     ###############
-    ############### Adders
+    # Adders
     ###############
 
     def addGuild(self, guildId: int, chanStat: int = 0, nbMembers: int = 0, status: int = 0):
-        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanNews) VALUES({guildId},{nbMembers},'{status}',{chanStat})"
+        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanNews) VALUES " \
+                f"({guildId},{nbMembers},'{status}',{chanStat})"
         self.cursor.execute(query)
         self.conn.commit()
 
@@ -185,7 +187,8 @@ class DatabaseHandler():
         if len(couple) != 2:
             return
             
-        query1 = f"INSERT INTO josix.ReactCouple (nomEmoji, idRole) VALUES ('{couple[0]}',{couple[1]}) RETURNING idCouple;"
+        query1 = f"INSERT INTO josix.ReactCouple (nomEmoji, idRole) VALUES " \
+                 f"('{couple[0]}',{couple[1]}) RETURNING idCouple;"
         self.cursor.execute(query1)
         idCouple = self.cursor.fetchone()[0]
 
@@ -209,12 +212,13 @@ class DatabaseHandler():
             text += foe.name + "', '"
         text = text[0:len(text)-3]
 
-        query = f"INSERT INTO josix.DartLog (idGuild, winnerName, losersName) VALUES({guildId}, '{winner.name}', ARRAY['{text}])"
+        query = f"INSERT INTO josix.DartLog (idGuild, winnerName, losersName) VALUES " \
+                f"({guildId}, '{winner.name}', ARRAY['{text}])"
         self.cursor.execute(query)
         self.conn.commit()
 
     ###############
-    ############### Modifiers
+    # Modifiers
     ###############
 
     def updatePlayerStat(self, userId: int, newElo: int) -> None:
@@ -247,7 +251,7 @@ class DatabaseHandler():
         self.conn.commit()
 
     ###############
-    ############### Deleters
+    # Deleters
     ###############
 
     def delMsg(self, msgId: int) -> None:

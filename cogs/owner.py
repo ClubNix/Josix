@@ -7,6 +7,7 @@ from logwrite import LOG_FILE, ERROR_FILE, adjustLog
 
 import os
 
+
 class Owner(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
@@ -15,14 +16,12 @@ class Owner(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler()
 
-
     @commands.slash_command(description="Stop the bot")
     @commands.is_owner()
     async def stop_josix(self, ctx: ApplicationContext):
         await ctx.respond("Stopping...")
         await self.bot.close()
 
-    
     @commands.slash_command(
         description="Create a backup for the databse",
         options=[discord.Option(
@@ -76,7 +75,7 @@ class Owner(commands.Cog):
         await ctx.defer(ephemeral=False, invisible=False)
         res = ""
         with open(LOG_FILE, "r") as f:
-            for line in (f.readlines() [-count:]):
+            for line in (f.readlines()[-count:]):
                 res += "\n" + adjustLog(line, False)
         await ctx.respond(f"```{res}```")
 
@@ -92,9 +91,10 @@ class Owner(commands.Cog):
         await ctx.defer(ephemeral=False, invisible=False)
         res = ""
         with open(ERROR_FILE, "r") as f:
-            for line in (f.readlines() [-count:]):
+            for line in (f.readlines()[-count:]):
                 res += "\n" + adjustLog(line, True)
         await ctx.respond(f"```{res}```")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Owner(bot))

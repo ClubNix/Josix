@@ -1,12 +1,14 @@
 import discord
 from discord.ext import commands
 from discord.errors import NotFound, Forbidden
-from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, CommandOnCooldown, NotOwner
+from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
+    CommandOnCooldown, NotOwner
 from discord import RawReactionActionEvent, ApplicationContext, DiscordException
 
 from database.database import DatabaseHandler
 
 import logwrite as log
+
 
 class Events(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -45,10 +47,9 @@ class Events(commands.Cog):
                 if member.get_role(roleId):
                     await member.remove_roles(role)
 
-
-##### ================================================== #####
-##### ================================================== #####
-##### ================================================== #####
+# ==================================================
+# ==================================================
+# ==================================================
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -83,7 +84,7 @@ class Events(commands.Cog):
         elif isinstance(error, NoPrivateMessage):
             await ctx.respond("This command can only be used in a server (get some friends)")
         elif isinstance(error, CommandOnCooldown):
-            error : CommandOnCooldown = error
+            error: CommandOnCooldown = error
             await ctx.respond(f"Too fast bro, wait {round(error.retry_after, 2)} seconds to retry this command")
         elif isinstance(error, NotOwner):
             await ctx.respond("This command is only for my master ! (skill issue n°3)")

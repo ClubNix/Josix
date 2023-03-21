@@ -19,7 +19,7 @@ class Admin(commands.Cog):
     async def createCouple(self, ctx: ApplicationContext, duos: list) -> tuple:
         chan = ctx.channel
 
-        msg = "For the first part, react to this message with the emoji you want to add in the reaction role !\nError : "
+        msg = "For the first part, react to this message with the emoji you want to add in the reaction role!\nError : "
         error = "None"
         config = await chan.send("Go !")
 
@@ -32,7 +32,7 @@ class Admin(commands.Cog):
         test = False
         count = 0
         while not test:
-            if count >= 3: # The user can fails 3 times before the end of the command
+            if count >= 3:  # The user can fails 3 times before the end of the command
                 await config.delete()
                 await chan.send("Too many fails, retry please")
                 return None
@@ -53,7 +53,6 @@ class Admin(commands.Cog):
                     count += 1
                     continue
 
-                
                 for duo in duos:
                     if reactName == duo[0]:
                         test = False
@@ -71,11 +70,11 @@ class Admin(commands.Cog):
             await config.edit("Now mention the role which will be linked to the reaction or type its id :")
             try:    
                 answer = await self.bot.wait_for('message', check=checkRole, timeout=60)
-                mentions = answer.role_mentions # all the mentions of a role in the message
+                mentions = answer.role_mentions  # all the mentions of a role in the message
                 await answer.delete()
 
                 if len(mentions) > 0:
-                    role = mentions[0] # Take the first mention in the message
+                    role = mentions[0]  # Take the first mention in the message
                 else:
                     try:
                         role = ctx.guild.get_role(int(answer.content))
@@ -105,7 +104,6 @@ class Admin(commands.Cog):
 
         await config.delete()
         return (reaction, role.id)
-
 
     @commands.slash_command(description="Set the message as a reaction role message")
     @commands.guild_only()
@@ -247,7 +245,6 @@ class Admin(commands.Cog):
 
         self.db.addCouple((emoji, roleId), msgId)
         await ctx.respond("Done !")
-        
 
     @commands.slash_command(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)

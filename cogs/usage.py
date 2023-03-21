@@ -9,6 +9,7 @@ import datetime
 from . import FILES
 from database.database import DatabaseHandler
 
+
 class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -18,24 +19,27 @@ class Usage(commands.Cog):
     @commands.slash_command(
         description="Get the help menu",
         options=[discord.Option(input_type=str,
-            name="command_name",
-            description="Name of the command",
-            default=None,
-        )]
+                                name="command_name",
+                                description="Name of the command",
+                                default=None,
+                                )]
     )
     async def help(self, ctx: ApplicationContext, command_name: str):
         av_aut = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar
         av_bot = self.bot.user.avatar.url if self.bot.user.avatar else self.bot.user.default_avatar
 
         if not command_name:
-            helpEmbed = discord.Embed(title="Help embed", description=f"Use /help [command_name] to see more info for a command", color = 0x0089FF)
+            helpEmbed = discord.Embed(title="Help embed",
+                                      description=f"Use /help [command_name] to see more info for a command",
+                                      color=0x0089FF)
             helpEmbed.set_author(name=ctx.author, icon_url=av_aut)
             helpEmbed.set_thumbnail(url=av_bot)
             for cogName in FILES:
                 lstCmd = ""
                 cog = self.bot.get_cog(FILES[cogName])
 
-                if not cog or cogName.lower() == "events" or (cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
+                if not cog or cogName.lower() == "events" or (
+                        cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
 
                 commands = cog.get_commands()
@@ -44,19 +48,21 @@ class Usage(commands.Cog):
                 else:
                     for command in commands:
                         lstCmd += "`" + command.qualified_name + "`, "
-                    lstCmd = lstCmd[:len(lstCmd)-2]
+                    lstCmd = lstCmd[:len(lstCmd) - 2]
                 helpEmbed.add_field(name=cogName, value=lstCmd, inline=False)
             await ctx.respond(embed=helpEmbed)
 
         else:
             command_name = command_name.lower()
-            command: discord.SlashCommand = self.bot.get_application_command(name=command_name, type=discord.SlashCommand)
+            command: discord.SlashCommand = self.bot.get_application_command(name=command_name,
+                                                                             type=discord.SlashCommand)
 
             if not command:
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 
-            if command.cog and command.cog.qualified_name.lower() == "owner" and not await self.bot.is_owner(ctx.author):
+            if command.cog and command.cog.qualified_name.lower() == "owner" and not await self.bot.is_owner(
+                    ctx.author):
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 
@@ -68,37 +74,39 @@ class Usage(commands.Cog):
             usage = f"/{command.name} "
             param = command.options
             options = ""
-            
+
             for val in param:
                 default = val.default
                 if default:
                     default = f" = {default}"
                 else:
                     default = ""
-                    
+
                 if val.required:
                     usage += f"<{val.name}{default}> "
                 else:
                     usage += f"[{val.name}{default}] "
 
                 options += f"**{val.name}** : {val.description}\n"
-                    
 
-            embed2 = discord.Embed(title = "Help command", description = f"Description of the command **{command.name}**\n <> -> Required parameters | [] -> Optional parameters", color = 0x0089FF)
-            embed2.set_thumbnail(url = av_bot)
-            embed2.set_author(name = ctx.author, icon_url = av_aut)
-            embed2.add_field(name = "Description :", value = desc)
-            embed2.add_field(name = "Usage :", value = usage, inline = False)
-            embed2.add_field(name = "Options : ", value = options, inline = False)
-            await ctx.respond(embed = embed2)
+            embed2 = discord.Embed(title="Help command",
+                                   description=f"Description of the command **{command.name}**\n <> -> Required "
+                                               f"parameters | [] -> Optional parameters",
+                                   color=0x0089FF)
+            embed2.set_thumbnail(url=av_bot)
+            embed2.set_author(name=ctx.author, icon_url=av_aut)
+            embed2.add_field(name="Description :", value=desc)
+            embed2.add_field(name="Usage :", value=usage, inline=False)
+            embed2.add_field(name="Options : ", value=options, inline=False)
+            await ctx.respond(embed=embed2)
 
     @commands.slash_command(
         description="Randomly choose a sentence from a list",
         options=[discord.Option(input_type=str,
-            name="sentences",
-            description="List of sentences separated by a `;`",
-            required=True
-        )]
+                                name="sentences",
+                                description="List of sentences separated by a `;`",
+                                required=True
+                                )]
     )
     async def choose(self, ctx: ApplicationContext, sentences: str):
         values = sentences.split(";")
@@ -106,7 +114,8 @@ class Usage(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
+    @commands.slash_command(
+        description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
     @commands.guild_only()
     @option(
         name="lock",
@@ -119,15 +128,15 @@ class Usage(commands.Cog):
         if not (isinstance(thread, discord.Thread) and isinstance(thread.parent, discord.ForumChannel)):
             await ctx.respond("You can only close a thread created in the forum")
             return
-    
-        testMod = ctx.author.guild_permissions.manage_threads # Check if permissions are greater than manage_threads
-        if (ctx.author != thread.owner and not testMod) or (lock and not testMod): 
+
+        testMod = ctx.author.guild_permissions.manage_threads  # Check if permissions are greater than manage_threads
+        if (ctx.author != thread.owner and not testMod) or (lock and not testMod):
             await ctx.respond("You don't have the required permissions to do this")
             return
 
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
-        
+
     @commands.slash_command(description="Add your birthday in the database !")
     @commands.guild_only()
     @option(
@@ -150,7 +159,7 @@ class Usage(commands.Cog):
     )
     async def add_birthday(self, ctx: ApplicationContext, day: int, month: int, user: discord.User):
         month_days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        testReject = not ((1 <= month and month <= 12) and (1 <= day and day <= month_days[month-1]))
+        testReject = not ((1 <= month and month <= 12) and (1 <= day and day <= month_days[month - 1]))
         userId = ctx.author.id
         testUser = None
         testGuild = None
@@ -193,21 +202,19 @@ class Usage(commands.Cog):
         self.db.updateUserBD(userId, day, month, bdYear)
         await ctx.respond(stringRes)
 
-
-
-    def getMonthField(self, embed: discord.Embed, idGuild:int, monthInt: int):
-        months=["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-        res=[]
+    def getMonthField(self, embed: discord.Embed, idGuild: int, monthInt: int):
+        months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+                  "November", "December"]
+        res = []
 
         values = self.db.getBDMonth(idGuild, monthInt)
-        if values == None or len(values) == 0:
+        if values is None or len(values) == 0:
             return embed
 
         for val in values:
             res.append(f"`{val[0]}/{val[1]}` (<@{val[2]}>)")
 
-        return embed.add_field(name=months[monthInt-1], value=" , ".join(res))
-
+        return embed.add_field(name=months[monthInt - 1], value=" , ".join(res))
 
     @commands.slash_command(description="See all the birthdays of this server")
     @commands.guild_only()
@@ -219,7 +226,7 @@ class Usage(commands.Cog):
         max_value=12,
         default=None
     )
-    async def birthdays(self, ctx: ApplicationContext, month: int): 
+    async def birthdays(self, ctx: ApplicationContext, month: int):
         embed = discord.Embed(
             title=f"Birthdays of **{ctx.guild.name}**",
             description="All the birthdays form the server",
@@ -233,7 +240,7 @@ class Usage(commands.Cog):
             embed = self.getMonthField(embed, ctx.guild_id, month)
         else:
             for i in range(12):
-                embed = self.getMonthField(embed, ctx.guild_id, i+1)
+                embed = self.getMonthField(embed, ctx.guild_id, i + 1)
         await ctx.respond(embed=embed)
 
     @commands.slash_command(description="Get the birthday of a user")
@@ -256,7 +263,6 @@ class Usage(commands.Cog):
         embed.add_field(name="Date", value=res[0])
         await ctx.respond(embed=embed)
 
-
     @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
@@ -270,7 +276,6 @@ class Usage(commands.Cog):
                 chan = self.bot.get_channel(row[0])
                 if not chan:
                     continue
-
 
                 today = datetime.date.today()
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")

@@ -4,6 +4,7 @@ from discord.ext import commands
 from asyncio import TimeoutError
 from database.database import DatabaseHandler
 
+
 class Games(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -48,8 +49,7 @@ class Games(commands.Cog):
             self.db.updatePlayerStat(foe.id, newElo)
         return text
 
-
-    ### Old command not updated because we don't have our dart game anymore
+    # Old command not updated because we don't have our dart game anymore
     @commands.command(description="Add the results of your dart game in the database", aliases=["DART"])
     async def dart(self, ctx: commands.Context, winner: discord.User, *foes: discord.User):
         """
@@ -60,9 +60,9 @@ class Games(commands.Cog):
         The command is currently disabled
         """
 
-        def checkReact(reaction : discord.Reaction, user : discord.User):
+        def checkReact(reaction: discord.Reaction, user: discord.User):
             return user in foes and reaction.emoji == "✅" and self.bot != user
-        
+
         if winner in foes:
             await ctx.send("You can't challenge yourself !")
             return
@@ -87,15 +87,15 @@ class Games(commands.Cog):
         text = ""
         for foe in foes:
             text += foe.mention + ", "
-        text = text[0:len(text)-2]
+        text = text[0:len(text) - 2]
         text += f"\nYou have been signed as loser(s) in a dart game against {winner.mention}. "
         text += "I need at least one approval from one of you, just react with :white_check_mark: on this message"
 
-        msg : discord.Message = await ctx.send(text)
+        msg: discord.Message = await ctx.send(text)
         await msg.add_reaction("✅")
 
         try:
-            await self.bot.wait_for("reaction_add", check=checkReact, timeout=60) 
+            await self.bot.wait_for("reaction_add", check=checkReact, timeout=60)
         except TimeoutError as _:
             await ctx.send("Nobody approved this game, no updates have been done")
             await msg.delete()
@@ -109,10 +109,11 @@ class Games(commands.Cog):
         embed = discord.Embed(title="Dart Game", description="Results of last dart game", color=0x0089FF)
         embed.set_author(name=ctx.author)
         embed.set_thumbnail(url=(ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar))
-        embed.add_field(name="Winner", value=f"{winner.mention} : {elo1} + {newElo1 - elo1} -> **{newElo1}**", inline=False)
+        embed.add_field(name="Winner", value=f"{winner.mention} : {elo1} + {newElo1 - elo1} -> **{newElo1}**",
+                        inline=False)
         embed.add_field(name="Loser(s)", value=text)
         await ctx.send(embed=embed)
-        
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Games(bot))

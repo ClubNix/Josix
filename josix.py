@@ -13,25 +13,32 @@ class Josix(commands.Bot):
     load_dotenv()
     _TOKEN = getenv("discord")
 
-    def __init__(self, intents: discord.Intents):
+    def __init__(self, bot_intents: discord.Intents):
         super().__init__(
-            description = "Josix !", 
-            activity = discord.Game("/help and stats"), # The activity
-            intents = intents,
+            description="Josix !",
+            activity=discord.Game("/help and stats"), # The activity
+            intents=bot_intents,
             help_command=None
         )
         self._extensions()
 
     def _extensions(self):
-        for name in FILES: # FILES in the __init__.py file
+        for name in FILES:  # FILES in the __init__.py file
             try:
                 self.load_extension("cogs." + name)
                 log.writeLog("Extension " + name + " Successfully loaded")
-            except (ModuleNotFoundError, ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed) as error:
+            except (
+                    ModuleNotFoundError,
+                    ExtensionNotFound,
+                    ExtensionAlreadyLoaded,
+                    NoEntryPointError,
+                    ExtensionFailed
+            ) as error:
                 log.writeError(log.formatError(error))
 
     def run(self):
         super().run(Josix._TOKEN)
+
 
 if __name__ == "__main__":
     # The informations available for the bot
