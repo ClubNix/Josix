@@ -339,8 +339,12 @@ class Monix(commands.Cog):
 
             try:
                 if isMember:
+                    if record['User'] is None:
+                        continue
                     idUser, nameUser, valTransac = record['User']['id'], record['User']['username'], record['movement']
                 else:
+                    if record['Product'] is None:
+                        continue
                     idUser, nameUser = record['Product']['id'], record['Product']['name']
                     valTransac = int(-(record['movement'] / record['Product']['price']))
 
