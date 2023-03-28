@@ -5,7 +5,7 @@ from asyncio import TimeoutError
 from database.database import DatabaseHandler
 
 
-class Games(commands.Cog):
+class GamesBase(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler()
@@ -116,4 +116,5 @@ class Games(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Games(bot))
+    print("old")
+    bot.add_cog(GamesBase(bot))
