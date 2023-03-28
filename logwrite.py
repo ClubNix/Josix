@@ -37,8 +37,11 @@ def writeLog(msg : str):
 
 # Format the error to a string to get the file, line and message without whole traceback
 def formatError(e : Exception) -> str:
-    file = str(sys.exc_info()[-1].tb_frame).rsplit("'")[1]
-    return f"{file} on l.{format(sys.exc_info()[-1].tb_lineno)} --> {type(e).__name__}, {e}".strip()
+    try:
+        file = str(sys.exc_info()[-1].tb_frame).rsplit("'")[1]
+        return f"{file} on l.{format(sys.exc_info()[-1].tb_lineno)} --> {type(e).__name__}, {e}".strip()
+    except Exception:
+        return str(e)
 
 
 # Write a function to write to the error file a msg in red in and a timestamp like this, example :

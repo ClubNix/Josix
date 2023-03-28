@@ -4,7 +4,6 @@ from discord import ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError
 
 from dotenv import load_dotenv
 from os import getenv
-from cogs import FILES
 
 import logwrite as log
 
@@ -23,18 +22,17 @@ class Josix(commands.Bot):
         self._extensions()
 
     def _extensions(self):
-        for name in FILES:  # FILES in the __init__.py file
-            try:
-                self.load_extension("cogs." + name)
-                log.writeLog("Extension " + name + " Successfully loaded")
-            except (
-                    ModuleNotFoundError,
-                    ExtensionNotFound,
-                    ExtensionAlreadyLoaded,
-                    NoEntryPointError,
-                    ExtensionFailed
-            ) as error:
-                log.writeError(log.formatError(error))
+        try:
+            res = self.load_extension("cogs", recursive=True, store=True)
+            for cogName, cogRes in res.items():
+                if isinstance(cogRes, Exception):
+                    log.writeError(log.formatError(cogRes))
+
+                elif isinstance(cogRes, bool) and cogRes == True:
+                    log.writeLog(f"Extension {cogName} succesfully loaded")
+                
+        except Exception as error:
+            log.writeError(log.formatError(error))
 
     def run(self):
         super().run(Josix._TOKEN)
