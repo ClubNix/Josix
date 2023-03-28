@@ -6,9 +6,9 @@ from discord import option
 import random
 import datetime
 
-from . import FILES
 from database.database import DatabaseHandler
 
+FILES = {}
 
 class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -31,12 +31,18 @@ class Usage(commands.Cog):
                                       color=0x0089FF)
             helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
             helpEmbed.set_thumbnail(url=self.bot.user.display_avatar)
-            for cogName in FILES:
+            
+            gamesCmd = []
+            for cogName, cog in self.bot.cogs.items():
                 lstCmd = ""
-                cog = self.bot.get_cog(FILES[cogName])
 
                 if not cog or cogName.lower() == "events" or (
                         cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
+                    continue
+
+                if cog.description.lower().startswith("games"):
+                    for cmd in cog.get_commands():
+                        gamesCmd.append(cmd.qualified_name)
                     continue
 
                 commands = cog.get_commands()
@@ -47,6 +53,9 @@ class Usage(commands.Cog):
                         lstCmd += "`" + command.qualified_name + "`, "
                     lstCmd = lstCmd[:len(lstCmd) - 2]
                 helpEmbed.add_field(name=cogName, value=lstCmd, inline=False)
+
+            if len(gamesCmd) > 0:
+                helpEmbed.add_field(name="Games", value="`" + "`, `".join(gamesCmd) + "`", inline=False)
             await ctx.respond(embed=helpEmbed)
 
         else:
