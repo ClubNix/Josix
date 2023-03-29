@@ -49,9 +49,7 @@ class TTTBtn(discord.ui.Button["TTTView"]):
             stop = True
 
         if stop:
-            for child in view.children:
-                child.disabled = True
-
+            view.disable_all_items()
             view.stop()
 
         view.switchPlayer()

@@ -1,0 +1,119 @@
+import discord
+from discord.ext import commands
+from discord import ApplicationContext, Member, Interaction, option
+
+import numpy as np
+
+from random import randint
+
+class PatternBtn(discord.ui.Button["PatternView"]):
+    def __init__(self, x: int, y: int):
+        super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
+        self.x = x
+        self.y = y
+        self.label = x+y+1 if y == 0 else (y+1)*2 + x if y == 1 else (y+1)*2 + (x+1)
+
+    async def callback(self, interaction: Interaction):
+        assert self.view is not None
+        view: PatternView = self.view
+
+        if interaction.user.id != view.player.id:
+            return
+
+        view.chooseSquare(self.x, self.y)
+        view.addMove()
+        embed = discord.Embed(
+            title=f"Pattern game",
+            description="Turn all the squares into blue to win",
+            color=0x0089FF
+        )
+        embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
+        embed.add_field(name="", value=view)
+
+        if view.checkWin():
+            embed.description = f"Congratulations, you won in **{view.count}** moves !"
+            view.disable_all_items()
+            view.stop()
+
+        await interaction.response.edit_message(embed=embed, view=view)
+
+
+class PatternView(discord.ui.View):
+    children: list[PatternBtn]
+
+    def __init__(self, player: Member) -> None:
+        super().__init__()
+
+        self.player = player
+        self.count = 0
+        self.grid = np.array([
+            [1,1,1],
+            [1,1,1],
+            [1,1,1],
+        ])
+
+        for x in range(3):
+            for y in range(3):
+                self.add_item(PatternBtn(x, y))
+        self._initGame()
+
+    def _initGame(self) -> None:
+        while self.checkWin():
+            for _ in range(randint(10, 15)):
+                self.chooseSquare(randint(0, 2), randint(0, 2))
+
+    def addMove(self) -> None:
+        self.count += 1
+    
+    def chooseSquare(self, x: int, y: int) -> None:
+        tiles = [(x-1,y), (x,y-1), (x,y), (x+1,y), (x,y+1)]
+        for tile in tiles:
+            j = tile[0]
+            i = tile[1]
+
+            if i < 0 or 2 < i or j < 0 or 2 < j:
+                continue
+
+            value = self.grid[i][j]
+            self.grid[i][j] = 0 if value else 1
+
+
+    def checkWin(self) -> bool:
+        return self.grid.all()
+        
+    def __str__(self) -> str:
+        res = ""
+        for i in self.grid:
+            for j in i:
+                if j:
+                    res += "🟦"
+                else:
+                    res += "🟩"
+            res += "\n"
+        return res
+        
+
+class Pattern(commands.Cog):
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot = bot
+        self.description = "games : pattern"
+
+    @commands.slash_command(description="Launch a game of tic-tac-toe")
+    @commands.guild_only()
+    async def pattern_game(self, ctx: ApplicationContext):
+        view = PatternView(ctx.author)
+        embed = discord.Embed(
+            title=f"Pattern game",
+            description="Turn all the squares into blue to win",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.add_field(name="", value=view)
+
+        await ctx.respond(
+            embed=embed,
+            view=view
+        )
+
+def setup(bot: commands.Bot):
+    bot.add_cog(Pattern(bot))
