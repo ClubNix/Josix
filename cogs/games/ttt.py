@@ -113,6 +113,7 @@ class TicTacToe(commands.Cog):
         self.description = "games : TicTacToe"
 
     @commands.slash_command(description="Launch a game of tic-tac-toe")
+    @commands.guild_only()
     @option(
         input_type=Member,
         name="opponent",

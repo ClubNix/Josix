@@ -28,7 +28,7 @@ class Josix(commands.Bot):
                 if isinstance(cogRes, Exception):
                     log.writeError(log.formatError(cogRes))
 
-                elif isinstance(cogRes, bool) and cogRes == True:
+                elif isinstance(cogRes, bool) and cogRes:
                     log.writeLog(f"Extension {cogName} succesfully loaded")
                 
         except Exception as error:

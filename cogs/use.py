@@ -8,7 +8,6 @@ import datetime
 
 from database.database import DatabaseHandler
 
-FILES = {}
 
 class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):

@@ -245,15 +245,15 @@ class Fun(commands.Cog):
             await og.add_reaction(reaction)
 
         # function that will be called whenever there is a reaction add.
-        def check(reaction, user):
-            if user == commands.bot:    # if the user is josix chan
-                return False                                  # ignore
+        def check(reaction: discord.Reaction, user: discord.User):
+            if user.bot:    # if the user is a bot
+                return False   # ignore
             reacts.append(str(reaction))
-            return str(reaction) == '❌'  # else, if anyone clicked X, return true (= stop waiting)
+            return False
 
         try:
             # timeout = 15 minutes=900(it's ok for us, this is a coroutine)
-            await self.bot.wait_for('reaction_add', check=check, timeout=300)
+            await self.bot.wait_for('reaction_add', check=check, timeout=180)
         
         except TimeoutError:  # once we have waited for 5 minutes
             # if no one disagrees and at least 2 ppl aggree
@@ -270,7 +270,6 @@ class Fun(commands.Cog):
         return False
 
     @commands.slash_command(description="fills my collection of private jokes")
-    @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=str,

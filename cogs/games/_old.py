@@ -116,5 +116,4 @@ class GamesBase(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    print("old")
     bot.add_cog(GamesBase(bot))
