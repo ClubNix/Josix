@@ -66,13 +66,7 @@ class TTTView(discord.ui.View):
         self.currentPlayer = self.xPlayer
 
         self.state = 0
-        self.grid = np.array(
-            [
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0],
-            ]
-        )
+        self.grid = np.zeros((3,3), dtype=int)
 
         for x in range(3):
             for y in range(3):
