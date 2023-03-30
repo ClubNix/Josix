@@ -64,7 +64,7 @@ class OthelloInput(discord.ui.Select):
             view.enable_all_items()
             if view.canPlay(view.whitePlayer if view.currentPlayer.id == view.blackPlayer.id else view.blackPlayer):
                 view.switchPlayer()
-            desc = f"{view.currentPlayer.mention}'s turn !\nAfter selecting a value, wait for the selector to be disabled to select the other value"
+            desc = f"{view.currentPlayer.mention}'s turn !"
 
         embed = discord.Embed(
             title="Othello Game",
@@ -120,7 +120,7 @@ class OthelloView(discord.ui.View):
             i, j = y+offY, x+offX
             isClosed = False
             tmpTokens = []
-            while (0 <= i and i <= 7) and (0 <= i and i <= 7) and not isClosed:
+            while (0 <= i and i <= 7) and (0 <= j and j <= 7) and not isClosed:
                 if self.grid[i][j] == 0:
                     break
                 elif self.grid[i][j] == value:
@@ -149,7 +149,8 @@ class OthelloView(discord.ui.View):
             return True
         elif x + 1 <= 7 and self.grid[y][x+1] == oppoV:
             return True
-        return False
+        else:
+            return False
 
     def isEnded(self) -> bool:
         return self.grid.all() or not (self.canPlay(self.whitePlayer) or self.canPlay(self.blackPlayer))
@@ -157,7 +158,7 @@ class OthelloView(discord.ui.View):
     def canPlay(self, player: discord.Member) -> bool:
         value = 1 if self.currentPlayer.id == player.id else 2
         for i, row in enumerate(self.grid):
-            for j in row:
+            for j in range(len(row)):
                 if not self.checkPlay(j, i, value):
                     continue
 
@@ -194,7 +195,8 @@ class OthelloView(discord.ui.View):
 
     def switchTokens(self, tokens: list[tuple[int, int]]) -> None:
         for coords in tokens:
-            self.grid[coords] = 1 if self.grid[coords] == 2 else 2
+            x,y = coords
+            self.grid[y, x] = 1 if self.grid[y, x] == 2 else 2
 
 
     def __str__(self) -> str:
@@ -231,7 +233,7 @@ class Othello(commands.Cog):
         view = OthelloView(ctx.author, opponent, first)
         embed = discord.Embed(
             title="Othello Game",
-            description=f"{view.currentPlayer.mention}'s turn !\nAfter selecting a value, wait for the selector to be disabled to select the other value",
+            description=f"{view.currentPlayer.mention}'s turn !",
             color=0x0089FF
         )
         embed.add_field(name="", value=view)
