@@ -14,7 +14,7 @@ class Owner(commands.Cog):
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler()
+        self.db = DatabaseHandler(os.path.basename(__file__))
 
     @commands.slash_command(description="Stop the bot")
     @commands.is_owner()

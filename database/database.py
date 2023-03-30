@@ -10,7 +10,7 @@ FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 
 
 class DatabaseHandler():
-    def __init__(self) -> None:
+    def __init__(self, filename: str) -> None:
         try:
             conn = psycopg2.connect(
                 host=os.getenv("host"),
@@ -19,7 +19,7 @@ class DatabaseHandler():
                 password=os.getenv("db_pwd")
             )
 
-            log.writeLog(" - Connection on the database done - ")
+            log.writeLog(f" - Connection on the database for {filename} done - ")
         except psycopg2.Error as error:
             log.writeError(log.formatError(error))
             return

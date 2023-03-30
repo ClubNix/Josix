@@ -7,6 +7,7 @@ from discord import NotFound, InvalidArgument, HTTPException
 import asyncio
 import re
 import logwrite as log
+import os
 
 from database.database import DatabaseHandler
 
@@ -14,7 +15,7 @@ from database.database import DatabaseHandler
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler()
+        self.db = DatabaseHandler(os.path.basename(__file__))
 
     async def createCouple(self, ctx: ApplicationContext, duos: list) -> tuple:
         chan = ctx.channel

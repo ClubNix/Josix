@@ -8,12 +8,13 @@ from discord import RawReactionActionEvent, ApplicationContext, DiscordException
 from database.database import DatabaseHandler
 
 import logwrite as log
+import os
 
 
 class Events(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler()
+        self.db = DatabaseHandler(os.path.basename(__file__))
 
     async def updateRole(self, payload: RawReactionActionEvent, add: bool):
         emoji = payload.emoji

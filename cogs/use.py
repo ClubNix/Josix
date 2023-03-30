@@ -5,6 +5,7 @@ from discord import option
 
 import random
 import datetime
+import os
 
 from database.database import DatabaseHandler
 
@@ -12,7 +13,7 @@ from database.database import DatabaseHandler
 class Usage(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler()
+        self.db = DatabaseHandler(os.path.basename(__file__))
         self.checkBirthday.start()
 
     @commands.slash_command(
