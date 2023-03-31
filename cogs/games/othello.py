@@ -248,9 +248,18 @@ class Othello(commands.Cog):
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(
-            name="",
-            value="",
+            name="Rule 1",
+            value="There is 2 players, white and black. The winner is the one with the most tokens on the board of his color at the end.",
             inline=False
+        )
+        embed.add_field(
+            name="Rule 2",
+            value="When it's your turn you must place your token near one of your opponent's tokens (diagonals not included) and at least flip one token.",
+            inline=False
+        )
+        embed.add_field(
+            name="Rule 3",
+            value="You flip the opponent's tokens when they are between 1 of your tokens and the one you just placed (no recursion with the flipped ones)."
         )
         await ctx.respond(embed=embed)
 
