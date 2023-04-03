@@ -11,7 +11,7 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
         self.y = y
-        self.label = x+y+1 if y == 0 else (y+1)*2 + x if y == 1 else (y+1)*2 + (x+1)
+        self.label = (x+1) + 3*y
 
     async def callback(self, interaction: Interaction):
         assert self.view is not None
@@ -46,11 +46,7 @@ class PatternView(discord.ui.View):
 
         self.player = player
         self.count = 0
-        self.grid = np.array([
-            [1,1,1],
-            [1,1,1],
-            [1,1,1],
-        ])
+        self.grid = np.zeros((3,3), dtype=int)
 
         for x in range(3):
             for y in range(3):
@@ -61,6 +57,7 @@ class PatternView(discord.ui.View):
         while self.checkWin():
             for _ in range(randint(10, 15)):
                 self.chooseSquare(randint(0, 2), randint(0, 2))
+                print(self)
 
     def addMove(self) -> None:
         self.count += 1
@@ -79,16 +76,16 @@ class PatternView(discord.ui.View):
 
 
     def checkWin(self) -> bool:
-        return self.grid.all()
+        return not self.grid.any()
         
     def __str__(self) -> str:
         res = ""
         for i in self.grid:
             for j in i:
                 if j:
-                    res += "🟦"
-                else:
                     res += "🟩"
+                else:
+                    res += "🟦"
             res += "\n"
         return res
         
