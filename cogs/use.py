@@ -6,11 +6,17 @@ from discord import option
 import random
 import datetime
 import os
+import logwrite as log
+import json
 
 from database.database import DatabaseHandler
+from json import JSONDecodeError
 
 
 class Usage(commands.Cog):
+    _SCRIPT_DIR = os.path.dirname(__file__)
+    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
@@ -105,6 +111,36 @@ class Usage(commands.Cog):
             embed2.add_field(name="Usage :", value=usage, inline=False)
             embed2.add_field(name="Options : ", value=options, inline=False)
             await ctx.respond(embed=embed2)
+
+    @commands.slash_command(description="All the links related to the bot and club")
+    async def links(self, ctx: ApplicationContext):
+        try:
+            with open(Usage._FILE_PATH, "r") as f:
+                data = json.load(f)
+        except (FileNotFoundError, JSONDecodeError) as e:
+            if isinstance(e, FileNotFoundError):
+                log.writeError("Config file does not exist")
+            elif isinstance(e, JSONDecodeError):
+                log.writeError("Json error, make sure the config file is not empty")
+
+            await ctx.respond("Configuration error")
+            return
+
+        try:
+            links = [f"[{name}]({link})" for name, link in data["links"].items() if name and link]
+        except KeyError:
+            await ctx.respond("Configuration error")
+            return
+
+        embed = discord.Embed(
+            title="Links",
+            description="All the related and useful links",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.add_field(name="", value="\n".join(links))
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(
         description="Randomly choose a sentence from a list",
@@ -235,7 +271,7 @@ class Usage(commands.Cog):
     async def birthdays(self, ctx: ApplicationContext, month: int):
         embed = discord.Embed(
             title=f"Birthdays of **{ctx.guild.name}**",
-            description="All the birthdays form the server",
+            description="All the birthdays from the server",
             color=0x0089FF
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)

@@ -28,7 +28,7 @@ def adjustLog(msg: str, isError: bool) -> str:
         return msg.replace(LOG_COLOR, "").replace(END_FORMAT, " : ")
 
 
-# Write a function to write to the log file a msg in and a timestamp in blue like this, example :
+# Function to write to the log file a message and a timestamp in blue like this, example :
 # 2016-01-01 00:00:00 : msg
 def writeLog(msg : str):
     with open(LOG_FILE, 'a') as f:
@@ -44,7 +44,7 @@ def formatError(e : Exception) -> str:
         return str(e)
 
 
-# Write a function to write to the error file a msg in red in and a timestamp like this, example :
+# Function to write to the error file the error message and a timestamp in red like this, example :
 # 2016-01-01 00:00:00 : msg
 def writeError(msg : str):
     with open(ERROR_FILE, 'a') as f:
