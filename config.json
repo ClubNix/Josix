@@ -1,0 +1,20 @@
+{
+    "links": {
+        "linktree": "https://linktr.ee/clubnix",
+        "instagram" : "https://www.instagram.com/club.nix/",
+        "github" : "https://github.com/ClubNix",
+        "twitch": "https://www.twitch.tv/ClubNix",
+        "linkedin": "https://www.linkedin.com/company/9291137",
+        "youtube": "https://www.youtube.com/@clubnix",
+        "facebook" : "https://www.facebook.com/clubnix.fr",
+        "website": "https://www.clubnix.fr/",
+        "cotisation": "",
+        "monix" : "",
+        "git-bot" : "https://github.com/ClubNix/Josix"
+    },
+
+    "tags": {
+        "open": "Open",
+        "closed": "Closed"
+    }
+}

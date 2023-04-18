@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import ApplicationContext
 from discord import option
+from discord.utils import get as discordGet
 
 import random
 import datetime
@@ -11,6 +12,7 @@ import json
 
 from database.database import DatabaseHandler
 from json import JSONDecodeError
+from cogs.events import Events
 
 
 class Usage(commands.Cog):
@@ -175,6 +177,31 @@ class Usage(commands.Cog):
         if (ctx.author != thread.owner and not testMod) or (lock and not testMod):
             await ctx.respond("You don't have the required permissions to do this")
             return
+
+        if lock:
+            closeName = ""
+            try:
+                with open(Usage._FILE_PATH, "r") as f:
+                    data = json.load(f)
+
+                closeName = data["tags"]["closed"]
+                openName = data["tags"]["open"]
+            except (JSONDecodeError, FileNotFoundError, KeyError):
+                pass
+
+            if closeName != "" and openName != "":
+                cTag, oTag = await Events.getTags(thread, closeName, openName)
+
+                tags = thread.applied_tags.copy()
+                if cTag and not cTag in tags:
+                    tags.append(cTag)
+
+                try:
+                    del tags[tags.index(oTag)]
+                except (ValueError, IndexError):
+                    pass
+
+                await thread.edit(applied_tags=tags)
 
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
