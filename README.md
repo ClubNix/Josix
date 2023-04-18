@@ -53,7 +53,12 @@ logs = log_repository_in_your_home
 ```
 
 > The "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only). <br>
-> The home, logs, log/error_file fields are here to get logs and get nothing in your terminal
+> The home, logs, log/error_file fields are here to get logs and get nothing in your terminal <br>
+> No need to give monix_log and monix_psswd
+
+- Edit the `config.json` file to give your informations.
+  - The `links` field is here to give a list of your personal links (or whatever you want), it will work as an hypertext.
+  - The `tags` field is here to automatically create "open" and "close" tags for the forum channel. **DO NOT** edit the names `open` and `close`, just edit their content. 
 
 - Add your own private jokes :
 	- Create a file `askip.json` (if you want to change the name you have to change it in the `fun.py` file)

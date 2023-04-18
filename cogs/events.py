@@ -150,7 +150,6 @@ class Events(commands.Cog):
                     except (ValueError, IndexError):
                         pass
 
-                
                 if cTag and not cTag in tags:
                     tags.append(cTag)
                     await thread.unarchive()
