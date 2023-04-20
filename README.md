@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/python-3.8_|_3.9_|_3.10-blue" alt="python"/>
+  <img src="https://img.shields.io/badge/python-3.9+-blue" alt="python"/>
 </p>
 
 # What is Josix
