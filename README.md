@@ -27,6 +27,7 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 - 🔓 Log system (basic log + error log) with custom display with error formating
 - 💰 Commands to use our food system API, [Monix](https://github.com/ClubNix/monix-2.0)
 - 🎮 Board games such as : tic-tac-toe, othello, connect-4 and more
+- 🛠️ Server management
 
 
 # Install and lauch 
@@ -89,10 +90,7 @@ You can get an error on installing psycopg2, enter the following commands :
 
 And then you can retry to install psycopg2
 <br>
-Disable the monix extension by deleting the corresponding line in `cogs/__init__.py`. This extension can only work in our network.
-
-## Documentation
-We promise we will document our code
+Disable the monix extension by deleting `cogs/monix.py` or by renaming the python file with an `_` before it like this : `_monix.py`.
 
 ## License
 Josix is under the [Apache 2-0 license](https://github.com/ClubNix/Josix/blob/master/LICENSE)
