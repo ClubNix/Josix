@@ -15,6 +15,8 @@ import json
 
 
 class Events(commands.Cog):
+    """Main class for events that are not used for a specific cog"""
+    
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 

@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import ExtensionNotFound, ExtensionAlreadyLoaded, NoEntryPointError, ExtensionFailed
 
 from dotenv import load_dotenv
 from os import getenv
