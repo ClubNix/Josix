@@ -3,10 +3,11 @@ from discord.ext import commands
 from discord import ApplicationContext, option
 
 from database.database import DatabaseHandler
-from logwrite import LOG_FILE, ERROR_FILE, adjustLog
+from logwrite import LOG_FILE, ERROR_FILE
+from psycopg2 import Error as DBError
 
 import os
-
+import logwrite as log
 
 class Owner(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
@@ -55,13 +56,21 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def backup_execute(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
+        res = ""
 
         with open(Owner._SQL_FILE, 'r') as f:
             lines = f.readlines()
-        for line in lines:
-            self.db.execute(line)
+        for index, line in enumerate(lines):
+            try:
+                self.db.execute(line, True)
+            except DBError as db_error:
+                res += f"**l.{index+1}** : {str(db_error)}\n"
+            except Exception as error:
+                res += f"**l.{index+1}** : Unexcepted error\n"
+                log.writeError(log.formatError(error))
         
-        await ctx.respond("Backup execute done !")
+        res += "Backup execute done !"
+        await ctx.respond(res)
 
     @commands.slash_command(description="Display the last logs")
     @commands.is_owner()
@@ -76,7 +85,7 @@ class Owner(commands.Cog):
         res = ""
         with open(LOG_FILE, "r") as f:
             for line in (f.readlines()[-count:]):
-                res += "\n" + adjustLog(line, False)
+                res += "\n" + log.adjustLog(line, False)
         await ctx.respond(f"```{res}```")
 
     @commands.slash_command(description="Display the last errors")
@@ -92,7 +101,7 @@ class Owner(commands.Cog):
         res = ""
         with open(ERROR_FILE, "r") as f:
             for line in (f.readlines()[-count:]):
-                res += "\n" + adjustLog(line, True)
+                res += "\n" + log.adjustLog(line, True)
         await ctx.respond(f"```{res}```")
 
 

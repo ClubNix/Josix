@@ -27,19 +27,26 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
-    def execute(self, query: str) -> str:
+    def execute(self, query: str, raiseError: bool = False) -> str:
+        if query.startswith("--") or query.startswith("\n") or len(query) == 0:
+            return "Empty query"
+
         try:
             self.cursor.execute(query)
             self.conn.commit()
 
             try:
                 return str(self.cursor.fetchall())
-            except psycopg2.ProgrammingError:
+            except psycopg2.ProgrammingError as prgError:
+                if raiseError:
+                    raise prgError
                 return "Query executed : nothing to fetch"
 
-        except psycopg2.Error as error:
+        except psycopg2.Error as commonError:
             self.conn.rollback()
-            return str(error)
+            if raiseError:
+                raise commonError
+            return str(commonError)
 
     def backup(self, table: str):
         checkTable = f"AND table_name = '{table}'" if len(table) > 0 else ""
@@ -49,6 +56,7 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
 
         with open(FILE_PATH, "w") as f:
+            f.write("-- Last backup : " + str(datetime.datetime.now()) + "\n")
             for rowTable in res:
                 table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")
