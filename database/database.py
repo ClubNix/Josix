@@ -1,7 +1,7 @@
 import psycopg2
 import discord
 import os
-import datetime
+import datetime as dt
 import logwrite as log
 
 
@@ -56,7 +56,7 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
 
         with open(FILE_PATH, "w") as f:
-            f.write("-- Last backup : " + str(datetime.datetime.now()) + "\n")
+            f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
             for rowTable in res:
                 table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")
@@ -75,9 +75,9 @@ class DatabaseHandler():
                     for rd in row:
                         if rd is None:
                             row_data.append('NULL')
-                        elif isinstance(rd, datetime.date):
+                        elif isinstance(rd, dt.date):
                             row_data.append("'%s'" % (rd.strftime('%Y-%m-%d')))
-                        elif isinstance(rd, datetime.datetime):
+                        elif isinstance(rd, dt.datetime):
                             row_data.append("'%s'" % (rd.strftime('%Y-%m-%d %H:%M:%S')))
                         else:
                             row_data.append(repr(rd))
@@ -132,10 +132,48 @@ class DatabaseHandler():
         return self.cursor.fetchall()
 
     def getUserInGuild(self, userId: int, guildId: int) -> tuple:
-        query = f"""SELECT idUser AS "user", idGuild AS "guild" FROM josix.UserGuild
+        query = f"""SELECT * FROM josix.UserGuild
                     WHERE idUser = {userId} AND idGuild  = {guildId};"""
         self.cursor.execute(query)
         return self.cursor.fetchone()
+
+    def getUserGuildLink(self, userId: int, guildId: int) -> tuple[tuple]:
+        return (
+            self.getUser(userId),
+            self.getGuild(guildId),
+            self.getUserInGuild(userId, guildId)
+        )
+    
+    def getUserXP(self, userId: int) -> tuple:
+        query = f"SELECT idUser FROM josix.User WHERE idUser = {userId};"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def getGuildXP(self, guildId: int) -> tuple:
+        query = f"SELECT xpNews, enableXP FROM josix.Guild WHERE idGuild = {guildId};"
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def getUserGuildXP(self, userId: int, guildId: int) -> tuple:
+        query = f"""SELECT xp, lvl, lastMessage FROM josix.UserGuild
+                    WHERE idUser = {userId} AND idGuild  = {guildId};"""
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
+
+    def getXPUtils(self, userId: int, guildId: int) -> tuple[tuple]:
+        return (
+            self.getUserXP(userId),
+            self.getGuildXP(guildId),
+            self.getUserGuildXP(userId, guildId)
+        )
+        
+
+    def getNewsChan(self, userId: int) -> list:
+        query = f"""SELECT chanNews FROM josix.Guild g
+                                    INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
+                    WHERE idUser = {userId} AND chanNews IS NOT NULL;"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
 
     def checkBD(self, day: int, month: int) -> list:
         query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild",
@@ -145,13 +183,6 @@ class DatabaseHandler():
                     WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW()) AND
                           EXTRACT(DAY FROM u.hbDate) = {day} AND
                           EXTRACT(MONTH FROM u.hbDate) = {month};"""
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
-
-    def getNewsChan(self, userId: int) -> list:
-        query = f"""SELECT chanNews FROM josix.Guild g
-                                    INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
-                    WHERE idUser = {userId} AND chanNews IS NOT NULL;"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
@@ -180,9 +211,9 @@ class DatabaseHandler():
     # Adders
     ###############
 
-    def addGuild(self, guildId: int, chanStat: int = 0, nbMembers: int = 0, status: int = 0):
-        query = f"INSERT INTO josix.Guild(idGuild, totalMember, sendStatus, chanNews) VALUES " \
-                f"({guildId},{nbMembers},'{status}',{chanStat})"
+    def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0):
+        query = f"INSERT INTO josix.Guild(idGuild, chanNews, xpNews) VALUES " \
+                f"({guildId}, {chanStat}, {chanXP})"
         self.cursor.execute(query)
         self.conn.commit()
 
@@ -225,6 +256,7 @@ class DatabaseHandler():
         self.cursor.execute(query)
         self.conn.commit()
 
+
     ###############
     # Modifiers
     ###############
@@ -256,6 +288,16 @@ class DatabaseHandler():
                     SET hbDate = hbDate - INTERVAL '1 year'
                     WHERE idUser = {userId};"""
         self.cursor.execute(query)
+        self.conn.commit()
+
+    def updateUserXP(self, userId: int, guildId: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
+        query = """UPDATE josix.UserGuild
+                   SET lvl = %s,
+                       xp = %s,
+                       lastMessage = %s
+                    WHERE idUser = %s AND idGuild = %s;"""
+        params = (lvl, xp, lastSend, userId, guildId,)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     ###############

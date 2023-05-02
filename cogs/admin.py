@@ -264,6 +264,19 @@ class Admin(commands.Cog):
             self.db.changeNewsChan(idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
 
+    @commands.slash_command(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
+    @commands.has_permissions(manage_channels=True)
+    @commands.guild_only()
+    async def set_xp_channel(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        await ctx.respond("WIP")
+
+    @commands.slash_command(description="Enable or disable the xp system on the server")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def enable_xp_system(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        await ctx.respond("WIP")
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
