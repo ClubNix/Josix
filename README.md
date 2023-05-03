@@ -22,12 +22,13 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 - ⚙️ Reaction role 
 - 💾 Postgre database backup
 - 🎂 Birthday reminder
-- 🧠 Private jokes register
-- 😂 Joke generator
-- 🔓 Log system (basic log + error log) with custom display with error formating
+- 📈 XP System
 - 💰 Commands to use our food system API, [Monix](https://github.com/ClubNix/monix-2.0)
 - 🎮 Board games such as : tic-tac-toe, othello, connect-4 and more
+- 🧠 Private jokes register
+- 😂 Joke generator
 - 🛠️ Server management
+- 🔓 Log system (basic log + error log) with custom display with error formating
 
 
 # Install and lauch 

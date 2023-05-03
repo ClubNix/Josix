@@ -300,6 +300,20 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    def changeXPChan(self, guildId: int, chanId: int) -> None:
+        query = f"""UPDATE josix.Guild
+                    SET xpNews = {chanId}
+                    WHERE idGuild = {guildId};"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def updateGuildXpEnabled(self, guildId: int) -> None:
+        query = f"""UPDATE josix.Guild
+                    SET enableXP = NOT enableXP
+                    WHERE idGuild = {guildId}"""
+        self.cursor.execute(query)
+        self.conn.commit()
+
     ###############
     # Deleters
     ###############

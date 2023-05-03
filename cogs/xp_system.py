@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import ApplicationContext, option
 
 import datetime as dt
 import os
@@ -73,6 +74,182 @@ class XP(commands.Cog):
                 await xpChan.send(
                     f"Congratulations {auth.mention}, you are now level **{currentLvl}** with **{currentXP}** exp ! 🎉"
                 )
+
+
+####################
+#
+# Commands 
+# 
+####################
+
+
+    def _xp_update(self, member: discord.Member, amount: int) -> None:
+        guild = member.guild
+        userDB, guildDB, userGuildDB = self.db.getXPUtils(member.id, guild.id)
+
+        if not userDB:
+            self.db.addUser(member.id)
+        if not guildDB:
+            self.db.addGuild(guild.id)
+            guildDB = self.db.getGuildXP(guild.id)
+        if not userGuildDB:
+            self.db.addUserGuild(member.id, guild.id)
+            userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
+
+        currentXP: int = userGuildDB[0]
+
+        newXP = currentXP + amount
+        if newXP < 0:
+            newXP = 0
+        elif newXP > 1_899_250:
+            newXP = 1_899_250
+
+        xpNeed = self.nextLevelXP(0, 0)
+        level = 0
+        while xpNeed < newXP:
+            level += 1
+            xpNeed += self.nextLevelXP(level, xpNeed)
+        self.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
+
+    def _lvl_update(self, member: discord.Member, amount: int) -> None:
+        guild = member.guild
+        userDB, guildDB, userGuildDB = self.db.getXPUtils(member.id, guild.id)
+
+        if not userDB:
+            self.db.addUser(member.id)
+        if not guildDB:
+            self.db.addGuild(guild.id)
+            guildDB = self.db.getGuildXP(guild.id)
+        if not userGuildDB:
+            self.db.addUserGuild(member.id, guild.id)
+            userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
+
+        currentLvl: int = userGuildDB[1]
+        newLvl = currentLvl + amount
+        if newLvl < 0:
+            newLvl = 0
+        elif newLvl > 100:
+            newLvl = 100
+
+        xp = self.totalLevelXP(newLvl)
+        self.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
+
+    @commands.slash_command(description="Gives XP to a user")
+    @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the target member",
+        required=True
+    )
+    @option(
+        input_type=int,
+        name="amount",
+        description="The amount of XP to give",
+        min_value=1,
+        required=True
+    )
+    async def give_xp(self, ctx: ApplicationContext, member: discord.Member, amount: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        if member.bot:
+            await ctx.respond("You can't edit a bot's xp !")
+            return
+
+        if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            await ctx.respond("User not registered.")
+            return
+
+        self._xp_update(member, amount)
+        await ctx.respond("Done !")
+
+    @commands.slash_command(description="Removes XP to a user")
+    @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the target member",
+        required=True
+    )
+    @option(
+        input_type=int,
+        name="amount",
+        description="The amount of XP to remove",
+        min_value=1,
+        required=True
+    )
+    async def remove_xp(self, ctx: ApplicationContext, member: discord.Member, amount: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        if member.bot:
+            await ctx.respond("You can't edit a bot's xp !")
+            return
+
+        if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            await ctx.respond("User not registered.")
+            return
+
+        self._xp_update(member, -amount)
+        await ctx.respond("Done !")
+
+    @commands.slash_command(description="Gives levels to a user")
+    @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the target member",
+        required=True
+    )
+    @option(
+        input_type=int,
+        name="amount",
+        description="The amount of levels to give",
+        min_value=1,
+        required=True
+    )
+    async def give_levels(self, ctx: ApplicationContext, member: discord.Member, amount: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        if member.bot:
+            await ctx.respond("You can't edit a bot's levels !")
+            return
+
+        if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            await ctx.respond("User not registered.")
+            return
+
+        self._xp_update(member, amount)
+        await ctx.respond("Done !")
+
+    @commands.slash_command(description="Removes levels to a user")
+    @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the target member",
+        required=True
+    )
+    @option(
+        input_type=int,
+        name="amount",
+        description="The amount of levels to remove",
+        min_value=1,
+        required=True
+    )
+    async def remove_levels(self, ctx: ApplicationContext, member: discord.Member, amount: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        if member.bot:
+            await ctx.respond("You can't edit a bot's levels !")
+            return
+
+        if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            await ctx.respond("User not registered.")
+            return
+
+        self._xp_update(member, -amount)
+        await ctx.respond("Done !")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(XP(bot))

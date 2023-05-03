@@ -259,7 +259,7 @@ class Admin(commands.Cog):
 
         testGuild = self.db.getGuild(idGuild)
         if not testGuild or len(testGuild) == 0:
-            self.db.addGuild(idGuild, idChan, ctx.guild.member_count)
+            self.db.addGuild(idGuild, idChan)
         else:
             self.db.changeNewsChan(idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
@@ -269,14 +269,37 @@ class Admin(commands.Cog):
     @commands.guild_only()
     async def set_xp_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        await ctx.respond("WIP")
+
+        testGuild = None
+        idGuild = ctx.guild_id
+        idChan = ctx.channel_id
+
+        testGuild = self.db.getGuild(idGuild)
+        if not testGuild or len(testGuild) == 0:
+            self.db.addGuild(idGuild, idChan)
+        else:
+            self.db.changeXPChan(idGuild, idChan)
+        await ctx.respond("this channel will now host my the news about XP change !")
+
 
     @commands.slash_command(description="Enable or disable the xp system on the server")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def enable_xp_system(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        await ctx.respond("WIP")
+
+        xpState = None
+        idGuild = ctx.guild_id
+
+        xpState = self.db.getGuildXP(idGuild)
+        if not xpState or len(xpState) == 0:
+            self.db.addGuild(idGuild)
+            xpState = self.db.getGuildXP(idGuild)
+
+        enabled: bool = xpState[1]
+        self.db.updateGuildXpEnabled(idGuild)
+        await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
