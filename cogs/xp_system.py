@@ -251,5 +251,64 @@ class XP(commands.Cog):
         await ctx.respond("Done !")
 
 
+    @commands.slash_command(description="Leaderboard of users based on their xp points in the server")
+    @commands.cooldown(1, 30.0, commands.BucketType.user)
+    @option(
+        input_type=int,
+        name="limit",
+        description="Limit of users in the leaderboard (default 10)",
+        default=10,
+        min_value=1,
+        max_value=50
+    )
+    async def leaderboard(self, ctx: ApplicationContext, limit: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        idGuild = ctx.guild.id
+
+        guildDB = self.db.getGuildXP(idGuild)
+        if not guildDB:
+            self.db.addGuild(idGuild)
+            await ctx.respond("Server registered now. Try this command later")
+            return
+        elif not guildDB[1]:
+            await ctx.respond("The xp system is not enabled in this server.")
+            return
+
+        embed = discord.Embed(
+            title="XP Leaderboard",
+            description=f"Current leaderboard for the server {ctx.guild.name}",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+
+        lb = self.db.getXpLeaderboard(idGuild, limit)
+        count = 0
+        nbFields = 0
+        res = ""
+        for i, row in enumerate(lb):
+            idUser, xp, _ = row
+            text = f"**{i+1}** - <@{idUser}> ({xp})\n"
+            if len(text) + count > 1024:
+                embed.append_field(
+                    discord.EmbedField(name="", value=res)
+                )
+                count = 0
+                nbFields += 1
+                res = ""
+            if nbFields > 25:
+                break
+            
+            res += text
+            count += len(text)
+        if len(text) > 0:
+            embed.append_field(
+                discord.EmbedField(name="", value=res)
+            )
+        await ctx.respond(embed=embed)
+
+
+
+
 def setup(bot: commands.Bot):
     bot.add_cog(XP(bot))

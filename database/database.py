@@ -97,7 +97,7 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getUsers(self, limit: int = 10) -> list:
+    def getUsers(self, limit: int = 10) -> list[tuple]:
         query = "SELECT * FROM josix.User LIMIT %s;"
         params = (limit,)
         self.cursor.execute(query, params)
@@ -120,7 +120,7 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchone()
 
-    def getCouples(self, msgId: int = None) -> list:
+    def getCouples(self, msgId: int = None) -> list[tuple]:
         if not msgId:
             query = f"""SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
                         INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
@@ -166,16 +166,24 @@ class DatabaseHandler():
             self.getGuildXP(guildId),
             self.getUserGuildXP(userId, guildId)
         )
+
+    def getXpLeaderboard(self, guildId: int, limit: int) -> list[tuple]:
+        query = f"""SELECT idUser, xp, lvl FROM josix.UserGuild
+                    WHERE idGuild = {guildId}
+                    ORDER BY xp DESC
+                    LIMIT {limit}"""
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
         
 
-    def getNewsChan(self, userId: int) -> list:
+    def getNewsChan(self, userId: int) -> list[tuple]:
         query = f"""SELECT chanNews FROM josix.Guild g
                                     INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
                     WHERE idUser = {userId} AND chanNews IS NOT NULL;"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def checkBD(self, day: int, month: int) -> list:
+    def checkBD(self, day: int, month: int) -> list[tuple]:
         query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild",
                            EXTRACT(MONTH FROM u.hbDate) AS "month",
                            EXTRACT(DAY FROM u.hbDate) AS "day"
@@ -186,7 +194,7 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def getBirthdays(self, guildId: int) -> list:
+    def getBirthdays(self, guildId: int) -> list[tuple]:
         query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
                     FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
                     WHERE ug.idGuild = {guildId}
@@ -194,7 +202,7 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def getBDMonth(self, guildId: int, month: int) -> list:
+    def getBDMonth(self, guildId: int, month: int) -> list[tuple]:
         query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
                     FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
                     WHERE ug.idGuild = {guildId} AND EXTRACT(MONTH FROM u.hbDate) = {month}
