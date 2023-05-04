@@ -57,7 +57,6 @@ class PatternView(discord.ui.View):
         while self.checkWin():
             for _ in range(randint(10, 15)):
                 self.chooseSquare(randint(0, 2), randint(0, 2))
-                print(self)
 
     def addMove(self) -> None:
         self.count += 1

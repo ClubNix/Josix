@@ -174,6 +174,14 @@ class DatabaseHandler():
                     LIMIT {limit}"""
         self.cursor.execute(query)
         return self.cursor.fetchall()
+
+    def getLeaderboardPos(self, userId: int, guildId: int) -> tuple:
+        query = f"""SELECT COUNT(DISTINCT idUser) + 1
+                    FROM josix.UserGuild
+                    WHERE idGuild = {guildId} AND
+                          xp > (SELECT xp FROM josix.UserGuild WHERE idUser = {userId} AND idGuild = {guildId});"""
+        self.cursor.execute(query)
+        return self.cursor.fetchone()
         
 
     def getNewsChan(self, userId: int) -> list[tuple]:

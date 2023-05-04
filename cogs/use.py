@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands, tasks
 from discord import ApplicationContext
 from discord import option
-from discord.utils import get as discordGet
 
 import random
 import datetime

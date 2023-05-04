@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import ApplicationContext, option
+from discord.enums import InteractionType
 
 import datetime as dt
 import os
@@ -25,24 +26,17 @@ class XP(commands.Cog):
             res += self.nextLevelXP(i, res)
         return res
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        await self.bot.process_commands(message)
-        if message.author.bot:
-            return
-
-        auth = message.author
-        guild = message.guild
-        userDB, guildDB, userGuildDB = self.db.getXPUtils(auth.id, guild.id)
+    async def _updateUser(self, idTarget: int, idGuild: int, xp: int):
+        userDB, guildDB, userGuildDB = self.db.getXPUtils(idTarget, idGuild)
 
         if not userDB:
-            self.db.addUser(auth.id)
+            self.db.addUser(idTarget)
         if not guildDB:
-            self.db.addGuild(guild.id)
-            guildDB = self.db.getGuildXP(guild.id)
+            self.db.addGuild(idGuild)
+            guildDB = self.db.getGuildXP(idGuild)
         if not userGuildDB:
-            self.db.addUserGuild(auth.id, guild.id)
-            userGuildDB = self.db.getUserGuildXP(auth.id, guild.id)
+            self.db.addUserGuild(idTarget, idGuild)
+            userGuildDB = self.db.getUserGuildXP(idTarget, idGuild)
     
         xpChanId: int = guildDB[0]
         xpEnabled: bool = guildDB[1]
@@ -56,24 +50,45 @@ class XP(commands.Cog):
 
         nowTime = dt.datetime.now()
         if (nowTime - lastSend).seconds < 60:
-            return
-
-        msgLen = len(message.content)
-        xp = 100 if msgLen >= 75 else 50 if msgLen >= 20 else 25
+            pass
 
         xpNeed = self.nextLevelXP(currentLvl, currentXP - self.totalLevelXP(currentLvl))
         newLvl = xpNeed < (currentXP + xp)
 
         currentLvl = currentLvl + 1 if newLvl else currentLvl
         currentXP += xp
-        self.db.updateUserXP(auth.id, guild.id, currentLvl, currentXP, nowTime)
+        self.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
             xpChan = self.bot.get_channel(xpChanId)
             if xpChan:
                 await xpChan.send(
-                    f"Congratulations {auth.mention}, you are now level **{currentLvl}** with **{currentXP}** exp ! 🎉"
+                    f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp ! 🎉"
                 )
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        await self.bot.process_commands(message)
+        if message.author.bot:
+            return
+
+        msgLen = len(message.content)
+        xp = 100 if msgLen >= 75 else 50 if msgLen >= 20 else 25
+        await self._updateUser(
+            message.author.id,
+            message.guild.id,
+            xp
+        )
+
+    @commands.Cog.listener()
+    async def on_application_command_completion(self, ctx: ApplicationContext):
+        if ctx.author.bot:
+            return
+        await self._updateUser(
+            ctx.author.id,
+            ctx.guild.id,
+            50
+        )
 
 
 ####################
@@ -218,7 +233,7 @@ class XP(commands.Cog):
             await ctx.respond("User not registered.")
             return
 
-        self._xp_update(member, amount)
+        self._lvl_update(member, amount)
         await ctx.respond("Done !")
 
     @commands.slash_command(description="Removes levels to a user")
@@ -247,7 +262,7 @@ class XP(commands.Cog):
             await ctx.respond("User not registered.")
             return
 
-        self._xp_update(member, -amount)
+        self._lvl_update(member, -amount)
         await ctx.respond("Done !")
 
 
@@ -307,7 +322,53 @@ class XP(commands.Cog):
             )
         await ctx.respond(embed=embed)
 
+    @commands.slash_command(description="Show the XP card of the user")
+    @commands.cooldown(1, 30.0, commands.BucketType.user)
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the target member",
+        default=None
+    )
+    async def profile(self, ctx: ApplicationContext, member: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
+        if not member:
+            member = ctx.author
 
+        if member.bot:
+            await ctx.respond("You can't use this command on a bot user.")
+            return
+
+        idGuild = ctx.guild.id
+        stats = self.db.getUserGuildXP(member.id, idGuild)
+        if not stats:
+            await ctx.respond("This user is not registered")
+            return
+
+        xp: int
+        lvl: int
+        xp, lvl, _ = stats
+        xpNeed = self.totalLevelXP(lvl)
+        progress = round(xp / xpNeed, 2)
+        pos = self.db.getLeaderboardPos(member.id, idGuild)
+
+        embed = discord.Embed(
+            title=f"{member}'s card",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=member.display_avatar)
+        embed.add_field(name="", value="\n".join((
+            f"`XP` : **{xp}**",
+            f"`Level` : **{lvl}**",
+            f"`Progress` : **{progress*100}%**"
+        )))
+        embed.add_field(name="", value="\n".join((
+            f"`Next Level XP` : **{self.nextLevelXP(lvl, xp)}**",
+            f"`Total XP needed` : **{xpNeed}**",
+            f"`Leaderboard` : **{pos[0] if pos else '?'}**"
+        )))
+        await ctx.respond(embed=embed)
 
 
 def setup(bot: commands.Bot):
