@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import ApplicationContext, option
-from discord.enums import InteractionType
 
 import datetime as dt
 import os
@@ -13,7 +12,7 @@ class XP(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
-    def nextLevelXP(self, lvl: int, xp: int) -> int:
+    def nextLevelXP(self, lvl: int, xp: int = 0) -> int:
         """Stolen from MEE6 : https://github.com/Mee6/Mee6-documentation/blob/master/docs/levels_xp.md """
         return 5 * (lvl**2) + (50 * lvl) + 100 - xp
 
@@ -22,8 +21,8 @@ class XP(commands.Cog):
             return 0
 
         res = 0
-        for i in range(1, lvl+1):
-            res += self.nextLevelXP(i, res)
+        for i in range(0, lvl):
+            res += self.nextLevelXP(i, 0)
         return res
 
     async def _updateUser(self, idTarget: int, idGuild: int, xp: int):
@@ -49,11 +48,11 @@ class XP(commands.Cog):
             return
 
         nowTime = dt.datetime.now()
-        if (nowTime - lastSend).seconds < 60:
+        if ((nowTime - lastSend).seconds < 60):
             pass
 
         xpNeed = self.nextLevelXP(currentLvl, currentXP - self.totalLevelXP(currentLvl))
-        newLvl = xpNeed < (currentXP + xp)
+        newLvl = xpNeed <= xp
 
         currentLvl = currentLvl + 1 if newLvl else currentLvl
         currentXP += xp
@@ -63,7 +62,7 @@ class XP(commands.Cog):
             xpChan = self.bot.get_channel(xpChanId)
             if xpChan:
                 await xpChan.send(
-                    f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp ! 🎉"
+                    f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
 
     @commands.Cog.listener()
@@ -119,11 +118,12 @@ class XP(commands.Cog):
         elif newXP > 1_899_250:
             newXP = 1_899_250
 
-        xpNeed = self.nextLevelXP(0, 0)
         level = 0
+        xpNeed = self.nextLevelXP(level)
         while xpNeed < newXP:
             level += 1
-            xpNeed += self.nextLevelXP(level, xpNeed)
+            xpNeed += self.nextLevelXP(level)
+
         self.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
@@ -348,7 +348,8 @@ class XP(commands.Cog):
         xp: int
         lvl: int
         xp, lvl, _ = stats
-        xpNeed = self.totalLevelXP(lvl)
+        lastNeed = self.totalLevelXP(lvl)
+        xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
         progress = round(xp / xpNeed, 2)
         pos = self.db.getLeaderboardPos(member.id, idGuild)
 
@@ -364,7 +365,7 @@ class XP(commands.Cog):
             f"`Progress` : **{progress*100}%**"
         )))
         embed.add_field(name="", value="\n".join((
-            f"`Next Level XP` : **{self.nextLevelXP(lvl, xp)}**",
+            f"`Next Level XP` : **{self.nextLevelXP(lvl, xp-lastNeed)}**",
             f"`Total XP needed` : **{xpNeed}**",
             f"`Leaderboard` : **{pos[0] if pos else '?'}**"
         )))
