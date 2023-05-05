@@ -49,7 +49,7 @@ class XP(commands.Cog):
 
         nowTime = dt.datetime.now()
         if ((nowTime - lastSend).seconds < 60):
-            pass
+            return
 
         xpNeed = self.nextLevelXP(currentLvl, currentXP - self.totalLevelXP(currentLvl))
         newLvl = xpNeed <= xp
