@@ -212,19 +212,21 @@ class Usage(commands.Cog):
         input_type=float,
         name="cura_price",
         description="Price given by Cura in €",
-        required=True
+        required=True,
+        min_value=0.1
     )
     @option(
-        input_type=float,
+        input_type=int,
         name="minutes_count",
         description="Number of minutes for the print (rounded up)",
         required=True,
-        min_value=1.0
+        min_value=1
     )
     @option(
         input_type=bool,
         name="is_member",
-        description="Is the person asking for the print is a member or no"
+        description="Is the person asking for the print is a member or no",
+        required=True
     )
     async def print_price(
         self,
@@ -241,7 +243,7 @@ class Usage(commands.Cog):
         factor = 1 if is_member else 1.5
         minutesFactor = 1 + (((minutes_count // 30) + (1 if minutes_count % 30 > 0 else 0)) / 20)
         finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
-        await ctx.respond(f"The price for this print is : **{finalPrice}**")
+        await ctx.respond(f"The price for this print is : **{finalPrice} €**")
 
     @commands.slash_command(description="Add your birthday in the database !")
     @commands.guild_only()

@@ -234,14 +234,14 @@ class Admin(commands.Cog):
             if emoji == duo[0]:
                 await ctx.respond("The emoji is already used in the message")
                 if new:
-                    self.db.delMsg(msgId)
+                    self.db.delMessageReact(msgId)
                 return
 
             elif roleId == duo[1]:
                 await ctx.respond("The role is already used in the message")
                 await msg.clear_reaction(emoji)
                 if new:
-                    self.db.delMsg(msgId)
+                    self.db.delMessageReact(msgId)
                 return
 
         self.db.addCouple((emoji, roleId), msgId)
