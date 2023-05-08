@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.errors import NotFound, Forbidden
 from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
     CommandOnCooldown, NotOwner
-from discord import RawReactionActionEvent, RawThreadUpdateEvent ,ApplicationContext, DiscordException
+from discord import RawThreadUpdateEvent ,ApplicationContext, DiscordException
 from discord.utils import get as discordGet
 
 from database.database import DatabaseHandler
@@ -36,38 +36,6 @@ class Events(commands.Cog):
         except (JSONDecodeError, FileNotFoundError, KeyError):
             pass
 
-    async def updateRole(self, payload: RawReactionActionEvent, add: bool):
-        emoji = payload.emoji
-        if emoji.is_custom_emoji():
-            return
-
-        msgId = payload.message_id
-        resMsg = self.db.getMsg(msgId)
-        if resMsg is None or len(resMsg) == 0:
-            return
-
-        if payload.message_id in resMsg:
-            userId = payload.user_id
-            guildId = payload.guild_id
-            emojiName = emoji.name
-
-            guild = self.bot.get_guild(guildId)
-            member = guild.get_member(userId)
-
-            resRoles = self.db.getRoleFromReact(msgId, emojiName)
-            if resRoles is None:
-                return
-
-            roleId = resRoles[0]
-            role = guild.get_role(roleId)
-
-            if add:
-                if not member.get_role(roleId):
-                    await member.add_roles(role)
-            else:
-                if member.get_role(roleId):
-                    await member.remove_roles(role)
-
     async def getTags(thread: discord.Thread, close: str, open: str) -> tuple[discord.ForumTag | None]:
         cTag: discord.ForumTag = None
         oTag: discord.ForumTag = None
@@ -98,14 +66,6 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         log.writeLog(f"==> Bot ready : py-cord v{discord.__version__}\n")
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
-        await self.updateRole(payload, True)
-
-    @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
-        await self.updateRole(payload, False)
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):

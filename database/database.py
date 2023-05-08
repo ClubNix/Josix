@@ -131,6 +131,11 @@ class DatabaseHandler():
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
+    def getCoupleFromRole(self, roleId: int) -> list[tuple]:
+        query = f"SELECT idCouple FROM josix.ReactCouple WHERE idRole = {roleId};"
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
     def getUserInGuild(self, userId: int, guildId: int) -> tuple:
         query = f"""SELECT * FROM josix.UserGuild
                     WHERE idUser = {userId} AND idGuild  = {guildId};"""
@@ -334,7 +339,16 @@ class DatabaseHandler():
     # Deleters
     ###############
 
-    def delMsg(self, msgId: int) -> None:
-        query = f"DELETE FROM MsgReact WHERE idMsg = {msgId};"
+    def delMessageReact(self, msgId: int):
+        query = f"DELETE FROM josix.MsgCouple WHERE idMsg = {msgId};"
+        query2 = f"DELETE FROM josix.MsgReact WHERE idMsg = {msgId};"
         self.cursor.execute(query)
+        self.cursor.execute(query2)
+        self.conn.commit()
+
+    def delReactCouple(self, coupleId: int):
+        query = f"DELETE FROM josix.MsgCouple WHERE idCouple = {coupleId};"
+        query2 = f"DELETE FROM josix.ReactCouple WHERE idCouple = {coupleId};"
+        self.cursor.execute(query)
+        self.cursor.execute(query2)
         self.conn.commit()

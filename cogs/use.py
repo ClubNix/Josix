@@ -12,6 +12,7 @@ import json
 from database.database import DatabaseHandler
 from json import JSONDecodeError
 from cogs.events import Events
+from math import ceil
 
 
 class Usage(commands.Cog):
@@ -43,7 +44,8 @@ class Usage(commands.Cog):
             for cogName, cog in self.bot.cogs.items():
                 lstCmd = ""
 
-                if not cog or cogName.lower() == "events" or (
+                lcn = cogName.lower()
+                if not cog or lcn == "events" or lcn == "reactionrole" or (
                         cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
 
@@ -204,6 +206,42 @@ class Usage(commands.Cog):
 
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
+
+    @commands.slash_command(description="Get full price for a 3D print")
+    @option(
+        input_type=float,
+        name="cura_price",
+        description="Price given by Cura in €",
+        required=True
+    )
+    @option(
+        input_type=float,
+        name="minutes_count",
+        description="Number of minutes for the print (rounded up)",
+        required=True,
+        min_value=1.0
+    )
+    @option(
+        input_type=bool,
+        name="is_member",
+        description="Is the person asking for the print is a member or no"
+    )
+    async def print_price(
+        self,
+        ctx: ApplicationContext,
+        cura_price: float,
+        minutes_count: float,
+        is_member: bool
+    ):
+        """ function : https://cdn.discordapp.com/attachments/751051007110283365/987326536837373992/Screenshot_from_2022-06-17_14-02-05.png """
+        if cura_price <= 0.0 or minutes_count <= 0.0:
+            await ctx.respond("The cura price and number of minutes should be greater than zero.")
+            return
+
+        factor = 1 if is_member else 1.5
+        minutesFactor = 1 + (((minutes_count // 30) + (1 if minutes_count % 30 > 0 else 0)) / 20)
+        finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
+        await ctx.respond(f"The price for this print is : **{finalPrice}**")
 
     @commands.slash_command(description="Add your birthday in the database !")
     @commands.guild_only()
