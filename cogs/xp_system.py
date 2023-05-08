@@ -89,6 +89,17 @@ class XP(commands.Cog):
             50
         )
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.member.bot:
+            return
+        await self._updateUser(
+            payload.user_id,
+            payload.guild_id,
+            25
+            )
+        
+
 
 ####################
 #

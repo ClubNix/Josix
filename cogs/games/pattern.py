@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import ApplicationContext, Member, Interaction, option
+from discord import ApplicationContext, Member, Interaction
 
 import numpy as np
 
