@@ -4,6 +4,8 @@ import os
 import datetime as dt
 import logwrite as log
 
+from typing import Callable, Any
+
 
 SCRIPT_DIR = os.path.dirname(__file__)
 FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
@@ -27,6 +29,17 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
+    def safeExecute(
+        self,
+        func: Callable[[Any], list[tuple] | tuple | None],
+        *args
+        ) -> list[tuple] | tuple | None:
+        try:
+            return func(*args)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+            
+
     def execute(self, query: str, raiseError: bool = False) -> str:
         if query.startswith("--") or query.startswith("\n") or len(query) == 0:
             return "Empty query"
@@ -49,10 +62,13 @@ class DatabaseHandler():
             return str(commonError)
 
     def backup(self, table: str):
-        checkTable = f"AND table_name = '{table}'" if len(table) > 0 else ""
-        self.cursor.execute(
-            f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' {checkTable};"
-        )
+        checkTable = f"AND table_name = '{table}'" if len(table) > 0 else None
+        if table:
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' %s;"
+        else:
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix';"
+            
+        self.cursor.execute(query, (checkTable,))
         res = self.cursor.fetchall()
 
         with open(FILE_PATH, "w") as f:
@@ -61,7 +77,7 @@ class DatabaseHandler():
                 table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")
 
-                self.cursor.execute("SELECT * FROM josix.%s" % (table_name))  # change the query according to your needs
+                self.cursor.execute("SELECT * FROM josix.%s" % (table_name))
                 column_names = []
                 columns_descr = self.cursor.description
 
@@ -88,58 +104,61 @@ class DatabaseHandler():
     ###############
 
     def getGuild(self, guildId: int) -> tuple:
-        query = f"SELECT * FROM josix.Guild WHERE idGuild = {guildId};"
-        self.cursor.execute(query)
+        query = "SELECT * FROM josix.Guild WHERE idGuild = %s;"
+        self.cursor.execute(query, (guildId,))
         return self.cursor.fetchone()
 
     def getUser(self, userId: int) -> tuple:
-        query = f"SELECT * FROM josix.User WHERE idUser = {userId};"
-        self.cursor.execute(query)
+        query = "SELECT * FROM josix.User WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
     def getUsers(self, limit: int = 10) -> list[tuple]:
         query = "SELECT * FROM josix.User LIMIT %s;"
-        params = (limit,)
-        self.cursor.execute(query, params)
+        self.cursor.execute(query, (limit,))
         return self.cursor.fetchall()
 
     def getPlayerStat(self, userId: int) -> tuple:
-        query = f"SELECT elo, nbGames FROM josix.User WHERE idUser = {userId};"
-        self.cursor.execute(query)
+        query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
     def getMsg(self, msgId: int) -> tuple:
-        query = f"SELECT * FROM josix.Msgreact WHERE idMsg = {msgId};"
-        self.cursor.execute(query)
+        query = f"SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
+        self.cursor.execute(query, (msgId,))
         return self.cursor.fetchone()
 
     def getRoleFromReact(self, msgId: int, emojiName: str) -> tuple:
-        query = f"""SELECT idRole FROM josix.ReactCouple rc
-                    INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                    WHERE mc.idMsg = {msgId} AND rc.nomEmoji = '{emojiName}';"""
-        self.cursor.execute(query)
+        query = """SELECT idRole FROM josix.ReactCouple rc
+                   INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
+                   WHERE mc.idMsg = %s AND rc.nomEmoji = %s;"""
+        params = (msgId, emojiName)
+        self.cursor.execute(query, params)
         return self.cursor.fetchone()
 
     def getCouples(self, msgId: int = None) -> list[tuple]:
         if not msgId:
-            query = f"""SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
-                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
+            query = """SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
+                       INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
+            params = ()
         else:
-            query = f"""SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
-                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                        WHERE mc.idMsg = {msgId};"""
-        self.cursor.execute(query)
+            query = """SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
+                       INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
+                       WHERE mc.idMsg = %s;"""
+            params = (msgId,)
+        self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
     def getCoupleFromRole(self, roleId: int) -> list[tuple]:
-        query = f"SELECT idCouple FROM josix.ReactCouple WHERE idRole = {roleId};"
-        self.cursor.execute(query)
+        query = "SELECT idCouple FROM josix.ReactCouple WHERE idRole = %s;"
+        self.cursor.execute(query, (roleId,))
         return self.cursor.fetchall()
 
     def getUserInGuild(self, userId: int, guildId: int) -> tuple:
-        query = f"""SELECT * FROM josix.UserGuild
-                    WHERE idUser = {userId} AND idGuild  = {guildId};"""
-        self.cursor.execute(query)
+        query = """SELECT * FROM josix.UserGuild
+                   WHERE idUser = %s AND idGuild  = %s;"""
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
         return self.cursor.fetchone()
 
     def getUserGuildLink(self, userId: int, guildId: int) -> tuple[tuple]:
@@ -150,19 +169,20 @@ class DatabaseHandler():
         )
     
     def getUserXP(self, userId: int) -> tuple:
-        query = f"SELECT idUser FROM josix.User WHERE idUser = {userId};"
-        self.cursor.execute(query)
+        query = "SELECT idUser FROM josix.User WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
     def getGuildXP(self, guildId: int) -> tuple:
-        query = f"SELECT xpNews, enableXP FROM josix.Guild WHERE idGuild = {guildId};"
-        self.cursor.execute(query)
+        query = "SELECT xpNews, enableXP FROM josix.Guild WHERE idGuild = %s;"
+        self.cursor.execute(query, (guildId,))
         return self.cursor.fetchone()
 
     def getUserGuildXP(self, userId: int, guildId: int) -> tuple:
-        query = f"""SELECT xp, lvl, lastMessage FROM josix.UserGuild
-                    WHERE idUser = {userId} AND idGuild  = {guildId};"""
-        self.cursor.execute(query)
+        query = """SELECT xp, lvl, lastMessage FROM josix.UserGuild
+                   WHERE idUser = %s AND idGuild  = %s;"""
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
         return self.cursor.fetchone()
 
     def getXPUtils(self, userId: int, guildId: int) -> tuple[tuple]:
@@ -173,108 +193,117 @@ class DatabaseHandler():
         )
 
     def getXpLeaderboard(self, guildId: int, limit: int) -> list[tuple]:
-        query = f"""SELECT idUser, xp, lvl FROM josix.UserGuild
-                    WHERE idGuild = {guildId}
-                    ORDER BY xp DESC
-                    LIMIT {limit}"""
-        self.cursor.execute(query)
+        query = """SELECT idUser, xp, lvl FROM josix.UserGuild
+                   WHERE idGuild = %s
+                   ORDER BY xp DESC
+                   LIMIT %s"""
+        params = (guildId, limit)
+        self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
     def getLeaderboardPos(self, userId: int, guildId: int) -> tuple:
-        query = f"""SELECT COUNT(DISTINCT idUser) + 1
-                    FROM josix.UserGuild
-                    WHERE idGuild = {guildId} AND
-                          xp > (SELECT xp FROM josix.UserGuild WHERE idUser = {userId} AND idGuild = {guildId});"""
-        self.cursor.execute(query)
+        query = """SELECT COUNT(DISTINCT idUser) + 1
+                   FROM josix.UserGuild
+                   WHERE idGuild = %s AND
+                         xp > (SELECT xp FROM josix.UserGuild WHERE idUser = %s AND idGuild = %s);"""
+        params = (guildId, userId, guildId)
+        self.cursor.execute(query, params)
         return self.cursor.fetchone()
         
 
     def getNewsChan(self, userId: int) -> list[tuple]:
-        query = f"""SELECT chanNews FROM josix.Guild g
-                                    INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
-                    WHERE idUser = {userId} AND chanNews IS NOT NULL;"""
-        self.cursor.execute(query)
+        query = """SELECT chanNews 
+                   FROM josix.Guild g INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
+                   WHERE idUser = %s AND chanNews IS NOT NULL;"""
+        self.cursor.execute(query, (userId,))
         return self.cursor.fetchall()
 
     def checkBD(self, day: int, month: int) -> list[tuple]:
-        query = f"""SELECT u.idUser AS "user", ug.idGuild as "guild",
-                           EXTRACT(MONTH FROM u.hbDate) AS "month",
-                           EXTRACT(DAY FROM u.hbDate) AS "day"
+        query = """SELECT u.idUser AS "user", ug.idGuild as "guild",
+                          EXTRACT(MONTH FROM u.hbDate) AS "month",
+                          EXTRACT(DAY FROM u.hbDate) AS "day"
                     FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
                     WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW()) AND
-                          EXTRACT(DAY FROM u.hbDate) = {day} AND
-                          EXTRACT(MONTH FROM u.hbDate) = {month};"""
-        self.cursor.execute(query)
+                          EXTRACT(DAY FROM u.hbDate) = %s AND
+                          EXTRACT(MONTH FROM u.hbDate) = %s;"""
+        params = (day, month)
+        self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
     def getBirthdays(self, guildId: int) -> list[tuple]:
-        query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
-                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE ug.idGuild = {guildId}
-                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
-        self.cursor.execute(query)
+        query = """SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
+                   FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                   WHERE ug.idGuild = %s
+                   ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
+        self.cursor.execute(query, (guildId,))
         return self.cursor.fetchall()
 
     def getBDMonth(self, guildId: int, month: int) -> list[tuple]:
-        query = f"""SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
-                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE ug.idGuild = {guildId} AND EXTRACT(MONTH FROM u.hbDate) = {month}
-                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
-        self.cursor.execute(query)
+        query = """SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
+                   FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
+                   WHERE ug.idGuild = %s AND EXTRACT(MONTH FROM u.hbDate) = %s
+                   ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
+        self.cursor.execute(query, (guildId, month))
         return self.cursor.fetchall()
 
     def getBDUser(self, userId: int) -> tuple:
-        query = f"""SELECT hbDate FROM josix.User WHERE idUser = {userId};"""
-        self.cursor.execute(query)
+        query = "SELECT hbDate FROM josix.User WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
     ###############
     # Adders
     ###############
 
-    def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0):
-        query = f"INSERT INTO josix.Guild(idGuild, chanNews, xpNews) VALUES " \
-                f"({guildId}, {chanStat}, {chanXP})"
-        self.cursor.execute(query)
+    def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0) -> None:
+        query = """INSERT INTO josix.Guild(idGuild, chanNews, xpNews)
+                   VALUES (%s, %s, %s)"""
+        params = (guildId, chanStat, chanXP)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def addMsg(self, guildId: int, msgId: int) -> None:
-        query = f"INSERT INTO josix.MsgReact VALUES({msgId},{guildId});"
-        self.cursor.execute(query)
+        query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
+        params = (msgId, guildId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def addCouple(self, couple: tuple, msgId: int) -> None:
         if len(couple) != 2:
             return
             
-        query1 = f"INSERT INTO josix.ReactCouple (nomEmoji, idRole) VALUES " \
-                 f"('{couple[0]}',{couple[1]}) RETURNING idCouple;"
-        self.cursor.execute(query1)
+        query1 = """INSERT INTO josix.ReactCouple (nomEmoji, idRole)
+                    VALUES (%s, %s) RETURNING idCouple;"""
+        params = (couple[0], couple[1])
+        self.cursor.execute(query1, params)
         idCouple = self.cursor.fetchone()[0]
 
-        query2 = f"INSERT INTO josix.MsgCouple VALUES ({msgId},{idCouple});"
-        self.cursor.execute(query2)
+        query2 = "INSERT INTO josix.MsgCouple VALUES (%s,%s);"
+        params = (msgId, idCouple)
+        self.cursor.execute(query2, params)
         self.conn.commit()
 
     def addUser(self, userId: int) -> None:
-        query = f"INSERT INTO josix.User (idUser, elo, nbGames) VALUES ({userId}, 1000, 0);"
-        self.cursor.execute(query)
+        query = "INSERT INTO josix.User (idUser) VALUES (%s);"
+        self.cursor.execute(query, (userId,))
         self.conn.commit()
 
     def addUserGuild(self, userId: int, guildId: int) -> None:
-        query = f"""INSERT INTO josix.UserGuild(idUser, idGuild) VALUES ({userId},{guildId});"""
-        self.cursor.execute(query)
+        query = "INSERT INTO josix.UserGuild(idUser, idGuild) VALUES (%s, %s);"
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
-    def addDartLog(self, guildId: int, winner: discord.User, foes: tuple[discord.User]):
+    def addDartLog(self, guildId: int, winner: discord.User, foes: tuple[discord.User]) -> None:
         text = ""
         for foe in foes:
             text += foe.name + "', '"
         text = text[0:len(text)-3]
 
-        query = f"INSERT INTO josix.DartLog (idGuild, winnerName, losersName) VALUES " \
-                f"({guildId}, '{winner.name}', ARRAY['{text}])"
-        self.cursor.execute(query)
+        query = """INSERT INTO josix.DartLog (idGuild, winnerName, losersName)
+                   VALUES (%s, %s, ARRAY[%s])"""
+        params = (guildId, winner.name, text)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
 
@@ -283,32 +312,35 @@ class DatabaseHandler():
     ###############
 
     def updatePlayerStat(self, userId: int, newElo: int) -> None:
-        query = f"""UPDATE josix.User
-                    SET elo = {newElo}, nbGames = nbGames + 1
-                    WHERE idUser = {userId};"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.User
+                   SET elo = %s, nbGames = nbGames + 1
+                   WHERE idUser = %s;"""
+        params = (newElo, userId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def changeNewsChan(self, guildId: int, chanId: int) -> None:
-        query = f"""UPDATE josix.Guild
-                    SET chanNews = {chanId}
-                    WHERE idGuild = {guildId};"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.Guild
+                   SET chanNews = %s
+                   WHERE idGuild = %s;"""
+        params = (chanId, guildId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def updateUserBD(self, userId: int, day: int, month: int, year: int) -> None:
         newBd = f"'{year}-{month}-{day}'"
-        query = f"""UPDATE josix.User
-                    SET hbDate = {newBd}
-                    WHERE idUser = {userId};"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.User
+                   SET hbDate = %s
+                   WHERE idUser = %s;"""
+        params = (newBd, userId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def resetBd(self, userId: int) -> None:
-        query = f"""UPDATE josix.User
-                    SET hbDate = hbDate - INTERVAL '1 year'
-                    WHERE idUser = {userId};"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.User
+                   SET hbDate = hbDate - INTERVAL '1 year'
+                   WHERE idUser = %s;"""
+        self.cursor.execute(query, (userId,))
         self.conn.commit()
 
     def updateUserXP(self, userId: int, guildId: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
@@ -317,38 +349,39 @@ class DatabaseHandler():
                        xp = %s,
                        lastMessage = %s
                     WHERE idUser = %s AND idGuild = %s;"""
-        params = (lvl, xp, lastSend, userId, guildId,)
+        params = (lvl, xp, lastSend, userId, guildId)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     def changeXPChan(self, guildId: int, chanId: int) -> None:
-        query = f"""UPDATE josix.Guild
-                    SET xpNews = {chanId}
-                    WHERE idGuild = {guildId};"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.Guild
+                   SET xpNews = %s
+                   WHERE idGuild = %s;"""
+        params = (chanId, guildId)
+        self.cursor.execute(query, params)
         self.conn.commit()
 
     def updateGuildXpEnabled(self, guildId: int) -> None:
-        query = f"""UPDATE josix.Guild
-                    SET enableXP = NOT enableXP
-                    WHERE idGuild = {guildId}"""
-        self.cursor.execute(query)
+        query = """UPDATE josix.Guild
+                   SET enableXP = NOT enableXP
+                   WHERE idGuild = %s"""
+        self.cursor.execute(query, (guildId,))
         self.conn.commit()
 
     ###############
     # Deleters
     ###############
 
-    def delMessageReact(self, msgId: int):
-        query = f"DELETE FROM josix.MsgCouple WHERE idMsg = {msgId};"
-        query2 = f"DELETE FROM josix.MsgReact WHERE idMsg = {msgId};"
-        self.cursor.execute(query)
-        self.cursor.execute(query2)
+    def delMessageReact(self, msgId: int) -> None:
+        query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s;"
+        query2 = "DELETE FROM josix.MsgReact WHERE idMsg = %s;"
+        self.cursor.execute(query, (msgId,))
+        self.cursor.execute(query2, (msgId,))
         self.conn.commit()
 
-    def delReactCouple(self, coupleId: int):
-        query = f"DELETE FROM josix.MsgCouple WHERE idCouple = {coupleId};"
-        query2 = f"DELETE FROM josix.ReactCouple WHERE idCouple = {coupleId};"
-        self.cursor.execute(query)
-        self.cursor.execute(query2)
+    def delReactCouple(self, coupleId: int) -> None:
+        query = "DELETE FROM josix.MsgCouple WHERE idCouple = %s;"
+        query2 = "DELETE FROM josix.ReactCouple WHERE idCouple = %s;"
+        self.cursor.execute(query, (coupleId,))
+        self.cursor.execute(query2, (coupleId,))
         self.conn.commit()

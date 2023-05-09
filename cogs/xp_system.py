@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import ApplicationContext, option
 
 import datetime as dt
+import logwrite as log
 import os
 
 from database.database import DatabaseHandler
@@ -73,32 +74,42 @@ class XP(commands.Cog):
 
         msgLen = len(message.content)
         xp = 100 if msgLen >= 75 else 50 if msgLen >= 20 else 25
-        await self._updateUser(
-            message.author.id,
-            message.guild.id,
-            xp
-        )
+        try:
+            await self._updateUser(
+                message.author.id,
+                message.guild.id,
+                xp
+            )
+        except Exception as e:
+            log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx: ApplicationContext):
         if ctx.author.bot:
             return
-        await self._updateUser(
-            ctx.author.id,
-            ctx.guild.id,
-            50
-        )
+
+        try:
+            await self._updateUser(
+                ctx.author.id,
+                ctx.guild.id,
+                50
+            )
+        except Exception as e:
+            log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.member.bot:
             return
-        await self._updateUser(
-            payload.user_id,
-            payload.guild_id,
-            25
+
+        try:
+            await self._updateUser(
+                payload.user_id,
+                payload.guild_id,
+                25
             )
-        
+        except Exception as e:
+            log.writeError(log.formatError(e))
 
 
 ####################
@@ -182,11 +193,15 @@ class XP(commands.Cog):
             await ctx.respond("You can't edit a bot's xp !")
             return
 
-        if not self.db.getUserInGuild(member.id, ctx.guild.id):
-            await ctx.respond("User not registered.")
-            return
+        try:
+            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+                await ctx.respond("User not registered.")
+                return
 
-        self._xp_update(member, amount)
+            self._xp_update(member, amount)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+
         await ctx.respond("Done !")
 
     @commands.slash_command(description="Removes XP to a user")
@@ -211,11 +226,15 @@ class XP(commands.Cog):
             await ctx.respond("You can't edit a bot's xp !")
             return
 
-        if not self.db.getUserInGuild(member.id, ctx.guild.id):
-            await ctx.respond("User not registered.")
-            return
+        try:
+            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+                await ctx.respond("User not registered.")
+                return
 
-        self._xp_update(member, -amount)
+            self._xp_update(member, -amount)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+
         await ctx.respond("Done !")
 
     @commands.slash_command(description="Gives levels to a user")
@@ -240,11 +259,15 @@ class XP(commands.Cog):
             await ctx.respond("You can't edit a bot's levels !")
             return
 
-        if not self.db.getUserInGuild(member.id, ctx.guild.id):
-            await ctx.respond("User not registered.")
-            return
+        try:
+            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+                await ctx.respond("User not registered.")
+                return
 
-        self._lvl_update(member, amount)
+            self._lvl_update(member, amount)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+
         await ctx.respond("Done !")
 
     @commands.slash_command(description="Removes levels to a user")
@@ -269,11 +292,15 @@ class XP(commands.Cog):
             await ctx.respond("You can't edit a bot's levels !")
             return
 
-        if not self.db.getUserInGuild(member.id, ctx.guild.id):
-            await ctx.respond("User not registered.")
-            return
+        try:
+            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+                await ctx.respond("User not registered.")
+                return
 
-        self._lvl_update(member, -amount)
+            self._lvl_update(member, -amount)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+
         await ctx.respond("Done !")
 
 
@@ -291,14 +318,18 @@ class XP(commands.Cog):
         await ctx.defer(ephemeral=False, invisible=False)
         idGuild = ctx.guild.id
 
-        guildDB = self.db.getGuildXP(idGuild)
-        if not guildDB:
-            self.db.addGuild(idGuild)
-            await ctx.respond("Server registered now. Try this command later")
-            return
-        elif not guildDB[1]:
-            await ctx.respond("The xp system is not enabled in this server.")
-            return
+        try:
+            guildDB = self.db.getGuildXP(idGuild)
+            if not guildDB:
+                self.db.addGuild(idGuild)
+                await ctx.respond("Server registered now. Try this command later")
+                return
+            elif not guildDB[1]:
+                await ctx.respond("The xp system is not enabled in this server.")
+                return
+            lb = self.db.getXpLeaderboard(idGuild, limit)
+        except Exception as e:
+            log.writeError(log.formatError(e))
 
         embed = discord.Embed(
             title="XP Leaderboard",
@@ -308,7 +339,6 @@ class XP(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.set_thumbnail(url=self.bot.user.display_avatar)
 
-        lb = self.db.getXpLeaderboard(idGuild, limit)
         count = 0
         nbFields = 0
         res = ""
@@ -351,7 +381,7 @@ class XP(commands.Cog):
             return
 
         idGuild = ctx.guild.id
-        stats = self.db.getUserGuildXP(member.id, idGuild)
+        stats = self.db.safeExecute(self.db.getUserGuildXP, member.id, idGuild)
         if not stats:
             await ctx.respond("This user is not registered")
             return
@@ -361,8 +391,9 @@ class XP(commands.Cog):
         xp, lvl, _ = stats
         lastNeed = self.totalLevelXP(lvl)
         xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
+        nextXp = self.nextLevelXP(lvl, xp-lastNeed)
         progress = round(xp / xpNeed, 2)
-        pos = self.db.getLeaderboardPos(member.id, idGuild)
+        pos = self.db.safeExecute(self.db.getLeaderboardPos, member.id, idGuild)
 
         embed = discord.Embed(
             title=f"{member}'s card",
@@ -376,7 +407,7 @@ class XP(commands.Cog):
             f"`Progress` : **{progress*100}%**"
         )))
         embed.add_field(name="", value="\n".join((
-            f"`Next Level XP` : **{self.nextLevelXP(lvl, xp-lastNeed)}**",
+            f"`Next Level XP` : **{nextXp}**",
             f"`Total XP needed` : **{xpNeed}**",
             f"`Leaderboard` : **{pos[0] if pos else '?'}**"
         )))

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from discord import ApplicationContext
+from discord import ApplicationContext, TextChannel
 from discord import option
 
 import random
@@ -368,14 +368,14 @@ class Usage(commands.Cog):
         embed.add_field(name="Date", value=res[0])
         await ctx.respond(embed=embed)
 
-    @tasks.loop(hours=6.0)
+    @tasks.loop(minutes=1.0)
     async def checkBirthday(self):
         today = datetime.date.today()
-        bd = self.db.checkBD(today.day, today.month)
+        bd = self.db.safeExecute(self.db.checkBD, today.day, today.month)
 
         for value in bd:
             idUser = value[0]
-            results = self.db.getNewsChan(idUser)
+            results = self.db.safeExecute(self.db.getNewsChan, idUser)
 
             for row in results:
                 chan = self.bot.get_channel(row[0])
@@ -384,7 +384,10 @@ class Usage(commands.Cog):
 
                 today = datetime.date.today()
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
-                self.db.updateUserBD(idUser, today.day, today.month, today.year)
+                self.db.safeExecute(
+                    self.db.updateUserBD,
+                    idUser, today.day, today.month, today.year
+                )
 
 
 def setup(bot: commands.Bot):

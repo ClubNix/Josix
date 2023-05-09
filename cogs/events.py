@@ -6,7 +6,6 @@ from discord.ext.commands import BotMissingPermissions, MissingPermissions, Miss
 from discord import RawThreadUpdateEvent ,ApplicationContext, DiscordException
 from discord.utils import get as discordGet
 
-from database.database import DatabaseHandler
 from json import JSONDecodeError
 
 import logwrite as log
@@ -22,8 +21,6 @@ class Events(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
-
         self.close = ""
         self.open = ""
 
