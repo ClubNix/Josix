@@ -5,6 +5,7 @@ from discord import ApplicationContext, Member, Interaction
 import numpy as np
 
 from random import randint
+from cogs.games.games_base import BaseGame, BaseView
 
 class PatternBtn(discord.ui.Button["PatternView"]):
     def __init__(self, x: int, y: int):
@@ -32,17 +33,16 @@ class PatternBtn(discord.ui.Button["PatternView"]):
 
         if view.checkWin():
             embed.description = f"Congratulations, you won in **{view.count}** moves !"
-            view.disable_all_items()
-            view.stop()
+            view.stopGame()
 
         await interaction.response.edit_message(embed=embed, view=view)
 
 
-class PatternView(discord.ui.View):
+class PatternView(BaseView):
     children: list[PatternBtn]
 
-    def __init__(self, player: Member) -> None:
-        super().__init__()
+    def __init__(self, interaction: Interaction, game: BaseGame, player: Member) -> None:
+        super().__init__(interaction, game, player)
 
         self.player = player
         self.count = 0
@@ -89,15 +89,20 @@ class PatternView(discord.ui.View):
         return res
         
 
-class Pattern(commands.Cog):
+class Pattern(BaseGame):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__("pattern")
         self.bot = bot
         self.description = "games : pattern"
 
     @commands.slash_command(description="Launch a game of tic-tac-toe")
     @commands.guild_only()
     async def pattern_game(self, ctx: ApplicationContext):
-        view = PatternView(ctx.author)
+        if self.checkPlayers(ctx.author.id):
+            await ctx.respond("You are already in a game. If not, use `/quit_game` command")
+            return
+
+        view = PatternView(ctx.interaction, self, ctx.author)
         embed = discord.Embed(
             title=f"Pattern game",
             description="Turn all the squares into blue to win",
@@ -105,7 +110,7 @@ class Pattern(commands.Cog):
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(name="", value=view)
-
+        self.initGame(ctx.author.id)
         await ctx.respond(
             embed=embed,
             view=view

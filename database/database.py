@@ -251,6 +251,17 @@ class DatabaseHandler():
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
+
+    def getGameFromUser(self, userId: int) -> tuple:
+        query = "SELECT idGame FROM josix.Games WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
+        return self.cursor.fetchone()
+
+    def getGameType(self, gameName: str) -> tuple:
+        query = "SELECT idType FROM josix.GameType WHERE gameName = %s;"
+        self.cursor.execute(query, (gameName,))
+        return self.cursor.fetchone()
+
     ###############
     # Adders
     ###############
@@ -303,6 +314,24 @@ class DatabaseHandler():
         query = """INSERT INTO josix.DartLog (idGuild, winnerName, losersName)
                    VALUES (%s, %s, ARRAY[%s])"""
         params = (guildId, winner.name, text)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    def addGameType(self, gameName: str) -> None:
+        query = "INSERT INTO josix.GameType(gameName) VALUES(%s);"
+        self.cursor.execute(query, (gameName,))
+        self.conn.commit()
+
+    def addGameFromId(self, typeId: int, userId:int, opponent: int = None):
+        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
+        params = (typeId, userId, opponent)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    def addGameFromName(self, gameName: str, userId:int, opponent: int = None):
+        typeId = self.getGameType(gameName)[0]
+        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
+        params = (typeId, userId, opponent)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -384,4 +413,9 @@ class DatabaseHandler():
         query2 = "DELETE FROM josix.ReactCouple WHERE idCouple = %s;"
         self.cursor.execute(query, (coupleId,))
         self.cursor.execute(query2, (coupleId,))
+        self.conn.commit()
+
+    def quitGame(self, userId: int) -> None:
+        query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
+        self.cursor.execute(query, (userId, userId))
         self.conn.commit()

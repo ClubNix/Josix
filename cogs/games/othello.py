@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import ApplicationContext, Interaction, SelectOption, option
 
 from random import randint
+from cogs.games.games_base import BaseGame, BaseView
 
 import numpy as np
 
@@ -54,7 +55,7 @@ class OthelloInput(discord.ui.Select):
 
         if view.isEnded():
             winner = view.checkWinner()
-            view.disable_all_items()
+            view.stopGame()
             if not winner:
                 desc = "It's a tie !"
             else:
@@ -76,12 +77,12 @@ class OthelloInput(discord.ui.Select):
 
         
 
-class OthelloView(discord.ui.View):
+class OthelloView(BaseView):
     children: list[OthelloInput]
     __directions = [(0,-1), (0,1), (-1,0), (1, 0), (-1,-1), (1,-1), (-1,1), (1,1)]
     
-    def __init__(self, player1: discord.Member, player2: discord.Member, first: int):
-        super().__init__(timeout=180.0, disable_on_timeout=True)
+    def __init__(self, interaction: Interaction, game: BaseGame, player1: discord.Member, player2: discord.Member, first: int):
+        super().__init__(interaction, game, player1)
 
         self.whitePlayer, self.blackPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.whitePlayer
@@ -212,8 +213,9 @@ class OthelloView(discord.ui.View):
         res += "**‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾**\n"
         return res
 
-class Othello(commands.Cog):
+class Othello(BaseGame):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__("othello")
         self.bot = bot
         self.description = "games : Othello"
 
@@ -229,14 +231,19 @@ class Othello(commands.Cog):
             await ctx.respond("You can't challenge yourself")
             return
 
+        if self.checkPlayers(ctx.author.id, opponent.id):
+            await ctx.respond("One of the players is already in a game. If not, use `/quit_game` command")
+            return
+
         first = randint(0, 1)
-        view = OthelloView(ctx.author, opponent, first)
+        view = OthelloView(ctx.interaction, self, ctx.author, opponent, first)
         embed = discord.Embed(
             title="Othello Game",
             description=f"{view.currentPlayer.mention}'s turn !",
             color=0x0089FF
         )
         embed.add_field(name="", value=view)
+        self.initGame(ctx.author.id, opponent.id)
         await ctx.respond(embed=embed, view=view)
 
     @commands.slash_command(description="See othello's rules")

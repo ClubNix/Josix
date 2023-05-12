@@ -5,6 +5,7 @@ from discord import ApplicationContext, Member, Interaction, option
 import numpy as np
 
 from random import randint
+from cogs.games.games_base import BaseGame, BaseView
 
 class TTTBtn(discord.ui.Button["TTTView"]):
     def __init__(self, x: int, y: int):
@@ -49,18 +50,24 @@ class TTTBtn(discord.ui.Button["TTTView"]):
             stop = True
 
         if stop:
-            view.disable_all_items()
-            view.stop()
+            view.stopGame()
 
         view.switchPlayer()
         await interaction.response.edit_message(content=msg, view=view)
 
 
-class TTTView(discord.ui.View):
+class TTTView(BaseView):
     children: list[TTTBtn]
 
-    def __init__(self, player1: Member, player2: Member, first: int) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        interaction: Interaction,
+        game: BaseGame,
+        player1: Member,
+        player2: Member,
+        first: int
+        ) -> None:
+        super().__init__(interaction, game, player1)
 
         self.xPlayer, self.oPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.xPlayer
@@ -99,8 +106,9 @@ class TTTView(discord.ui.View):
         return self.grid.all()
         
 
-class TicTacToe(commands.Cog):
+class TicTacToe(BaseGame):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__("tic-tac-toe")
         self.bot = bot
         self.description = "games : TicTacToe"
 
@@ -117,10 +125,15 @@ class TicTacToe(commands.Cog):
             await ctx.respond("You can't play against yourself")
             return
 
+        if self.checkPlayers(ctx.author.id, opponent.id):
+            await ctx.respond("One of the players is already in a game. If not use `/quit_game` command")
+            return
+
         first = randint(0,1)
+        self.initGame(ctx.author.id, opponent.id)
         await ctx.respond(
             f"Tic Tac Toe : {ctx.author.mention if first else opponent.mention} goes first !",
-            view=TTTView(ctx.author, opponent, first)
+            view=TTTView(ctx.interaction, self, ctx.author, opponent, first)
         )
 
 def setup(bot: commands.Bot):

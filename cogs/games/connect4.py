@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import ApplicationContext, Interaction, option
 
 from random import randint
+from cogs.games.games_base import BaseGame, BaseView
 
 import numpy as np
 
@@ -27,13 +28,11 @@ class C4Button(discord.ui.Button["C4View"]):
         y = view.addToken(self.x)
         
         if view.checkWin(self.x, y):
-            view.disable_all_items()
-            view.stop()
+            view.stopGame()
             desc = f"{view.currentPlayer.name} won !"
 
         elif view.isFull():
-            view.disable_all_items()
-            view.stop()
+            view.stopGame()
             desc = "It's a tie !",
 
         else:
@@ -51,10 +50,17 @@ class C4Button(discord.ui.Button["C4View"]):
         await interaction.response.edit_message(embed=embed, view=view)
         
 
-class C4View(discord.ui.View):
+class C4View(BaseView):
     children: list[C4Button]
-    def __init__(self, player1: discord.Member, player2: discord.Member, first: int):
-        super().__init__(timeout=180.0, disable_on_timeout=True)
+    def __init__(
+        self,
+        interaction: Interaction,
+        game: BaseGame,
+        player1: discord.Member,
+        player2: discord.Member,
+        first: int
+        ):
+        super().__init__(interaction, game, player1)
         self.redPlayer, self.yellowPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.redPlayer
 
@@ -131,8 +137,9 @@ class C4View(discord.ui.View):
         return res
 
 
-class Connect4(commands.Cog):
+class Connect4(BaseGame):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__("connect4")
         self.bot = bot
         self.description = "games : Connect 4"
 
@@ -144,18 +151,24 @@ class Connect4(commands.Cog):
         required=True
     )
     async def connect4(self, ctx: ApplicationContext, opponent: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
         if ctx.author.id == opponent.id:
             await ctx.respond("You can't challenge yourself")
             return
 
+        if self.checkPlayers(ctx.author.id, opponent.id):
+            await ctx.respond("One of the players is already in a game. If not, use `/quit_game` command")
+            return
+
         first = randint(0, 1)
-        view = C4View(ctx.author, opponent, first)
+        view = C4View(ctx.interaction, self, ctx.author, opponent, first)
         embed = discord.Embed(
             title="Connect 4 Game",
             description=f"{view.currentPlayer.name}'s turn",
             color=0x0089FF
         )
         embed.add_field(name="", value=view)
+        self.initGame(ctx.author.id, opponent.id)
         await ctx.respond(embed=embed, view=view)
         
 
