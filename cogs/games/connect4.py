@@ -18,6 +18,10 @@ class C4Button(discord.ui.Button["C4View"]):
         assert self.view is not None
         view: C4View = self.view
 
+        if await view.checkGameState():
+            await interaction.response.edit_message(content="Game stopped by a player", view=view)
+            return
+
         if interaction.user.id != view.currentPlayer.id:
             return
 
@@ -56,11 +60,12 @@ class C4View(BaseView):
         self,
         interaction: Interaction,
         game: BaseGame,
+        idGame: int,
         player1: discord.Member,
         player2: discord.Member,
         first: int
         ):
-        super().__init__(interaction, game, player1)
+        super().__init__(interaction, game, idGame, player1)
         self.redPlayer, self.yellowPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.redPlayer
 
@@ -160,15 +165,15 @@ class Connect4(BaseGame):
             await ctx.respond("One of the players is already in a game. If not, use `/quit_game` command")
             return
 
+        idGame = self.initGame(ctx.author.id, opponent.id)
         first = randint(0, 1)
-        view = C4View(ctx.interaction, self, ctx.author, opponent, first)
+        view = C4View(ctx.interaction, self, idGame, ctx.author, opponent, first)
         embed = discord.Embed(
             title="Connect 4 Game",
             description=f"{view.currentPlayer.name}'s turn",
             color=0x0089FF
         )
         embed.add_field(name="", value=view)
-        self.initGame(ctx.author.id, opponent.id)
         await ctx.respond(embed=embed, view=view)
         
 

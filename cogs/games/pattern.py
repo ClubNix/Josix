@@ -18,6 +18,10 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         assert self.view is not None
         view: PatternView = self.view
 
+        if await view.checkGameState():
+            await interaction.response.edit_message(content="Game stopped by the player", view=view)
+            return
+
         if interaction.user.id != view.player.id:
             return
 
@@ -41,8 +45,14 @@ class PatternBtn(discord.ui.Button["PatternView"]):
 class PatternView(BaseView):
     children: list[PatternBtn]
 
-    def __init__(self, interaction: Interaction, game: BaseGame, player: Member) -> None:
-        super().__init__(interaction, game, player)
+    def __init__(
+        self,
+        interaction: Interaction,
+        game: BaseGame,
+        idGame: int,
+        player: Member
+        ) -> None:
+        super().__init__(interaction, game, idGame, player)
 
         self.player = player
         self.count = 0
@@ -102,7 +112,8 @@ class Pattern(BaseGame):
             await ctx.respond("You are already in a game. If not, use `/quit_game` command")
             return
 
-        view = PatternView(ctx.interaction, self, ctx.author)
+        idGame = self.initGame(ctx.author.id)
+        view = PatternView(ctx.interaction, self, idGame, ctx.author)
         embed = discord.Embed(
             title=f"Pattern game",
             description="Turn all the squares into blue to win",
@@ -110,7 +121,6 @@ class Pattern(BaseGame):
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(name="", value=view)
-        self.initGame(ctx.author.id)
         await ctx.respond(
             embed=embed,
             view=view

@@ -262,6 +262,13 @@ class DatabaseHandler():
         self.cursor.execute(query, (gameName,))
         return self.cursor.fetchone()
 
+    def getExistingGame(self, gameId: int, userId: int) -> tuple:
+        query = """SELECt idGame FROM josix.Games
+                   WHERE idGame = %s AND (idUser = %s OR opponent = %s);"""
+        params = (gameId, userId, userId)
+        self.cursor.execute(query, params)
+        return self.cursor.fetchone()
+
     ###############
     # Adders
     ###############
@@ -328,12 +335,13 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
-    def addGameFromName(self, gameName: str, userId:int, opponent: int = None):
+    def addGameFromName(self, gameName: str, userId:int, opponent: int = None) -> tuple:
         typeId = self.getGameType(gameName)[0]
-        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
+        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
         params = (typeId, userId, opponent)
         self.cursor.execute(query, params)
         self.conn.commit()
+        return self.cursor.fetchone()
 
 
     ###############
@@ -418,4 +426,14 @@ class DatabaseHandler():
     def quitGame(self, userId: int) -> None:
         query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
         self.cursor.execute(query, (userId, userId))
+        self.conn.commit()
+
+    def deleteGame(self, gameId: int) -> None:
+        query = "DELETE FROM josix.Games WHERE idGame = %s;"
+        self.cursor.execute(query, (gameId,))
+        self.conn.commit()
+
+    def deleteGames(self) -> None:
+        query = "DELETE FROM josix.Games;"
+        self.cursor.execute(query)
         self.conn.commit()

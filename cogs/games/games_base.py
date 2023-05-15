@@ -12,6 +12,10 @@ class Games(commands.Cog):
         self.bot = bot
         self.description = "games : Base"
         self.db = DatabaseHandler(os.path.basename(__file__))
+        self._cleanGames()
+
+    def _cleanGames(self):
+        self.db.deleteGames()
 
     @commands.slash_command(description="Quit your current game")
     async def quit_game(self, ctx: ApplicationContext):
@@ -35,25 +39,37 @@ class BaseGame(commands.Cog):
     def checkGame(self) -> bool:
         return bool(self._db.getGameType(self.name))
 
+    def checkGameState(self, idGame: int, idUser: int) -> bool:
+        return bool(self._db.getExistingGame(idGame, idUser))
+
     def checkPlayers(self, idUser, idOpponent: int = None) -> bool:
         """Check if one of the two players are already in a game"""
         user = bool(self._db.getGameFromUser(idUser))
         oppo = bool(self._db.getGameFromUser(idOpponent)) if idOpponent else False
         return user or oppo
 
-    def initGame(self, playerId: int, oppoId: int = None) -> None:
-        self._db.addGameFromName(self.name, playerId, oppoId)
+    def initGame(self, playerId: int, oppoId: int = None) -> int:
+        res = self._db.addGameFromName(self.name, playerId, oppoId)
+        return res[0]
 
-    def stopGame(self, idUser: int) -> None:
-        self._db.quitGame(idUser)
+    def stopGame(self, idGame: int) -> None:
+        self._db.deleteGame(idGame)
 
 
 class BaseView(View):
-    def __init__(self, interaction: discord.Interaction, game: BaseGame, ogPlayer: Member, *args) -> None:
+    def __init__(self, interaction: discord.Interaction, game: BaseGame, idGame: int, ogPlayer: Member, *args) -> None:
         super().__init__(timeout=15.0, disable_on_timeout=True, *args)
         self.interaction = interaction
         self.game = game
         self.ogPlayer = ogPlayer
+        self.idGame = idGame
+
+    async def checkGameState(self) -> bool:
+        res = self.game.checkGameState(self.idGame, self.ogPlayer.id)
+        if not res:
+            self.stopGame()
+            await self.interaction.edit_original_response(content="A user stopped this game", view=self)
+        return res
 
     async def on_timeout(self) -> None:
         self.stopGame()
@@ -62,7 +78,7 @@ class BaseView(View):
     def stopGame(self) -> None:
         self.disable_all_items()
         self.stop()
-        self.game.stopGame(self.ogPlayer.id)
+        self.game.stopGame(self.idGame)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Games(bot))

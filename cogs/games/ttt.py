@@ -17,6 +17,10 @@ class TTTBtn(discord.ui.Button["TTTView"]):
         assert self.view is not None
         view: TTTView = self.view
 
+        if await view.checkGameState():
+            await interaction.response.edit_message(content="Game stopped by a player", view=view)
+            return
+
         if view.grid[self.x][self.y]:
             return
 
@@ -63,11 +67,12 @@ class TTTView(BaseView):
         self,
         interaction: Interaction,
         game: BaseGame,
+        idGame: int,
         player1: Member,
         player2: Member,
         first: int
         ) -> None:
-        super().__init__(interaction, game, player1)
+        super().__init__(interaction, game, idGame, player1)
 
         self.xPlayer, self.oPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.xPlayer
@@ -130,10 +135,10 @@ class TicTacToe(BaseGame):
             return
 
         first = randint(0,1)
-        self.initGame(ctx.author.id, opponent.id)
+        idGame = self.initGame(ctx.author.id, opponent.id)
         await ctx.respond(
             f"Tic Tac Toe : {ctx.author.mention if first else opponent.mention} goes first !",
-            view=TTTView(ctx.interaction, self, ctx.author, opponent, first)
+            view=TTTView(ctx.interaction, self, idGame, ctx.author, opponent, first)
         )
 
 def setup(bot: commands.Bot):
