@@ -18,7 +18,6 @@ class TTTBtn(discord.ui.Button["TTTView"]):
         view: TTTView = self.view
 
         if await view.checkGameState():
-            await interaction.response.edit_message(content="Game stopped by a player", view=view)
             return
 
         if view.grid[self.x][self.y]:

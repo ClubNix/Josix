@@ -253,8 +253,8 @@ class DatabaseHandler():
 
 
     def getGameFromUser(self, userId: int) -> tuple:
-        query = "SELECT idGame FROM josix.Games WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
+        query = "SELECT idGame FROM josix.Games WHERE idUser = %s OR opponent = %s;"
+        self.cursor.execute(query, (userId, userId))
         return self.cursor.fetchone()
 
     def getGameType(self, gameName: str) -> tuple:

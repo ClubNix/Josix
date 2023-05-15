@@ -19,7 +19,6 @@ class C4Button(discord.ui.Button["C4View"]):
         view: C4View = self.view
 
         if await view.checkGameState():
-            await interaction.response.edit_message(content="Game stopped by a player", view=view)
             return
 
         if interaction.user.id != view.currentPlayer.id:

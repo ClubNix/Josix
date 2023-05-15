@@ -58,7 +58,7 @@ class BaseGame(commands.Cog):
 
 class BaseView(View):
     def __init__(self, interaction: discord.Interaction, game: BaseGame, idGame: int, ogPlayer: Member, *args) -> None:
-        super().__init__(timeout=15.0, disable_on_timeout=True, *args)
+        super().__init__(timeout=180.0, disable_on_timeout=True, *args)
         self.interaction = interaction
         self.game = game
         self.ogPlayer = ogPlayer

@@ -19,7 +19,6 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         view: PatternView = self.view
 
         if await view.checkGameState():
-            await interaction.response.edit_message(content="Game stopped by the player", view=view)
             return
 
         if interaction.user.id != view.player.id:

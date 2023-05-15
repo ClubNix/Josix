@@ -23,7 +23,6 @@ class OthelloInput(discord.ui.Select):
         view: OthelloView = self.view
 
         if await view.checkGameState():
-            await interaction.response.edit_message(content="Game stopped by a player", view=view)
             return
 
         if interaction.user.id != view.currentPlayer.id:
