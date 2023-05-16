@@ -141,34 +141,6 @@ class Monix(commands.Cog):
     #
     # -----------------------------
 
-    @commands.slash_command(description="See all the products")
-    @commands.cooldown(1, 30, commands.BucketType.user)
-    @option(
-        input_type=int,
-        name="count",
-        description="The number of products you want to see",
-        min_value=1,
-        max_value=25,
-        default=10
-    )
-    async def see_products(self, ctx: ApplicationContext, count: int):
-        await ctx.defer(ephemeral=False, invisible=False)
-        data = self.request(
-            target="/products/",
-            method=HTTPMethod.GET
-        )
-
-        res = ""
-        countMax = 0
-        for product in data["data"]:
-            res += f"{product['name']} : {product['price']} <:monixCoin:1029767611761823784> (**{product['stock']}** " \
-                   f"in stocks)\n"
-            countMax += 1
-            if countMax >= count:
-                break
-
-        await ctx.respond(res)
-
     @commands.slash_command(description="Check the current stocks and ping the treasurer if they are low")
     @commands.cooldown(1, 60, commands.BucketType.user)
     @option(
@@ -211,7 +183,7 @@ class Monix(commands.Cog):
                 color=0xFFCC00
             )
             lowEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
-            await ctx.respond(content=text, embed=lowEmbed)
+            await ctx.respond(embed=lowEmbed)
 
         else:
             highEmbed = discord.Embed(
