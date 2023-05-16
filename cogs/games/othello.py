@@ -22,7 +22,7 @@ class OthelloInput(discord.ui.Select):
         assert self.view is not None
         view: OthelloView = self.view
 
-        if await view.checkGameState():
+        if not await view.checkGameState():
             return
 
         if interaction.user.id != view.currentPlayer.id:

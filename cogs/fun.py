@@ -41,7 +41,7 @@ class Fun(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
-        description="Send the message with the bot as the author and delete yours",
+        description="Send the message as if it is his own sentence",
         options=[discord.Option(
             input_type=str,
             name="text",
@@ -51,7 +51,7 @@ class Fun(commands.Cog):
     )
     async def say(self, ctx: ApplicationContext, text: str):
         await ctx.delete()
-        await ctx.respond("".join(text))
+        await ctx.respond(text)
 
     @commands.slash_command(description="Send a random joke")
     @option(

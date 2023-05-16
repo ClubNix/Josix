@@ -49,6 +49,14 @@ class BaseGame(commands.Cog):
         return user or oppo
 
     def initGame(self, playerId: int, oppoId: int = None) -> int:
+        testP1 = bool(self._db.getUser(playerId))
+        testP2 = bool(self._db.getUser(oppoId)) if oppoId else True
+
+        if not testP1:
+            self._db.addUser(playerId)
+        if not testP2:
+            self._db.addUser(oppoId)
+            
         res = self._db.addGameFromName(self.name, playerId, oppoId)
         return res[0]
 

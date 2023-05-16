@@ -29,6 +29,20 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
+
+    def _error_handler(func: Callable):
+        def wrapper(ref, *args):
+            try:
+                return func(ref, *args)
+            except psycopg2.Error as dbError:
+                ref: DatabaseHandler = ref
+                ref.conn.rollback()
+                raise dbError
+            except Exception as commonError:
+                raise commonError
+        return wrapper
+
+
     def safeExecute(
         self,
         func: Callable[[Any], list[tuple] | tuple | None],
@@ -61,6 +75,8 @@ class DatabaseHandler():
                 raise commonError
             return str(commonError)
 
+
+    @_error_handler
     def backup(self, table: str):
         checkTable = f"AND table_name = '{table}'" if len(table) > 0 else None
         if table:
@@ -103,31 +119,37 @@ class DatabaseHandler():
     # Getters
     ###############
 
+    @_error_handler
     def getGuild(self, guildId: int) -> tuple:
         query = "SELECT * FROM josix.Guild WHERE idGuild = %s;"
         self.cursor.execute(query, (guildId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getUser(self, userId: int) -> tuple:
         query = "SELECT * FROM josix.User WHERE idUser = %s;"
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getUsers(self, limit: int = 10) -> list[tuple]:
         query = "SELECT * FROM josix.User LIMIT %s;"
         self.cursor.execute(query, (limit,))
         return self.cursor.fetchall()
 
+    @_error_handler
     def getPlayerStat(self, userId: int) -> tuple:
         query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getMsg(self, msgId: int) -> tuple:
         query = f"SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
         self.cursor.execute(query, (msgId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getRoleFromReact(self, msgId: int, emojiName: str) -> tuple:
         query = """SELECT idRole FROM josix.ReactCouple rc
                    INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
@@ -136,6 +158,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         return self.cursor.fetchone()
 
+    @_error_handler
     def getCouples(self, msgId: int = None) -> list[tuple]:
         if not msgId:
             query = """SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
@@ -149,11 +172,13 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
+    @_error_handler
     def getCoupleFromRole(self, roleId: int) -> list[tuple]:
         query = "SELECT idCouple FROM josix.ReactCouple WHERE idRole = %s;"
         self.cursor.execute(query, (roleId,))
         return self.cursor.fetchall()
 
+    @_error_handler
     def getUserInGuild(self, userId: int, guildId: int) -> tuple:
         query = """SELECT * FROM josix.UserGuild
                    WHERE idUser = %s AND idGuild  = %s;"""
@@ -167,17 +192,20 @@ class DatabaseHandler():
             self.getGuild(guildId),
             self.getUserInGuild(userId, guildId)
         )
-    
+
+    @_error_handler
     def getUserXP(self, userId: int) -> tuple:
         query = "SELECT idUser FROM josix.User WHERE idUser = %s;"
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getGuildXP(self, guildId: int) -> tuple:
         query = "SELECT xpNews, enableXP FROM josix.Guild WHERE idGuild = %s;"
         self.cursor.execute(query, (guildId,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getUserGuildXP(self, userId: int, guildId: int) -> tuple:
         query = """SELECT xp, lvl, lastMessage FROM josix.UserGuild
                    WHERE idUser = %s AND idGuild  = %s;"""
@@ -192,6 +220,7 @@ class DatabaseHandler():
             self.getUserGuildXP(userId, guildId)
         )
 
+    @_error_handler
     def getXpLeaderboard(self, guildId: int, limit: int) -> list[tuple]:
         query = """SELECT idUser, xp, lvl FROM josix.UserGuild
                    WHERE idGuild = %s
@@ -201,6 +230,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
+    @_error_handler
     def getLeaderboardPos(self, userId: int, guildId: int) -> tuple:
         query = """SELECT COUNT(DISTINCT idUser) + 1
                    FROM josix.UserGuild
@@ -209,8 +239,9 @@ class DatabaseHandler():
         params = (guildId, userId, guildId)
         self.cursor.execute(query, params)
         return self.cursor.fetchone()
-        
 
+        
+    @_error_handler
     def getNewsChan(self, userId: int) -> list[tuple]:
         query = """SELECT chanNews 
                    FROM josix.Guild g INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
@@ -218,6 +249,7 @@ class DatabaseHandler():
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchall()
 
+    @_error_handler
     def checkBD(self, day: int, month: int) -> list[tuple]:
         query = """SELECT u.idUser AS "user", ug.idGuild as "guild",
                           EXTRACT(MONTH FROM u.hbDate) AS "month",
@@ -230,6 +262,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
+    @_error_handler
     def getBirthdays(self, guildId: int) -> list[tuple]:
         query = """SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
@@ -238,6 +271,7 @@ class DatabaseHandler():
         self.cursor.execute(query, (guildId,))
         return self.cursor.fetchall()
 
+    @_error_handler
     def getBDMonth(self, guildId: int, month: int) -> list[tuple]:
         query = """SELECT EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), u.idUser
                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
@@ -246,22 +280,26 @@ class DatabaseHandler():
         self.cursor.execute(query, (guildId, month))
         return self.cursor.fetchall()
 
+    @_error_handler
     def getBDUser(self, userId: int) -> tuple:
         query = "SELECT hbDate FROM josix.User WHERE idUser = %s;"
         self.cursor.execute(query, (userId,))
         return self.cursor.fetchone()
 
 
+    @_error_handler
     def getGameFromUser(self, userId: int) -> tuple:
         query = "SELECT idGame FROM josix.Games WHERE idUser = %s OR opponent = %s;"
         self.cursor.execute(query, (userId, userId))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getGameType(self, gameName: str) -> tuple:
         query = "SELECT idType FROM josix.GameType WHERE gameName = %s;"
         self.cursor.execute(query, (gameName,))
         return self.cursor.fetchone()
 
+    @_error_handler
     def getExistingGame(self, gameId: int, userId: int) -> tuple:
         query = """SELECt idGame FROM josix.Games
                    WHERE idGame = %s AND (idUser = %s OR opponent = %s);"""
@@ -273,6 +311,7 @@ class DatabaseHandler():
     # Adders
     ###############
 
+    @_error_handler
     def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0) -> None:
         query = """INSERT INTO josix.Guild(idGuild, chanNews, xpNews)
                    VALUES (%s, %s, %s)"""
@@ -280,12 +319,14 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def addMsg(self, guildId: int, msgId: int) -> None:
         query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
         params = (msgId, guildId)
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def addCouple(self, couple: tuple, msgId: int) -> None:
         if len(couple) != 2:
             return
@@ -301,17 +342,20 @@ class DatabaseHandler():
         self.cursor.execute(query2, params)
         self.conn.commit()
 
+    @_error_handler
     def addUser(self, userId: int) -> None:
         query = "INSERT INTO josix.User (idUser) VALUES (%s);"
         self.cursor.execute(query, (userId,))
         self.conn.commit()
 
+    @_error_handler
     def addUserGuild(self, userId: int, guildId: int) -> None:
         query = "INSERT INTO josix.UserGuild(idUser, idGuild) VALUES (%s, %s);"
         params = (userId, guildId)
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def addDartLog(self, guildId: int, winner: discord.User, foes: tuple[discord.User]) -> None:
         text = ""
         for foe in foes:
@@ -324,17 +368,20 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def addGameType(self, gameName: str) -> None:
         query = "INSERT INTO josix.GameType(gameName) VALUES(%s);"
         self.cursor.execute(query, (gameName,))
         self.conn.commit()
 
+    @_error_handler
     def addGameFromId(self, typeId: int, userId:int, opponent: int = None):
         query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
         params = (typeId, userId, opponent)
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def addGameFromName(self, gameName: str, userId:int, opponent: int = None) -> tuple:
         typeId = self.getGameType(gameName)[0]
         query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
@@ -348,6 +395,7 @@ class DatabaseHandler():
     # Modifiers
     ###############
 
+    @_error_handler
     def updatePlayerStat(self, userId: int, newElo: int) -> None:
         query = """UPDATE josix.User
                    SET elo = %s, nbGames = nbGames + 1
@@ -356,6 +404,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def changeNewsChan(self, guildId: int, chanId: int) -> None:
         query = """UPDATE josix.Guild
                    SET chanNews = %s
@@ -364,6 +413,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def updateUserBD(self, userId: int, day: int, month: int, year: int) -> None:
         newBd = f"'{year}-{month}-{day}'"
         query = """UPDATE josix.User
@@ -373,6 +423,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def resetBd(self, userId: int) -> None:
         query = """UPDATE josix.User
                    SET hbDate = hbDate - INTERVAL '1 year'
@@ -380,6 +431,7 @@ class DatabaseHandler():
         self.cursor.execute(query, (userId,))
         self.conn.commit()
 
+    @_error_handler
     def updateUserXP(self, userId: int, guildId: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
         query = """UPDATE josix.UserGuild
                    SET lvl = %s,
@@ -390,6 +442,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def changeXPChan(self, guildId: int, chanId: int) -> None:
         query = """UPDATE josix.Guild
                    SET xpNews = %s
@@ -398,6 +451,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
     def updateGuildXpEnabled(self, guildId: int) -> None:
         query = """UPDATE josix.Guild
                    SET enableXP = NOT enableXP
@@ -409,6 +463,7 @@ class DatabaseHandler():
     # Deleters
     ###############
 
+    @_error_handler
     def delMessageReact(self, msgId: int) -> None:
         query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s;"
         query2 = "DELETE FROM josix.MsgReact WHERE idMsg = %s;"
@@ -416,6 +471,7 @@ class DatabaseHandler():
         self.cursor.execute(query2, (msgId,))
         self.conn.commit()
 
+    @_error_handler
     def delReactCouple(self, coupleId: int) -> None:
         query = "DELETE FROM josix.MsgCouple WHERE idCouple = %s;"
         query2 = "DELETE FROM josix.ReactCouple WHERE idCouple = %s;"
@@ -423,16 +479,19 @@ class DatabaseHandler():
         self.cursor.execute(query2, (coupleId,))
         self.conn.commit()
 
+    @_error_handler
     def quitGame(self, userId: int) -> None:
         query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
         self.cursor.execute(query, (userId, userId))
         self.conn.commit()
 
+    @_error_handler
     def deleteGame(self, gameId: int) -> None:
         query = "DELETE FROM josix.Games WHERE idGame = %s;"
         self.cursor.execute(query, (gameId,))
         self.conn.commit()
 
+    @_error_handler
     def deleteGames(self) -> None:
         query = "DELETE FROM josix.Games;"
         self.cursor.execute(query)

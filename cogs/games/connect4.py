@@ -18,7 +18,7 @@ class C4Button(discord.ui.Button["C4View"]):
         assert self.view is not None
         view: C4View = self.view
 
-        if await view.checkGameState():
+        if not await view.checkGameState():
             return
 
         if interaction.user.id != view.currentPlayer.id:

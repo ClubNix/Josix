@@ -392,7 +392,7 @@ class XP(commands.Cog):
         lastNeed = self.totalLevelXP(lvl)
         xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
         nextXp = self.nextLevelXP(lvl, xp-lastNeed)
-        progress = round(xp / xpNeed, 2)
+        progress = round((xp / xpNeed) * 100, 2)
         pos = self.db.safeExecute(self.db.getLeaderboardPos, member.id, idGuild)
 
         embed = discord.Embed(
@@ -404,7 +404,7 @@ class XP(commands.Cog):
         embed.add_field(name="", value="\n".join((
             f"`XP` : **{xp}**",
             f"`Level` : **{lvl}**",
-            f"`Progress` : **{progress*100}%**"
+            f"`Progress` : **{progress}%**"
         )))
         embed.add_field(name="", value="\n".join((
             f"`Next Level XP` : **{nextXp}**",

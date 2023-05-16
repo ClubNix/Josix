@@ -18,7 +18,7 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         assert self.view is not None
         view: PatternView = self.view
 
-        if await view.checkGameState():
+        if not await view.checkGameState():
             return
 
         if interaction.user.id != view.player.id:

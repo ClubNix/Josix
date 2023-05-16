@@ -17,7 +17,7 @@ class TTTBtn(discord.ui.Button["TTTView"]):
         assert self.view is not None
         view: TTTView = self.view
 
-        if await view.checkGameState():
+        if not await view.checkGameState():
             return
 
         if view.grid[self.x][self.y]:
