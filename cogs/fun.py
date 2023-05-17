@@ -46,6 +46,7 @@ class Fun(commands.Cog):
             input_type=str,
             name="text",
             description="The sentence that will be repeated",
+            max_length=512,
             required=True
         )]
     )
@@ -275,18 +276,21 @@ class Fun(commands.Cog):
         input_type=str,
         name="username",
         description="Name of the user who get this askip",
+        max_length=64,
         required=True
     )
     @option(
         input_type=str,
         name="askip_name",
         description="Name of the new askip",
+        max_length=64,
         required=True
     )
     @option(
         input_type=str,
         name="askip_text",
         description="Content of the askip",
+        max_length=512,
         required=True
     )
     async def add_askip(self, ctx: ApplicationContext, username: str, askip_name: str, askip_text: str):

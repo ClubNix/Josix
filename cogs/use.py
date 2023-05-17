@@ -24,13 +24,12 @@ class Usage(commands.Cog):
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.checkBirthday.start()
 
-    @commands.slash_command(
-        description="Get the help menu",
-        options=[discord.Option(input_type=str,
-                                name="command_name",
-                                description="Name of the command",
-                                default=None,
-                                )]
+    @commands.slash_command(description="Get the help menu")
+    @option(
+        input_type=str,
+        name="command_name",
+        description="Name of the command",
+        default=None,
     )
     async def help(self, ctx: ApplicationContext, command_name: str):
         if not command_name:
@@ -145,13 +144,13 @@ class Usage(commands.Cog):
         embed.add_field(name="", value="\n".join(links))
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(
-        description="Randomly choose a sentence from a list",
-        options=[discord.Option(input_type=str,
-                                name="sentences",
-                                description="List of sentences separated by a `;`",
-                                required=True
-                                )]
+    @commands.slash_command(description="Randomly choose a sentence from a list")
+    @option(
+        input_type=str,
+        name="sentences",
+        description="List of sentences separated by a `;`",
+        max_length=512,
+        required=True
     )
     async def choose(self, ctx: ApplicationContext, sentences: str):
         values = sentences.split(";")
@@ -363,9 +362,10 @@ class Usage(commands.Cog):
             await ctx.respond("User not registered")
             return
 
+        date: datetime.date = res[0]
         embed = discord.Embed(title=f"Birthday of {user}", color=0x0089FF)
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
-        embed.add_field(name="Date", value=res[0])
+        embed.add_field(name="Date", value=f"**{date.strftime('%d/%m')}**")
         await ctx.respond(embed=embed)
 
     @tasks.loop(minutes=1.0)

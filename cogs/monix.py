@@ -173,8 +173,9 @@ class Monix(commands.Cog):
                 nbStocks += product["stock"]
 
         if nbStocks < 50:
-            roleT = ctx.guild.get_role(1017914272585629788)  # Role of the treasurer
-            text = roleT.mention if roleT else "Role not found"
+            # Mention disabled, to enable it uncomment the following lines and add content=text in the ctx.respond
+            # roleT = ctx.guild.get_role(1017914272585629788)  # Role of the treasurer
+            # text = roleT.mention if roleT else "Role not found"
 
             lowEmbed = discord.Embed(
                 title="Stocks",

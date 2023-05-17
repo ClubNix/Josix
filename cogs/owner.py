@@ -34,7 +34,7 @@ class Owner(commands.Cog):
             default=""
         )]
     )
-    async def backup_database(self, ctx: ApplicationContext, table: str):
+    async def create_backup(self, ctx: ApplicationContext, table: str):
         await ctx.defer(ephemeral=False, invisible=False)
         self.db.backup(table)
         await ctx.respond("Backup done !")
@@ -50,12 +50,18 @@ class Owner(commands.Cog):
     )
     async def execute(self, ctx: ApplicationContext, query: str):
         await ctx.defer(ephemeral=False, invisible=False)
-        await ctx.respond(self.db.execute(query))
+        try:
+            await ctx.respond(self.db.execute(query))
+        except discord.HTTPException as e:
+            await ctx.respond(e)
 
     @commands.slash_command(description="Execute the backup file")
-    async def backup_execute(self, ctx: ApplicationContext):
+    async def execute_backup(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = ""
+        count = 0
+        tmp = ""
+        msg = ""
+
 
         with open(Owner._SQL_FILE, 'r') as f:
             lines = f.readlines()
@@ -63,13 +69,51 @@ class Owner(commands.Cog):
             try:
                 self.db.execute(line, True)
             except DBError as db_error:
-                res += f"**l.{index+1}** : {str(db_error)}\n"
+                tmp = f"**l.{index+1}** : {str(db_error)}\n"
+                lenTmp = len(tmp)
+                if lenTmp + count > 2000:
+                    await ctx.respond(msg)
+                    count = lenTmp
+                    msg = tmp
+                else:
+                    count += lenTmp
+                    msg += tmp
+
             except Exception as error:
-                res += f"**l.{index+1}** : Unexcepted error\n"
+                tmp = f"**l.{index+1}** : Unexcepted error\n"
+                lenTmp = len(tmp)
+                if lenTmp + count > 2000:
+                    await ctx.respond(msg)
+                    count = lenTmp
+                    msg = tmp
+                else:
+                    count += lenTmp
+                    msg += tmp
                 log.writeError(log.formatError(error))
         
-        res += "Backup execute done !"
-        await ctx.respond(res)
+        if count > 0:
+            await ctx.respond(msg)
+        await ctx.respond("Backup execute done !")
+
+
+    async def lineDisplay(self, ctx: ApplicationContext, filePath: str, limit: int, isError: bool):
+        count = 0
+        msg = ""
+
+        with open(filePath, "r") as f:
+            for line in (f.readlines()[-limit:]):
+                newLine = "\n" + log.adjustLog(line, isError)
+                lenLine = len(newLine)
+
+                if lenLine + count > 2000:
+                    await ctx.respond(f"```{msg}```")
+                    count = lenLine
+                    msg = lenLine
+                else:
+                    count += lenLine
+                    msg += newLine
+
+        await ctx.respond(f"```{msg}```")
 
     @commands.slash_command(description="Display the last logs")
     @option(
@@ -80,11 +124,7 @@ class Owner(commands.Cog):
     )
     async def display_logs(self, ctx: ApplicationContext, count: int):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = ""
-        with open(LOG_FILE, "r") as f:
-            for line in (f.readlines()[-count:]):
-                res += "\n" + log.adjustLog(line, False)
-        await ctx.respond(f"```{res}```")
+        await self.lineDisplay(ctx, LOG_FILE, count, False)
 
     @commands.slash_command(description="Display the last errors")
     @option(
@@ -95,15 +135,7 @@ class Owner(commands.Cog):
     )
     async def display_errors(self, ctx: ApplicationContext, count: int):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = ""
-        with open(ERROR_FILE, "r") as f:
-            for line in (f.readlines()[-count:]):
-                res += "\n" + log.adjustLog(line, True)
-        await ctx.respond(f"```{res}```")
-
-    @commands.slash_command(description="test owner")
-    async def test_own(self, ctx: ApplicationContext):
-        await ctx.respond("All good")
+        await self.lineDisplay(ctx, ERROR_FILE, count, True)
 
 
 def setup(bot: commands.Bot):
