@@ -150,7 +150,7 @@ class Admin(commands.Cog):
             self.db.addGuild(idGuild, idChan)
         else:
             self.db.changeXPChan(idGuild, idChan)
-        await ctx.respond("this channel will now host my the news about XP change !")
+        await ctx.respond("this channel will now the XP news !")
 
 
     @commands.slash_command(description="Enable or disable the xp system on the server")

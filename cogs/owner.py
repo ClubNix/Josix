@@ -17,8 +17,10 @@ class Owner(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
+    def cog_check(self, ctx: ApplicationContext):
+        return self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
+
     @commands.slash_command(description="Stop the bot")
-    @commands.is_owner()
     async def stop_josix(self, ctx: ApplicationContext):
         await ctx.respond("Stopping...")
         await self.bot.close()
@@ -32,7 +34,6 @@ class Owner(commands.Cog):
             default=""
         )]
     )
-    @commands.is_owner()
     async def backup_database(self, ctx: ApplicationContext, table: str):
         await ctx.defer(ephemeral=False, invisible=False)
         self.db.backup(table)
@@ -47,13 +48,11 @@ class Owner(commands.Cog):
             required=True
         )]
     )
-    @commands.is_owner()
     async def execute(self, ctx: ApplicationContext, query: str):
         await ctx.defer(ephemeral=False, invisible=False)
         await ctx.respond(self.db.execute(query))
 
     @commands.slash_command(description="Execute the backup file")
-    @commands.is_owner()
     async def backup_execute(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
         res = ""
@@ -73,7 +72,6 @@ class Owner(commands.Cog):
         await ctx.respond(res)
 
     @commands.slash_command(description="Display the last logs")
-    @commands.is_owner()
     @option(
         input_type=int,
         name="count",
@@ -89,7 +87,6 @@ class Owner(commands.Cog):
         await ctx.respond(f"```{res}```")
 
     @commands.slash_command(description="Display the last errors")
-    @commands.is_owner()
     @option(
         input_type=int,
         name="count",
@@ -103,6 +100,10 @@ class Owner(commands.Cog):
             for line in (f.readlines()[-count:]):
                 res += "\n" + log.adjustLog(line, True)
         await ctx.respond(f"```{res}```")
+
+    @commands.slash_command(description="test owner")
+    async def test_own(self, ctx: ApplicationContext):
+        await ctx.respond("All good")
 
 
 def setup(bot: commands.Bot):
