@@ -7,6 +7,7 @@ from discord import RawThreadUpdateEvent ,ApplicationContext, DiscordException
 from discord.utils import get as discordGet
 
 from json import JSONDecodeError
+from database.database import DatabaseHandler
 
 import logwrite as log
 import os
@@ -21,6 +22,7 @@ class Events(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.db = DatabaseHandler(os.path.basename(__file__))
         self.close = ""
         self.open = ""
 
@@ -131,6 +133,36 @@ class Events(commands.Cog):
                     await thread.edit(applied_tags=tags)
             except Exception as e:
                 log.writeError(log.formatError(e))
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        if member.bot:
+            return
+
+        dbGuild = self.db.getGuild(member.guild.id)
+        if not dbGuild:
+            return
+
+        if not dbGuild.enableWelcome:
+            return
+
+        chan = member.guild.get_channel(dbGuild.wChan)
+        role = member.guild.get_role(dbGuild.wRole)
+        text = dbGuild.wText
+        
+        if role:
+            await member.add_roles(role, reason="Welcome role")
+        
+        if chan:
+            if text:
+                text = text.format(
+                    user=member.mention,
+                    server=member.guild.name,
+                    ln="\n"
+                )
+            else:
+                text = f"Welcome on the server **{member.guild.name}** {member.mention}"
+            await chan.send(text)
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: ApplicationContext, error: DiscordException):

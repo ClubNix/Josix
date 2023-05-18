@@ -14,6 +14,10 @@ class GuildDB:
     chanNews: int
     xpNews: int
     enableXp: bool
+    enableWelcome: bool
+    wChan: int
+    wRole: int
+    wText: str
 
 @dataclass()
 class LinkUserGuild:

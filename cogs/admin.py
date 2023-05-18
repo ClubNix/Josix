@@ -171,6 +171,65 @@ class Admin(commands.Cog):
         self.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
+    @commands.slash_command(description="Set up the custom welcome system for your server")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.TextChannel,
+        name="channel",
+        description="Channel that will host the welcome message",
+        default=None
+    )
+    @option(
+        input_type=discord.Role,
+        name="role",
+        description="Role that will be automatically given",
+        default=None
+    )
+    @option(
+        input_type=str,
+        name="message",
+        description="Custom welcoming message",
+        default=""
+    )
+    async def set_custom_welcome(self, ctx: ApplicationContext, channel: discord.TextChannel, role: discord.Role, message: str):
+        if not (channel or role or message):
+            await ctx.respond("Can't set up your custom welcome")
+            return
+
+        if len(message) > 512:
+            await ctx.respond("The message is too long")
+            return
+
+        await ctx.defer(ephemeral=False, invisible=False)
+        idGuild = ctx.guild_id
+        dbGuild = self.db.getGuild(idGuild)
+
+        if not dbGuild:
+            self.db.addGuild(idGuild)
+            dbGuild = self.db.getGuild(idGuild)
+
+        idChan = channel.id if channel else None
+        idRole = role.id if role else None
+        self.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
+        await ctx.respond("Your custome welcome message has been set")
+
+
+    @commands.slash_command(description="Enable or disable the welcome system")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def enable_welcome(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        idGuild = ctx.guild_id
+        dbGuild = self.db.getGuild(idGuild)
+        if not dbGuild:
+            self.db.addGuild(idGuild)
+            dbGuild = self.db.getGuild(idGuild)
+
+        enabled = dbGuild.enableWelcome
+        self.db.updateGuildWelcomeEnabled(idGuild)
+        await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))

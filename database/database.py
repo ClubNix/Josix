@@ -481,6 +481,31 @@ class DatabaseHandler():
         self.cursor.execute(query, (guildId,))
         self.conn.commit()
 
+    @_error_handler
+    def updateWelcomeGuild(self, guildId: int, chanId: int | None, roleId: int | None, message: str):
+        if not chanId:
+            chanId = 0
+        if not roleId:
+            roleId = 0
+
+        query = """UPDATE josix.Guild
+                   SET enableWelcome = TRUE,
+                       welcomeChan = %s,
+                       welcomeRole = %s,
+                       welcomeText = %s
+                   WHERE idGuild = %s;"""
+        params = (chanId, roleId, message, guildId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    @_error_handler
+    def updateGuildWelcomeEnabled(self, guildId: int) -> None:
+        query = """UPDATE josix.Guild
+                   SET enableWelcome = NOT enableWelcome
+                   WHERE idGuild = %s"""
+        self.cursor.execute(query, (guildId,))
+        self.conn.commit()
+
     ###############
     # Deleters
     ###############
