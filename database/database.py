@@ -8,8 +8,8 @@ from typing import Callable, Any
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
-FILE_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
-
+BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
+DAILY_BACKUP_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql')
 
 class DatabaseHandler():
     def __init__(self, filename: str) -> None:
@@ -77,7 +77,7 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def backup(self, table: str):
+    def backup(self, table: str, daily: bool = False):
         checkTable = f"AND table_name = '{table}'" if len(table) > 0 else None
         if table:
             query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' %s;"
@@ -87,7 +87,8 @@ class DatabaseHandler():
         self.cursor.execute(query, (checkTable,))
         res = self.cursor.fetchall()
 
-        with open(FILE_PATH, "w") as f:
+        file = DAILY_BACKUP_PATH if daily else BACKUP_PATH
+        with open(file, "w") as f:
             f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
             for rowTable in res:
                 table_name = rowTable[0]

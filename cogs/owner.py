@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import ApplicationContext, option
 
 from database.database import DatabaseHandler
@@ -16,6 +16,7 @@ class Owner(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
+        self.daily_backup.start()
 
     def cog_check(self, ctx: ApplicationContext):
         return self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
@@ -136,6 +137,14 @@ class Owner(commands.Cog):
     async def display_errors(self, ctx: ApplicationContext, count: int):
         await ctx.defer(ephemeral=False, invisible=False)
         await self.lineDisplay(ctx, ERROR_FILE, count, True)
+
+    
+    @tasks.loop(hours=24.0)
+    async def daily_backup(self):
+        try:
+            await self.db.backup("", True)
+        except Exception as e:
+            log.writeError(log.formatError(e))
 
 
 def setup(bot: commands.Bot):

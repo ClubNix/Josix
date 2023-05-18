@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from discord import ApplicationContext, TextChannel
+from discord import ApplicationContext
 from discord import option
 
 import random
@@ -368,7 +368,7 @@ class Usage(commands.Cog):
         embed.add_field(name="Date", value=f"**{date.strftime('%d/%m')}**")
         await ctx.respond(embed=embed)
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
         bd = self.db.safeExecute(self.db.checkBD, today.day, today.month)
