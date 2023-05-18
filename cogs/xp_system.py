@@ -352,12 +352,12 @@ class XP(commands.Cog):
                 count = 0
                 nbFields += 1
                 res = ""
-            if nbFields > 25:
+            if nbFields == 25:
                 break
             
             res += text
             count += len(text)
-        if len(text) > 0:
+        if len(text) > 0 and nbFields < 25:
             embed.append_field(
                 discord.EmbedField(name="", value=res)
             )

@@ -23,14 +23,14 @@ class Admin(commands.Cog):
         input_type=int,
         name="limit",
         description="Limit of messages to delete (default 10, can't be more than 50)",
-        default=10
+        default=10,
+        min_value=0,
+        max_value=50
     )
     async def clear(self, ctx: ApplicationContext, limit: int):
         await ctx.defer(ephemeral=False, invisible=False)
-        if limit < 0 or 50 < limit:
-            limit = 10 
         await ctx.channel.purge(limit=limit)
-        await ctx.respond("Done !")
+        await ctx.respond("Done !", delete_after=5.0)
 
     @commands.slash_command(description="Add a couple of reaction-role to the message")
     @commands.has_permissions(manage_messages=True)
@@ -150,7 +150,7 @@ class Admin(commands.Cog):
             self.db.addGuild(idGuild, idChan)
         else:
             self.db.changeXPChan(idGuild, idChan)
-        await ctx.respond("this channel will now host my the news about XP change !")
+        await ctx.respond("this channel will now the XP news !")
 
 
     @commands.slash_command(description="Enable or disable the xp system on the server")
