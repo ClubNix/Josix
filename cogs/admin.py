@@ -89,11 +89,11 @@ class Admin(commands.Cog):
 
         try:
             testGuild = self.db.getGuild(ctx.guild_id)
-            if testGuild is None or len(testGuild) == 0:
+            if not testGuild:
                 self.db.addGuild(ctx.guild_id, ctx.channel_id)
 
             testMsg = self.db.getMsg(msgId)
-            if testMsg is None or len(testMsg) == 0:
+            if not testMsg:
                 self.db.addMsg(ctx.guild_id, msgId)
                 new = True
         except Exception as e:
@@ -129,7 +129,7 @@ class Admin(commands.Cog):
         idChan = ctx.channel_id
 
         testGuild = self.db.getGuild(idGuild)
-        if not testGuild or len(testGuild) == 0:
+        if not testGuild:
             self.db.addGuild(idGuild, idChan)
         else:
             self.db.changeNewsChan(idGuild, idChan)
@@ -146,7 +146,7 @@ class Admin(commands.Cog):
         idChan = ctx.channel_id
 
         testGuild = self.db.getGuild(idGuild)
-        if not testGuild or len(testGuild) == 0:
+        if not testGuild:
             self.db.addGuild(idGuild, idChan)
         else:
             self.db.changeXPChan(idGuild, idChan)
@@ -163,11 +163,11 @@ class Admin(commands.Cog):
         idGuild = ctx.guild_id
 
         xpState = self.db.getGuildXP(idGuild)
-        if not xpState or len(xpState) == 0:
+        if not xpState:
             self.db.addGuild(idGuild)
             xpState = self.db.getGuildXP(idGuild)
 
-        enabled: bool = xpState[1]
+        enabled = xpState[1]
         self.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 

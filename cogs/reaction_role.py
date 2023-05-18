@@ -20,10 +20,10 @@ class ReactionRole(commands.Cog):
 
         msgId = payload.message_id
         resMsg = self.db.getMsg(msgId)
-        if resMsg is None or len(resMsg) == 0:
+        if not resMsg:
             return
 
-        if payload.message_id in resMsg:
+        if payload.message_id == resMsg.id:
             userId = payload.user_id
             guildId = payload.guild_id
             emojiName = emoji.name
@@ -32,7 +32,7 @@ class ReactionRole(commands.Cog):
             member = guild.get_member(userId)
 
             resRoles = self.db.getRoleFromReact(msgId, emojiName)
-            if resRoles is None:
+            if not resRoles:
                 return
 
             roleId = resRoles[0]

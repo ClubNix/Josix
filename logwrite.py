@@ -30,13 +30,13 @@ def adjustLog(msg: str, isError: bool) -> str:
 
 # Function to write to the log file a message and a timestamp in blue like this, example :
 # 2016-01-01 00:00:00 : msg
-def writeLog(msg : str):
+def writeLog(msg: str):
     with open(LOG_FILE, 'a') as f:
         f.write(LOG_COLOR + str(datetime.now()) + END_FORMAT + msg + '\n')
 
 
 # Format the error to a string to get the file, line and message without whole traceback
-def formatError(e : Exception) -> str:
+def formatError(e: Exception) -> str:
     try:
         file = str(sys.exc_info()[-1].tb_frame).rsplit("'")[1]
         return f"{file} on l.{format(sys.exc_info()[-1].tb_lineno)} --> {type(e).__name__}, {e}".strip()
@@ -46,6 +46,6 @@ def formatError(e : Exception) -> str:
 
 # Function to write to the error file the error message and a timestamp in red like this, example :
 # 2016-01-01 00:00:00 : msg
-def writeError(msg : str):
+def writeError(msg: str):
     with open(ERROR_FILE, 'a') as f:
         f.write(ERROR_COLOR + str(datetime.now()) + END_FORMAT + msg + '\n')

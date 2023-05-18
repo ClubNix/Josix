@@ -26,28 +26,25 @@ class Owner(commands.Cog):
         await ctx.respond("Stopping...")
         await self.bot.close()
 
-    @commands.slash_command(
-        description="Create a backup for the databse",
-        options=[discord.Option(
-            input_type=str,
-            name="table",
-            description="Name of the table to backup",
-            default=""
-        )]
+    @commands.slash_command(description="Create a backup for the database")
+    @option(
+        input_type=str,
+        name="table",
+        description="Name of the table to backup",
+        default=""
     )
     async def create_backup(self, ctx: ApplicationContext, table: str):
         await ctx.defer(ephemeral=False, invisible=False)
         self.db.backup(table)
         await ctx.respond("Backup done !")
 
-    @commands.slash_command(
-        description="Execute a query",
-        options=[discord.Option(
-            input_type=str,
-            name="query",
-            description="Query to execute",
-            required=True
-        )]
+    @commands.slash_command(description="Execute a query")
+    @commands.is_owner()
+    @option(
+        input_type=str,
+        name="query",
+        description="Query to execute",
+        required=True
     )
     async def execute(self, ctx: ApplicationContext, query: str):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -57,12 +54,12 @@ class Owner(commands.Cog):
             await ctx.respond(e)
 
     @commands.slash_command(description="Execute the backup file")
+    @commands.is_owner()
     async def execute_backup(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
         count = 0
         tmp = ""
         msg = ""
-
 
         with open(Owner._SQL_FILE, 'r') as f:
             lines = f.readlines()
@@ -95,7 +92,6 @@ class Owner(commands.Cog):
         if count > 0:
             await ctx.respond(msg)
         await ctx.respond("Backup execute done !")
-
 
     async def lineDisplay(self, ctx: ApplicationContext, filePath: str, limit: int, isError: bool):
         count = 0
@@ -142,7 +138,7 @@ class Owner(commands.Cog):
     @tasks.loop(hours=24.0)
     async def daily_backup(self):
         try:
-            await self.db.backup("", True)
+            self.db.backup("", True)
         except Exception as e:
             log.writeError(log.formatError(e))
 

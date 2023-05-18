@@ -11,7 +11,7 @@ class Josix(commands.Bot):
     load_dotenv()
     _TOKEN = getenv("discord")
 
-    def __init__(self, bot_intents: discord.Intents):
+    def __init__(self, bot_intents: discord.Intents) -> None:
         super().__init__(
             description="Josix !",
             activity=discord.Game("/help and stats"), # The activity
@@ -20,7 +20,7 @@ class Josix(commands.Bot):
         )
         self._extensions()
 
-    def _extensions(self):
+    def _extensions(self) -> None:
         try:
             res = self.load_extension("cogs", recursive=True, store=True)
             for cogName, cogRes in res.items():
@@ -33,7 +33,7 @@ class Josix(commands.Bot):
         except Exception as error:
             log.writeError(log.formatError(error))
 
-    def run(self):
+    def run(self) -> None:
         super().run(Josix._TOKEN)
 
 

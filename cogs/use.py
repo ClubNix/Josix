@@ -289,15 +289,15 @@ class Usage(commands.Cog):
             stringRes = "Your birthday has been added !"
 
         testUser = self.db.getUser(userId)
-        if not testUser or len(testUser) == 0:
+        if not testUser:
             self.db.addUser(userId)
 
         testGuild = self.db.getGuild(ctx.guild_id)
-        if not testGuild or len(testGuild) == 0:
+        if not testGuild:
             self.db.addGuild(ctx.guild_id)
 
         testBoth = self.db.getUserInGuild(userId, ctx.guild_id)
-        if not testBoth or len(testBoth) == 0:
+        if not testBoth:
             self.db.addUserGuild(userId, ctx.guild_id)
 
         today = datetime.date.today()
@@ -315,7 +315,7 @@ class Usage(commands.Cog):
         res = []
 
         values = self.db.getBDMonth(idGuild, monthInt)
-        if values is None or len(values) == 0:
+        if not values:
             return embed
 
         for val in values:
@@ -358,7 +358,7 @@ class Usage(commands.Cog):
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
         res = self.db.getBDUser(user.id)
-        if not res or len(res) == 0:
+        if not res:
             await ctx.respond("User not registered")
             return
 

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.errors import NotFound, Forbidden
 from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
-    CommandOnCooldown, NotOwner
+    CommandOnCooldown, NotOwner, CheckFailure
 from discord import RawThreadUpdateEvent ,ApplicationContext, DiscordException
 from discord.utils import get as discordGet
 
@@ -146,6 +146,8 @@ class Events(commands.Cog):
             await ctx.respond("An argument is missing in your command (skill issue n°2)")
         elif isinstance(error, NoPrivateMessage):
             await ctx.respond("This command can only be used in a server (get some friends)")
+        elif isinstance(error, CheckFailure):
+            await ctx.respond("You didn't match the command checks")
         elif isinstance(error, CommandOnCooldown):
             error: CommandOnCooldown = error
             await ctx.respond(f"Too fast bro, wait {round(error.retry_after, 2)} seconds to retry this command")

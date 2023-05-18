@@ -38,12 +38,12 @@ class XP(commands.Cog):
             self.db.addUserGuild(idTarget, idGuild)
             userGuildDB = self.db.getUserGuildXP(idTarget, idGuild)
     
-        xpChanId: int = guildDB[0]
-        xpEnabled: bool = guildDB[1]
+        xpChanId = guildDB[0]
+        xpEnabled = guildDB[1]
 
-        currentXP: int = userGuildDB[0]
-        currentLvl: int = userGuildDB[1]
-        lastSend: dt.datetime = userGuildDB[2]
+        currentXP = userGuildDB[0]
+        currentLvl = userGuildDB[1]
+        lastSend = userGuildDB[2]
 
         if not xpEnabled:
             return
@@ -56,7 +56,8 @@ class XP(commands.Cog):
         newLvl = xpNeed <= xp
 
         currentLvl = currentLvl + 1 if newLvl else currentLvl
-        currentXP += xp
+        currentXP = min(1_899_250, currentXP+xp)
+
         self.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
@@ -132,9 +133,10 @@ class XP(commands.Cog):
             self.db.addUserGuild(member.id, guild.id)
             userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
 
-        currentXP: int = userGuildDB[0]
+        currentXP = userGuildDB[0]
 
         newXP = currentXP + amount
+        print(newXP, currentXP, amount)
         if newXP < 0:
             newXP = 0
         elif newXP > 1_899_250:
@@ -161,7 +163,7 @@ class XP(commands.Cog):
             self.db.addUserGuild(member.id, guild.id)
             userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
 
-        currentLvl: int = userGuildDB[1]
+        currentLvl = userGuildDB[1]
         newLvl = currentLvl + amount
         if newLvl < 0:
             newLvl = 0
