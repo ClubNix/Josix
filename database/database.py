@@ -506,6 +506,14 @@ class DatabaseHandler():
         self.cursor.execute(query, (guildId,))
         self.conn.commit()
 
+    @_error_handler
+    def updateLogsEntries(self, logs: list[tuple[str, int]]) -> None:
+        for log in logs:
+            query = "INSERT INTO josix.Logs VALUES(%s, %s) ON CONFLICT DO NOTHING;"
+            params = (log[1], log[0])
+            self.cursor.execute(query, params)
+        self.conn.commit()
+
     ###############
     # Deleters
     ###############

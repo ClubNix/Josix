@@ -44,7 +44,7 @@ class Usage(commands.Cog):
                 lstCmd = ""
 
                 lcn = cogName.lower()
-                if not cog or lcn == "events" or lcn == "reactionrole" or (
+                if not cog or lcn == "events" or lcn == "logger" or lcn == "reactionrole" or (
                         cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
                     continue
 

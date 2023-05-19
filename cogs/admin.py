@@ -231,5 +231,31 @@ class Admin(commands.Cog):
         self.db.updateGuildWelcomeEnabled(idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
+    @commands.slash_command(description="Choose which logs to register")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def set_logger(self, ctx: ApplicationContext):
+        await ctx.respond("WIP")
+
+    @commands.slash_command(description="Choose where to send the logs")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.TextChannel,
+        name="channel",
+        description="The channel that will host the bot registered logs",
+        default=None
+    )
+    async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
+        if not channel:
+            # delete the column value to stop the logs
+            pass
+        else:
+            # update
+            pass
+
+        await ctx.respond("WIP")
+
+
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))

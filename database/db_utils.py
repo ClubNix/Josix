@@ -28,6 +28,6 @@ class LinkUserGuild:
     lastMessage: datetime
 
 @dataclass()
-class MsgReact():
+class MsgReact:
     id: int
     idGuild: int
