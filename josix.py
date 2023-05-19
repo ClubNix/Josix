@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from types import TracebackType
+
 from dotenv import load_dotenv
 from os import getenv
 
@@ -42,9 +44,14 @@ if __name__ == "__main__":
     intents = discord.Intents.none()
     intents.members = True
     intents.guilds = True
+    intents.bans = True
+    intents.emojis_and_stickers = True
+    intents.webhooks = True
     intents.messages = True
     intents.message_content = True
     intents.reactions = True
+    intents.auto_moderation_configuration = True
+    intents.auto_moderation_execution = True
 
     josix = Josix(intents)
     josix.run()

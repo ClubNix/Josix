@@ -9,6 +9,7 @@ import logwrite as log
 import os
 
 from database.database import DatabaseHandler
+from cogs.logger import LoggerView
 
 
 class Admin(commands.Cog):
@@ -235,7 +236,7 @@ class Admin(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def set_logger(self, ctx: ApplicationContext):
-        await ctx.respond("WIP")
+        await ctx.respond("WIP", view=LoggerView(self.db))
 
     @commands.slash_command(description="Choose where to send the logs")
     @commands.has_permissions(manage_guild=True)

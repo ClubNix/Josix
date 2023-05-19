@@ -18,6 +18,7 @@ class GuildDB:
     wChan: int
     wRole: int
     wText: str
+    logNews: int
 
 @dataclass()
 class LinkUserGuild:
@@ -31,3 +32,8 @@ class LinkUserGuild:
 class MsgReact:
     id: int
     idGuild: int
+
+@dataclass()
+class LogSelection:
+    idGuild: int
+    logs: list[int]

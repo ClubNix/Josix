@@ -6,7 +6,7 @@ import logwrite as log
 
 from typing import Callable, Any
 from datetime import datetime, date
-from database.db_utils import UserDB, GuildDB, LinkUserGuild, MsgReact
+from database.db_utils import UserDB, GuildDB, LinkUserGuild, MsgReact, LogSelection
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -152,12 +152,6 @@ class DatabaseHandler():
         return None
 
     @_error_handler
-    def getPlayerStat(self, userId: int) -> tuple[int, int] | None:
-        query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
-        return self.cursor.fetchone()
-
-    @_error_handler
     def getMsg(self, msgId: int) -> MsgReact | None:
         query = f"SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
         self.cursor.execute(query, (msgId,))
@@ -166,6 +160,44 @@ class DatabaseHandler():
         if res:
             return MsgReact(*res)
         return None
+
+    @_error_handler
+    def getUserInGuild(self, userId: int, guildId: int) -> LinkUserGuild | None:
+        query = """SELECT * FROM josix.UserGuild
+                   WHERE idUser = %s AND idGuild  = %s;"""
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchone()
+
+        if res:
+            return LinkUserGuild(*res)
+        return None
+
+    def getUserGuildLink(self, userId: int, guildId: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
+        return (
+            self.getUser(userId),
+            self.getGuild(guildId),
+            self.getUserInGuild(userId, guildId)
+        )
+
+    def getSelectLogs(self, guildId: int) -> LogSelection | None:
+        query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
+        self.cursor.execute(query, (guildId,))
+        res = self.cursor.fetchall()
+
+        if res:
+            logs = []
+            for row in res:
+                logs.append(row[1])
+            return LogSelection(guildId, logs)
+        return None
+
+
+    @_error_handler
+    def getPlayerStat(self, userId: int) -> tuple[int, int] | None:
+        query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
+        self.cursor.execute(query, (userId,))
+        return self.cursor.fetchone()
 
     @_error_handler
     def getRoleFromReact(self, msgId: int, emojiName: str) -> tuple[int] | None:
@@ -195,25 +227,6 @@ class DatabaseHandler():
         query = "SELECT idCouple FROM josix.ReactCouple WHERE idRole = %s;"
         self.cursor.execute(query, (roleId,))
         return self.cursor.fetchall()
-
-    @_error_handler
-    def getUserInGuild(self, userId: int, guildId: int) -> LinkUserGuild | None:
-        query = """SELECT * FROM josix.UserGuild
-                   WHERE idUser = %s AND idGuild  = %s;"""
-        params = (userId, guildId)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchone()
-
-        if res:
-            return LinkUserGuild(*res)
-        return None
-
-    def getUserGuildLink(self, userId: int, guildId: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
-        return (
-            self.getUser(userId),
-            self.getGuild(guildId),
-            self.getUserInGuild(userId, guildId)
-        )
 
     @_error_handler
     def getUserXP(self, userId: int) -> tuple[int] | None:
@@ -504,6 +517,18 @@ class DatabaseHandler():
                    SET enableWelcome = NOT enableWelcome
                    WHERE idGuild = %s"""
         self.cursor.execute(query, (guildId,))
+        self.conn.commit()
+
+    @_error_handler
+    def updateLogSelects(self, guildId: int, logs: list[int]) -> None:
+        for i in range(1, 13):
+            params = (guildId, i)
+
+            if i in logs:
+                query = "INSERT INTO josix.LogSelector VALUES(%s, %s) ON CONFLICT DO NOTHING;"
+            else:
+                query = "DELETE FROM josix.LogSelector WHERE idGuild = %s AND idLog = %s;"
+            self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
