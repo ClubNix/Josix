@@ -2,14 +2,15 @@ import discord
 from discord.ext import commands
 from discord.ui.select import Select
 from discord import AutoModRule, AutoModActionExecutionEvent
-from discord import Guild, TextChannel, Emoji, GuildSticker, Role
+from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOverwrite
 from discord import User, Member, RawMemberRemoveEvent
 from discord.abc import GuildChannel
 
 from database.database import DatabaseHandler
 from enum import IntEnum
 from typing import Sequence
-from time import time
+from time import time, mktime
+from datetime import datetime as dt
 
 import os
 import logwrite as log
@@ -152,7 +153,7 @@ class Logger(commands.Cog):
         embed.add_field(name="Trigger", value=rule.trigger_type.name)
         embed.add_field(name="Enabled", value=rule.enabled, inline=False)
         embed.add_field(name="Actions", value=", ".join([i.type.name for i in rule.actions]))
-        embed.set_footer(text=f"ID : {rule.id} • <t:{int(time())}:f>")
+        embed.set_footer(text=f"ID : {rule.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
@@ -180,7 +181,7 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_auto_moderation_action_execution(self, payload: AutoModActionExecutionEvent):
-        chan: TextChannel = self.checkLogStatus(payload.guild_id)
+        chan: TextChannel = await self.checkLogStatus(payload.guild_id)
         if not chan:
             return
         
@@ -195,31 +196,121 @@ class Logger(commands.Cog):
         embed.add_field(name="Action", value=payload.action.type.name)
         embed.add_field(name="Key-word", value=payload.matched_keyword)
         embed.add_field(name="Trigger", value=payload.matched_content)
-        if len(payload.content) < 1024: embed.add_field(name="Content", value=payload.content, inline=False)
-        embed.set_footer(text=f"ID : {rule.id} • <t:{int(time())}:f>")
+        embed.add_field(name="Content", value=payload.content[:1024], inline=False)
+        embed.set_footer(text=f"ID : {rule.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         await chan.send(embed=embed)
 
 #
 # Channel logs
 #
 
+    async def _channel_embed(self, channel: GuildChannel, title: str, color: int) -> discord.Embed:
+        embed = discord.Embed(
+            title=title,
+            color=color
+        )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.add_field(name="Name", value=channel.name)
+        embed.add_field(name="Category", value=channel.category)
+        embed.add_field(
+            name="Overwrites",
+            value=", ".join([target.mention for target in channel.overwrites.keys()])[:1023],
+            inline=False
+        )
+        embed.set_footer(text=f"ID : {channel.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        return embed
+
+
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: GuildChannel):
-        chan: TextChannel = self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
         if not chan:
             return
+        embed = await self._channel_embed(channel, "Channel created", Logger.addColor)
+        await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: GuildChannel):
-        chan: TextChannel = self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
         if not chan:
             return
+        embed = await self._channel_embed(channel, "Channel deleted", Logger.noColor)
+        await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before: GuildChannel, after: GuildChannel):
-        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.CHANNEL_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.CHANNEL_UPDATE)
         if not chan:
             return
+
+        embed = discord.Embed(
+            title="Channel updated",
+            color=Logger.updColor
+        )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.set_footer(text=f"ID : {before.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+        if before.name != after.name:
+            embed.title = "Channel name updated"
+            embed.description = f"{before.name} **-->** {after.name}"
+        elif before.category != after.category:
+            embed.title = "Channel category updated"
+            embed.description = f"{before.category} **-->** {after.category}"
+            embed.add_field(name="Name", value=after.name)
+        else:
+            embed.add_field(name="Name", value=after.name)
+            test = False
+            updTarget: Member | Role = None
+            updPerms : PermissionOverwrite = None
+
+            if len(before.overwrites) < len(after.overwrites):
+                test = True
+                for key in after.overwrites:
+                    if key not in before.overwrites.keys():
+                        continue
+
+                    updTarget = key
+                    updPerms = after.overwrites[key]
+                    break
+
+            elif len(before.overwrites) > len(after.overwrites):
+                test = True
+                for key in before.overwrites:
+                    if key in after.overwrites.keys():
+                        continue
+
+                    updTarget = key
+                    break
+            else:
+                for key in after.overwrites:
+                    if before.overwrites[key] != after.overwrites[key]:
+                        test = True
+                        updTarget = key
+                        updPerms = after.overwrites[key]
+
+            if not (test or updTarget):
+                return
+
+            embed.title = f"Permissions changed for {updTarget.name} in {after.name}"
+            allows = []
+            disallows = []
+            for perm in iter(updPerms):
+                allows.append(perm[0]) if perm[1] else disallows.append(perm[0])
+
+            if updPerms:
+                embed.add_field(
+                    name="Allowed permissions ✅",
+                    value=", ".join(allows)[:1023],
+                    inline=False
+                )
+                embed.add_field(
+                    name="Disallowed permissions ❌",
+                    value=", ".join(disallows)[:1023],
+                    inline=False
+                )
+            else:
+                embed.description = "Permissions deleted"
+        await chan.send(embed=embed)
 
 #
 # Role logs
@@ -227,19 +318,19 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: Role):
-        chan: TextChannel = self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: Role):
-        chan: TextChannel = self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: Role, after: Role):
-        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
         if not chan:
             return
 
@@ -249,19 +340,19 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_update(self, before: Guild, after: Guild):
-        chan: TextChannel = self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
-        chan: TextChannel = self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_guild_stickers_update(self, guild: Guild, before: Sequence[GuildSticker], after: Sequence[GuildSticker]):
-        chan: TextChannel = self.checkLogStatus(guild.id, Logs.STICKERS_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.STICKERS_UPDATE)
         if not chan:
             return
 
@@ -284,38 +375,38 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: Guild, user: User | Member):
-        chan: TextChannel = self.checkLogStatus(guild.id, Logs.BANS)
+        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: Guild, user: User):
-        chan: TextChannel = self.checkLogStatus(guild.id, Logs.BANS)
+        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
-        chan: TextChannel = self.checkLogStatus(member.guild.id, Logs.MEMBER_JOIN)
+        chan: TextChannel = await self.checkLogStatus(member.guild.id, Logs.MEMBER_JOIN)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_raw_member_remove(self, payload: RawMemberRemoveEvent):
-        chan: TextChannel = self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
+        chan: TextChannel = await self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
-        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.MEMBER_UPDATE)
+        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.MEMBER_UPDATE)
         if not chan:
             return
 
     @commands.Cog.listener()
     async def on_user_update(self, before: User, after: User):
         for guild in before.mutual_guilds:
-            chan: TextChannel = self.checkLogStatus(guild.id, Logs.USER_UPDATE)
+            chan: TextChannel = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
             if not chan:
                 return
 

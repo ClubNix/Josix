@@ -236,7 +236,7 @@ class Admin(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def set_logger(self, ctx: ApplicationContext):
-        await ctx.respond("WIP", view=LoggerView(self.db))
+        await ctx.respond("Choose your logs :", view=LoggerView(self.db))
 
     @commands.slash_command(description="Choose where to send the logs")
     @commands.has_permissions(manage_guild=True)
