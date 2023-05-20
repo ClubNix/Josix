@@ -1,13 +1,19 @@
 import discord
 from discord.ext import commands
 from discord.ui.select import Select
-from discord import AutoModRule, AutoModActionExecutionEvent, AutoModAction, TextChannel
+from discord import AutoModRule, AutoModActionExecutionEvent
+from discord import Guild, TextChannel, Emoji, GuildSticker, Role
+from discord import User, Member, RawMemberRemoveEvent
+from discord.abc import GuildChannel
 
 from database.database import DatabaseHandler
 from enum import IntEnum
+from typing import Sequence
+from time import time
 
 import os
 import logwrite as log
+
 
 class Logs(IntEnum):
     AUTOMOD = 1
@@ -21,7 +27,8 @@ class Logs(IntEnum):
     WEBHOOKS_UPDATE = 9
     BANS = 10
     MEMBER_JOIN = 11
-    USER_UPDATE = 12
+    MEMBER_UPDATE = 12
+    USER_UPDATE = 13
 
 
 class LoggerView(discord.ui.View):
@@ -77,6 +84,10 @@ class LoggerView(discord.ui.View):
             discord.SelectOption(
                 label="Joins", value=str(Logs.MEMBER_JOIN.value),
                 description="A member joins or leaves the server"
+            ),
+            discord.SelectOption(
+                label="User update", value=str(Logs.MEMBER_UPDATE.value),
+                description="All updates on the member of the server"
             ),
             discord.SelectOption(
                 label="User update", value=str(Logs.USER_UPDATE.value),
@@ -141,6 +152,7 @@ class Logger(commands.Cog):
         embed.add_field(name="Trigger", value=rule.trigger_type.name)
         embed.add_field(name="Enabled", value=rule.enabled, inline=False)
         embed.add_field(name="Actions", value=", ".join([i.type.name for i in rule.actions]))
+        embed.set_footer(text=f"ID : {rule.id} • <t:{int(time())}:f>")
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
@@ -184,7 +196,128 @@ class Logger(commands.Cog):
         embed.add_field(name="Key-word", value=payload.matched_keyword)
         embed.add_field(name="Trigger", value=payload.matched_content)
         if len(payload.content) < 1024: embed.add_field(name="Content", value=payload.content, inline=False)
+        embed.set_footer(text=f"ID : {rule.id} • <t:{int(time())}:f>")
         await chan.send(embed=embed)
+
+#
+# Channel logs
+#
+
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel: GuildChannel):
+        chan: TextChannel = self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel: GuildChannel):
+        chan: TextChannel = self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_channel_update(self, before: GuildChannel, after: GuildChannel):
+        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.CHANNEL_UPDATE)
+        if not chan:
+            return
+
+#
+# Role logs
+#
+
+    @commands.Cog.listener()
+    async def on_guild_role_create(self, role: Role):
+        chan: TextChannel = self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role: Role):
+        chan: TextChannel = self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_role_update(self, before: Role, after: Role):
+        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
+        if not chan:
+            return
+
+#
+# Update logs
+#
+
+    @commands.Cog.listener()
+    async def on_guild_update(self, before: Guild, after: Guild):
+        chan: TextChannel = self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
+        chan: TextChannel = self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_guild_stickers_update(self, guild: Guild, before: Sequence[GuildSticker], after: Sequence[GuildSticker]):
+        chan: TextChannel = self.checkLogStatus(guild.id, Logs.STICKERS_UPDATE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_webhooks_update(self, channel: GuildChannel):
+        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.WEBHOOKS_UPDATE)
+        if not chan:
+            return
+
+        embed = discord.Embed(title="Webhook update", color=Logger.updColor)
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.add_field(name="Name", value=channel.name)
+        embed.add_field(name="Category", value=channel.category)
+        embed.set_footer(text=f"{channel.mention} • <t:{int(time())}:f>")
+        await chan.send(embed=embed)
+
+#
+# Member logs
+#
+
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild: Guild, user: User | Member):
+        chan: TextChannel = self.checkLogStatus(guild.id, Logs.BANS)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild: Guild, user: User):
+        chan: TextChannel = self.checkLogStatus(guild.id, Logs.BANS)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: Member):
+        chan: TextChannel = self.checkLogStatus(member.guild.id, Logs.MEMBER_JOIN)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_raw_member_remove(self, payload: RawMemberRemoveEvent):
+        chan: TextChannel = self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before: Member, after: Member):
+        chan: TextChannel = self.checkLogStatus(before.guild.id, Logs.MEMBER_UPDATE)
+        if not chan:
+            return
+
+    @commands.Cog.listener()
+    async def on_user_update(self, before: User, after: User):
+        for guild in before.mutual_guilds:
+            chan: TextChannel = self.checkLogStatus(guild.id, Logs.USER_UPDATE)
+            if not chan:
+                return
 
 def setup(bot: commands.Bot):
     bot.add_cog(Logger(bot))
