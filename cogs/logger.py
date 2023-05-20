@@ -220,7 +220,6 @@ class Logger(commands.Cog):
         embed.set_footer(text=f"ID : {channel.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
 
-
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: GuildChannel):
         chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
@@ -316,23 +315,65 @@ class Logger(commands.Cog):
 # Role logs
 #
 
+    async def _role_embed(self, role: Role, title: str, color: int) -> discord.Embed:
+        embed = discord.Embed(
+            title=title,
+            color=color
+        )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.add_field(name="Name", value=role.name)
+        embed.add_field(name="Color", value=role.color)
+        embed.add_field(
+            name="Permissions",
+            value=", ".join([perm for perm, allow in role.permissions if allow])[:1023],
+            inline=False
+        )
+        embed.set_footer(text=f"ID : {role.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        return embed
+
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: Role):
         chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
+        embed = await self._role_embed(role, "Role created", Logger.addColor)
+        await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: Role):
         chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
+        embed = await self._role_embed(role, "Role deleted", Logger.noColor)
+        await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: Role, after: Role):
         chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
         if not chan:
             return
+
+        embed = discord.Embed(
+            title=f"Role {before.name} updated",
+            color=Logger.updColor
+        )
+
+        if before.name != after.name:
+            embed.add_field(name="Name", value=f"{before.name} **-->** {after.name}", inline=False)
+        if before.color != after.color:
+            embed.add_field(name="Color", value=f"{before.color} **-->** {after.color}", inline=False)
+        if before.mentionable != after.mentionable:
+            embed.add_field(name="Mentionable", value=after.mentionable, inline=False)
+        if before.hoist != after.hoist:
+            embed.add_field(name="Separated", value=after.hoist, inline=False)
+
+        if before.permissions != after.permissions:
+            embed.add_field(
+                name="Permissions",
+                value=", ".join([perm for perm, allow in after.permissions if allow])[:1023],
+                inline=False
+            )
+        await chan.send(embed=embed)
 
 #
 # Update logs
