@@ -19,7 +19,9 @@
 # What is Josix
 
 Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/). Mostly for fun its goal is at first just general purpose for the server of the Club\*Nix (join [here](https://discord.gg/PX7ceVqQkj)) like :
-- ⚙️ Reaction role 
+- 👋 Custom welcome message
+- ⚙️ Reaction role
+- 📖 Logger
 - 💾 Postgre database backup
 - 🎂 Birthday reminder
 - 📈 XP System
@@ -27,7 +29,6 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 - 🎮 Board games such as : tic-tac-toe, othello, connect-4 and more
 - 🧠 Private jokes register
 - 😂 Joke generator
-- 🛠️ Server management
 - 🔓 Log system (basic log + error log) with custom display with error formating
 
 
