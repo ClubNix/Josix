@@ -357,6 +357,7 @@ class Logger(commands.Cog):
             title=f"Role {before.name} updated",
             color=Logger.updColor
         )
+        embed.set_footer(text=f"ID : {after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
         if before.name != after.name:
             embed.add_field(name="Name", value=f"{before.name} **-->** {after.name}", inline=False)
@@ -384,6 +385,38 @@ class Logger(commands.Cog):
         chan: TextChannel = await self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
         if not chan:
             return
+
+        embed = discord.Embed(
+            title="Server updated",
+            color=Logger.updColor
+        )
+        embed.set_footer(text=f"ID : {after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        if after.icon: embed.set_thumbnail(url=after.icon)
+
+        if before.afk_channel != after.afk_channel:
+            bf = before.afk_channel.mention if before.afk_channel else "None"
+            af = after.afk_channel.mention if after.afk_channel else "None"
+            embed.add_field(name="AFK Channel", value=f"{bf} **-->** {af}", inline=False)
+        if before.afk_timeout != after.afk_timeout:
+            embed.add_field(name="AFK Timeout", value=f"{before.afk_timeout} **-->** {after.afk_timeout}", inline=False)
+        if before.banner != after.banner:
+            embed.add_field(name="Banner", value=f"[before]{before.banner} **-->** [after]{after.banner}", inline=False)
+        if before.description != after.description:
+            embed.add_field(name="Description", value=f"{before.description} **-->** {after}"[:1023], inline=False)
+        if before.explicit_content_filter != after.explicit_content_filter:
+            embed.add_field(name="Filter", value=f"{before.explicit_content_filter} **-->** {after.explicit_content_filter}", inline=False)
+        if before.icon != after.icon:
+            embed.add_field(name="Banner", value=f"[before]{before.icon} **-->** [after]{after.icon}", inline=False)
+        if before.mfa_level != after.mfa_level:
+            embed.add_field(name="Staff secure level", value=f"{before.mfa_level} **-->** {after.mfa_level}", inline=False)
+        if before.name != after.name:
+            embed.add_field(name="Name", value=f"{before.name} **-->** {after.name}", inline=False)
+        if before.nsfw_level != after.nsfw_level:
+            embed.add_field(name="NSFW Level", value=f"{before.nsfw_level} **-->** {after.nsfw_level}", inline=False)
+        if before.verification_level != after.verification_level:
+            embed.add_field(name="Verification level", value=f"{before.verification_level} **-->** {after.verification_level}", inline=False)
+        await chan.send(embed=embed)
+        
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
