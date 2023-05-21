@@ -25,10 +25,41 @@ class XP(commands.Cog):
         self.db = DatabaseHandler(os.path.basename(__file__))
 
     def nextLevelXP(self, lvl: int, xp: int = 0) -> int:
-        """Stolen from MEE6 : https://github.com/Mee6/Mee6-documentation/blob/master/docs/levels_xp.md """
+        """
+        Calculate the XP needed to get to the next level
+
+        Stolen from MEE6 : https://github.com/Mee6/Mee6-documentation/blob/master/docs/levels_xp.md
+
+        Parameters
+        ----------
+        lvl : int
+            Current level
+        xp : int
+            XP obtained so far
+
+        Returns
+        -------
+        int
+            The remaining xp needed
+        """
         return 5 * (lvl**2) + (50 * lvl) + 100 - xp
 
     def totalLevelXP(self, lvl: int) -> int:
+        """
+        Calculate the XP needed to get to reach a level starting from 0
+
+        Stolen from MEE6 : https://github.com/Mee6/Mee6-documentation/blob/master/docs/levels_xp.md
+
+        Parameters
+        ----------
+        lvl : int
+            Current level
+
+        Returns
+        -------
+        int
+            The amount of xp a user needs
+        """
         if lvl <= 0:
             return 0
 
@@ -37,7 +68,22 @@ class XP(commands.Cog):
             res += self.nextLevelXP(i, 0)
         return res
 
-    async def _updateUser(self, idTarget: int, idGuild: int, xp: int):
+    async def _updateUser(self, idTarget: int, idGuild: int, xp: int) -> None:
+        """
+        Updates a user xp and level in the database
+
+        Checks the state of the player then calculate the profits...
+        and updates the values
+
+        Parameters
+        ----------
+        idTarget : int
+            ID of the user obtaining XP
+        idGuild : int
+            ID of the server where the interaction comes from
+        xp : int
+            The XP the user will obtain
+        """
         userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idTarget, idGuild)
 
         if not userDB:

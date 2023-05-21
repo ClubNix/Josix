@@ -173,6 +173,24 @@ class Logger(commands.Cog):
         self.db.updateLogsEntries(logs)
 
     async def checkLogStatus(self, idGuild: int, idLog: int) -> discord.TextChannel | None:
+        """
+        Check if the guild has enabled this log
+
+        Retrieves the logs of the guild and check if this log is obtained.
+        Then returns the channel where the logs are displayed
+
+        Parameters
+        ----------
+        idGuild : int
+            ID of the guild where the log is called
+        idLog : int
+            ID of the called log
+
+        Returns
+        -------
+        TextChannel | None
+            The text channel that displays the logs
+        """
         guildLogs = self.db.getSelectLogs(idGuild)
         dbGuild = self.db.getGuild(idGuild)
         

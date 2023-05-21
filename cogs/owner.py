@@ -33,6 +33,7 @@ class Owner(commands.Cog):
         self.daily_backup.start()
 
     def cog_check(self, ctx: ApplicationContext):
+        """Check automatically called for every command of this cog"""
         return self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
 
     @commands.slash_command(description="Stop the bot")

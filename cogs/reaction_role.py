@@ -24,7 +24,21 @@ class ReactionRole(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
-    async def updateRole(self, payload: RawReactionActionEvent, add: bool):
+    async def updateRole(self, payload: RawReactionActionEvent, add: bool) -> None:
+        """
+        Update the role of a user when it interacts with a reaction role message
+
+        Check if the message is a reaction role message and if the reaction is not a
+        custom emoji.
+        Then retrieves the role associated with the reaction and add or remove it from the user
+
+        Parameters
+        ----------
+        payload : RawReactionActionEvent
+            The action event launched by the player
+        add : bool
+            Boolean that indicates if the user added or removed a reaction
+        """
         emoji = payload.emoji
         if emoji.is_custom_emoji():
             return

@@ -34,6 +34,14 @@ class Josix(commands.Bot):
         self._extensions()
 
     def _extensions(self) -> None:
+        """
+        Load all the extensions of the bot.
+
+        Goes recursively in the cogs file and load every python
+        file that does not starts with an underscore
+        
+        Once done, check the results for each extension, and log it
+        """
         try:
             res = self.load_extension("cogs", recursive=True, store=True)
             for cogName, cogRes in res.items():
