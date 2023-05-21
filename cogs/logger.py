@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ui.select import Select
 from discord import AutoModRule, AutoModActionExecutionEvent
 from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOverwrite
-from discord import User, Member, RawMemberRemoveEvent
+from discord import User, Member, RawMemberRemoveEvent, Embed
 from discord.abc import GuildChannel
 
 from database.database import DatabaseHandler
@@ -144,7 +144,7 @@ class Logger(commands.Cog):
             return
 
         creator = rule.creator
-        embed = discord.Embed(
+        embed = Embed(
             title="Automod rule " + ("created" if create else "updated"),
             description=rule.name,
             color=Logger.addColor if create else Logger.updColor
@@ -167,7 +167,7 @@ class Logger(commands.Cog):
             return
 
         creator = rule.creator
-        embed = discord.Embed(
+        embed = Embed(
             title="Automod rule deleted",
             description=rule.name,
             color=Logger.noColor
@@ -186,7 +186,7 @@ class Logger(commands.Cog):
             return
         
         rule = await payload.guild.fetch_auto_moderation_rule(payload.rule_id)
-        embed = discord.Embed(
+        embed = Embed(
             title="Automod rule executed",
             description=rule.name,
             color=Logger.noColor
@@ -204,8 +204,8 @@ class Logger(commands.Cog):
 # Channel logs
 #
 
-    async def _channel_embed(self, channel: GuildChannel, title: str, color: int) -> discord.Embed:
-        embed = discord.Embed(
+    async def _channel_embed(self, channel: GuildChannel, title: str, color: int) -> Embed:
+        embed = Embed(
             title=title,
             color=color
         )
@@ -242,7 +242,7 @@ class Logger(commands.Cog):
         if not chan:
             return
 
-        embed = discord.Embed(
+        embed = Embed(
             title="Channel updated",
             color=Logger.updColor
         )
@@ -315,8 +315,8 @@ class Logger(commands.Cog):
 # Role logs
 #
 
-    async def _role_embed(self, role: Role, title: str, color: int) -> discord.Embed:
-        embed = discord.Embed(
+    async def _role_embed(self, role: Role, title: str, color: int) -> Embed:
+        embed = Embed(
             title=title,
             color=color
         )
@@ -353,7 +353,7 @@ class Logger(commands.Cog):
         if not chan:
             return
 
-        embed = discord.Embed(
+        embed = Embed(
             title=f"Role {before.name} updated",
             color=Logger.updColor
         )
@@ -380,13 +380,42 @@ class Logger(commands.Cog):
 # Update logs
 #
 
+    def _emoji_embed(self, emoji: Emoji, create: bool) -> Embed:
+        embed = Embed(
+            title=("New emoji" if create else "Emoji deleted"),
+            color=(Logger.addColor if create else Logger.noColor)
+        )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        embed.add_field("Emoji", value=emoji)
+        embed.add_field("Name", value=emoji.name)
+        embed.add_field(name= '\u200B', value= '\u200B')
+        embed.add_field("Creator", value=emoji.user.mention)
+        embed.add_field("Animated", value=emoji.animated)
+        embed.set_footer(text=f"ID : {emoji.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        return embed
+
+    def _sticker_embed(self, sticker: GuildSticker, create: bool) -> Embed:
+        embed = Embed(
+            title=("New sticker" if create else "Sticker deleted"),
+            description=sticker.description,
+            color=(Logger.addColor if create else Logger.noColor)
+        )
+        embed.set_thumbnail(url=self.bot.user.display_avatar)
+        if sticker.url: embed.set_image(url=sticker.url)
+        embed.add_field("Name", value=sticker.name)
+        embed.add_field("Creator", value=sticker.user.mention)
+        embed.add_field("Format", value=sticker.format)
+        embed.set_footer(text=f"ID : {sticker.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        return embed
+
+
     @commands.Cog.listener()
     async def on_guild_update(self, before: Guild, after: Guild):
         chan: TextChannel = await self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
         if not chan:
             return
 
-        embed = discord.Embed(
+        embed = Embed(
             title="Server updated",
             color=Logger.updColor
         )
@@ -416,13 +445,62 @@ class Logger(commands.Cog):
         if before.verification_level != after.verification_level:
             embed.add_field(name="Verification level", value=f"{before.verification_level} **-->** {after.verification_level}", inline=False)
         await chan.send(embed=embed)
-        
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
+        print(before)
+        print(after)
         chan: TextChannel = await self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
         if not chan:
             return
+
+        if len(before) < len(after):
+            res: Emoji = None
+            for emoji in after:
+                if emoji not in before:
+                    res = emoji
+                    break
+
+            if not res:
+                return
+            await chan.send(embed=self._emoji_embed(res, True))
+
+        elif len(before) > len(after):
+            res: Emoji = None
+            for emoji in before:
+                if emoji not in after:
+                    res = emoji
+                    break
+
+            if not res:
+                return
+            await chan.send(embed=self._emoji_embed(res, False))
+
+        else:
+            resB: Emoji = None
+            resA: Emoji = None
+            for i, emojiB in enumerate(before):
+                emojiA = after[i]
+                if emojiB != emojiA:
+                    resB, resA = emojiB, emojiA
+
+            if not (resB or resA):
+                return
+
+            embed = Embed(title=f"Emoji {resA.name} updated")
+            embed.set_thumbnail(url=self.bot.user.display_avatar)
+            embed.set_footer(text=f"ID : {resA.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+            if resB.animated != resA.animated:
+                embed.add_field(name="Animated", value=f"{resB.animated} **-->** {resA.animated}", inline=False)
+            if resB.available != resA.available:
+                embed.add_field(name="Available", value=f"{resB.available} **-->** {resA.available}", inline=False)
+            if resB.name != resA.name:
+                embed.add_field(name="Name", value=f"{resB.name} **-->** {resA.name}", inline=False)
+            if resB.roles != resA.roles:
+                embed.add_field(name="Roles allowed before", value=", ".join(map(str, resB.roles)), inline=False)
+                embed.add_field(name="Roles allowed after", value=", ".join(map(str, resA.roles)), inline=False)
+            await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_stickers_update(self, guild: Guild, before: Sequence[GuildSticker], after: Sequence[GuildSticker]):
@@ -430,17 +508,66 @@ class Logger(commands.Cog):
         if not chan:
             return
 
+        if len(before) < len(after):
+            res: GuildSticker = None
+            for sticker in after:
+                if sticker not in before:
+                    res = sticker
+                    break
+
+            if not res:
+                return
+            await chan.send(embed=self._sticker_embed(res, True))
+
+        elif len(before) > len(after):
+            res: Emoji = None
+            for sticker in before:
+                if sticker not in after:
+                    res = sticker
+                    break
+
+            if not res:
+                return
+            await chan.send(embed=self._sticker_embed(res, False))
+
+        else:
+            resB: GuildSticker = None
+            resA: GuildSticker = None
+            for i, stickerB in enumerate(before):
+                stickerA = after[i]
+                if stickerB != stickerA:
+                    resB, resA = stickerB, stickerA
+
+            if not (resB or resA):
+                return
+
+            embed = Embed(title=f"Sticker {resA.name} updated")
+            embed.set_thumbnail(url=self.bot.user.display_avatar)
+            embed.set_footer(text=f"ID : {resA.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+            if resB.available != resA.available:
+                embed.add_field(name="Available", value=f"{resB.available} **-->** {resA.available}", inline=False)
+            if resB.description != resA.description:
+                embed.add_field(name="Description", value=f"{resB.description} **-->** {resA.description}"[:1023], inline=False)
+            if resB.emoji != resA.emoji:
+                embed.add_field(name="Emoji", value=f"{resB.emoji} **-->** {resA.emoji}", inline=False)
+            if resB.format != resA.format:
+                embed.add_field(name="Format", value=f"{resB.format} **-->** {resA.format}", inline=False)
+            if resB.name != resA.name:
+                embed.add_field(name="Name", value=f"{resB.name} **-->** {resA.name}", inline=False)
+            await chan.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_webhooks_update(self, channel: GuildChannel):
         chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.WEBHOOKS_UPDATE)
         if not chan:
             return
 
-        embed = discord.Embed(title="Webhook update", color=Logger.updColor)
+        embed = Embed(title="Webhook update", color=Logger.updColor)
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.add_field(name="Name", value=channel.name)
         embed.add_field(name="Category", value=channel.category)
-        embed.set_footer(text=f"{channel.mention} • <t:{int(time())}:f>")
+        embed.set_footer(text=f"{channel.mention} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         await chan.send(embed=embed)
 
 #
