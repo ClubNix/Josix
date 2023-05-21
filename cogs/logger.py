@@ -9,7 +9,6 @@ from discord.abc import GuildChannel
 from database.database import DatabaseHandler
 from enum import IntEnum
 from typing import Sequence
-from time import time, mktime
 from datetime import datetime as dt
 
 import os
@@ -387,11 +386,11 @@ class Logger(commands.Cog):
             color=(Logger.addColor if create else Logger.noColor)
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embed.add_field("Emoji", value=emoji)
-        embed.add_field("Name", value=emoji.name)
+        embed.add_field(name="Emoji", value=emoji)
+        embed.add_field(name="Name", value=emoji.name)
         embed.add_field(name= '\u200B', value= '\u200B')
-        embed.add_field("Creator", value=emoji.user.mention)
-        embed.add_field("Animated", value=emoji.animated)
+        if emoji.user: embed.add_field(name="Creator", value=emoji.user.mention)
+        embed.add_field(name="Animated", value=emoji.animated)
         embed.set_footer(text=f"ID : {emoji.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
 
@@ -403,9 +402,9 @@ class Logger(commands.Cog):
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         if sticker.url: embed.set_image(url=sticker.url)
-        embed.add_field("Name", value=sticker.name)
-        embed.add_field("Creator", value=sticker.user.mention)
-        embed.add_field("Format", value=sticker.format)
+        embed.add_field(name="Name", value=sticker.name)
+        if sticker.user: embed.add_field(name="Creator", value=sticker.user.mention)
+        embed.add_field(name="Format", value=sticker.format.name)
         embed.set_footer(text=f"ID : {sticker.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
 
@@ -436,7 +435,7 @@ class Logger(commands.Cog):
         if before.explicit_content_filter != after.explicit_content_filter:
             embed.add_field(name="Filter", value=f"{before.explicit_content_filter} **-->** {after.explicit_content_filter}", inline=False)
         if before.icon != after.icon:
-            embed.add_field(name="Banner", value=f"[before]({before.icon}) **-->** [after]({after.icon})", inline=False)
+            embed.add_field(name="Icon", value=f"[before]({before.icon}) **-->** [after]({after.icon})", inline=False)
         if before.mfa_level != after.mfa_level:
             embed.add_field(name="Staff secure level", value=f"{before.mfa_level} **-->** {after.mfa_level}", inline=False)
         if before.name != after.name:
@@ -451,8 +450,6 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
-        print(before)
-        print(after)
         chan: TextChannel = await self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
         if not chan:
             return
@@ -484,13 +481,13 @@ class Logger(commands.Cog):
             resA: Emoji = None
             for i, emojiB in enumerate(before):
                 emojiA = after[i]
-                if emojiB != emojiA:
+                if emojiB.name != emojiA.name:
                     resB, resA = emojiB, emojiA
 
             if not (resB or resA):
                 return
 
-            embed = Embed(title=f"Emoji {resA.name} updated")
+            embed = Embed(title=f"Emoji {resA.name} updated", color=Logger.updColor)
             embed.set_thumbnail(url=self.bot.user.display_avatar)
             embed.set_footer(text=f"ID : {resA.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
@@ -539,13 +536,13 @@ class Logger(commands.Cog):
             resA: GuildSticker = None
             for i, stickerB in enumerate(before):
                 stickerA = after[i]
-                if stickerB != stickerA:
+                if stickerB.name != stickerA.name or stickerB.emoji != stickerA.emoji:
                     resB, resA = stickerB, stickerA
 
             if not (resB or resA):
                 return
 
-            embed = Embed(title=f"Sticker {resA.name} updated")
+            embed = Embed(title=f"Sticker {resA.name} updated", color=Logger.updColor)
             embed.set_thumbnail(url=self.bot.user.display_avatar)
             embed.set_footer(text=f"ID : {resA.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
@@ -556,7 +553,7 @@ class Logger(commands.Cog):
             if resB.emoji != resA.emoji:
                 embed.add_field(name="Emoji", value=f"{resB.emoji} **-->** {resA.emoji}", inline=False)
             if resB.format != resA.format:
-                embed.add_field(name="Format", value=f"{resB.format} **-->** {resA.format}", inline=False)
+                embed.add_field(name="Format", value=f"{resB.format.name} **-->** {resA.format.name}", inline=False)
             if resB.name != resA.name:
                 embed.add_field(name="Name", value=f"{resB.name} **-->** {resA.name}", inline=False)
             if len(embed.fields) > 0:
@@ -581,13 +578,13 @@ class Logger(commands.Cog):
 
     def _join_embed(self, user: discord.User | Member, join: bool) -> Embed:
         title = (
-            f"{user.mention} joined the server" if join else f"{user.name} left the server"
+            f"{user.name} joined the server" if join else f"{user.name} left the server"
         )
         color = Logger.addColor if join else Logger.noColor
         embed = discord.Embed(title=title, color=color)
         embed.set_thumbnail(url=user.display_avatar)
-        embed.add_field("Name", value=user.name)
-        embed.add_field("Creation date", value=dt.strftime(user.created_at, '%d/%m/%Y'))
+        embed.add_field(name="Name", value=user.name)
+        embed.add_field(name="Creation date", value=dt.strftime(user.created_at, '%d/%m/%Y'))
         embed.set_footer(text=f"{user.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
 
@@ -605,7 +602,7 @@ class Logger(commands.Cog):
         async for ban in guild.bans():
             if ban.user == user:
                 if ban.reason:
-                    embed.add_field("Reason", ban.reason[:1023])
+                    embed.add_field(name="Reason", value=ban.reason[:1023], inline=False)
                 break
         await chan.send(embed=embed)
 
@@ -623,7 +620,7 @@ class Logger(commands.Cog):
         async for unban in guild.audit_logs(oldest_first=True, action=discord.AuditLogAction.unban):
             if unban.user:
                 if unban.reason:
-                    embed.add_field("Reason", unban.reason[:1023])
+                    embed.add_field(name="Reason", value=unban.reason[:1023])
                 break
         await chan.send(embed=embed) 
 
@@ -633,7 +630,9 @@ class Logger(commands.Cog):
         if not chan:
             return
 
-        await chan.send(embed=self._join_embed(member, True))
+        embed = self._join_embed(member, True)
+        embed.description = member.mention
+        await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_raw_member_remove(self, payload: RawMemberRemoveEvent):
@@ -653,14 +652,14 @@ class Logger(commands.Cog):
         embed.set_thumbnail(url=after.display_avatar)
         embed.set_footer(text=f"{after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
-        if before.nick != after:
-            embed.add_field(name="", value=f"{before} **-->** {after}", inline=False)
+        if before.nick != after.nick:
+            embed.add_field(name="Nickname", value=f"{before.nick} **-->** {after.nick}", inline=False)
         if before.timed_out != after.timed_out:
-            embed.add_field(name="", value=f"{before} **-->** {after}", inline=False)
+            embed.add_field(name="Timeout", value=f"{before.timed_out} **-->** {after.timed_out}", inline=False)
             if after.timed_out and after.communication_disabled_until:
                 embed.add_field(
-                    name="Time remaining",
-                    value=dt.strftime(after.communication_disabled_until, '%d/%m/%Y %H:%M'),
+                    name="End",
+                    value=dt.strftime(after.communication_disabled_until, '%d/%m/%Y %H:%M:%S'),
                     inline=False
                 )
         if len(embed.fields) > 0:
@@ -668,7 +667,8 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_user_update(self, before: User, after: User):
-        for guild in before.mutual_guilds:
+        print(after.mutual_guilds)
+        for guild in after.mutual_guilds:
             chan: TextChannel = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
             if not chan:
                 return
