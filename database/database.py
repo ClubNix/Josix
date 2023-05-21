@@ -539,6 +539,13 @@ class DatabaseHandler():
             self.cursor.execute(query, params)
         self.conn.commit()
 
+    @_error_handler
+    def updateLogChannel(self, guildId: int, channelId: int | None) -> None:
+        query = "UPDATE josix.Guild SET logNews = %s WHERE idGuild = %s;"
+        params = (channelId, guildId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
     ###############
     # Deleters
     ###############

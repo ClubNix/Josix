@@ -217,9 +217,13 @@ class Admin(commands.Cog):
             dbGuild = self.db.getGuild(idGuild)
 
         if not channel:
-            idChan = dbGuild.wChan if keep else None
+            idChan = dbGuild.wChan if keep else 0
+        else:
+            idChan = channel.id
         if not role:
-            idRole = dbGuild.wRole if keep else None
+            idRole = dbGuild.wRole if keep else 0
+        else:
+            idRole = role.id
         if not message:
             message = dbGuild.wText if keep else ""
 
@@ -264,14 +268,12 @@ class Admin(commands.Cog):
         default=None
     )
     async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
-        if not channel:
-            # delete the column value to stop the logs
-            pass
+        if channel:     
+            self.db.updateLogChannel(ctx.guild.id, channel.id)
+            await ctx.respond("Logs channel set")
         else:
-            # update
-            pass
-
-        await ctx.respond("WIP")
+            self.db.updateLogChannel(ctx.guild.id, None)
+            await ctx.respond("Logs channel unset")
 
 
 def setup(bot: commands.Bot):
