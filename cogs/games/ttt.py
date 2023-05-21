@@ -8,6 +8,18 @@ from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 
 class TTTBtn(discord.ui.Button["TTTView"]):
+    """
+    Button for the game TicTacToe
+    Represents a cell in the 3x3 grid of the game
+
+    Attributes
+    ----------
+    x : int
+        X position of the button
+    y : int
+        Y position of the button
+    """
+
     def __init__(self, x: int, y: int):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
@@ -60,6 +72,24 @@ class TTTBtn(discord.ui.Button["TTTView"]):
 
 
 class TTTView(BaseView):
+    """
+    View for the game TicTacToe
+    Represents the UI view and game functioning
+
+    Attributes
+    ----------
+    children : list[TTTBtn]
+        All the children of the view
+    xPlayer : Member
+        The player for the 'X'
+    oPlayer : Member
+        The player for the 'O'
+    state : int
+        The state of the game
+    grid : NDArray
+        A 3x3 grid representing game's UI
+    """
+
     children: list[TTTBtn]
 
     def __init__(
@@ -76,9 +106,7 @@ class TTTView(BaseView):
         self.xPlayer, self.oPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.xPlayer
 
-        self.state = 0
         self.grid = np.zeros((3,3), dtype=int)
-
         for x in range(3):
             for y in range(3):
                 self.add_item(TTTBtn(x, y))
@@ -111,6 +139,15 @@ class TTTView(BaseView):
         
 
 class TicTacToe(BaseGame):
+    """
+    Represents the Tic-Tac-Toe game extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__("tic-tac-toe")
         self.bot = bot

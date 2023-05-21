@@ -8,6 +8,20 @@ from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 
 class PatternBtn(discord.ui.Button["PatternView"]):
+    """
+    Button for the game Pattern
+    Represents a cell in the grid
+
+    Attributes
+    ----------
+    x : int
+        X position of the button
+    y : int
+        Y position of the button
+    label : str
+        The label of the button, i.e. its number in the grid
+    """
+
     def __init__(self, x: int, y: int):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
@@ -42,6 +56,22 @@ class PatternBtn(discord.ui.Button["PatternView"]):
 
 
 class PatternView(BaseView):
+    """
+    View for the game Pattern
+    Represents the UI view and game functioning
+
+    Attributes
+    ----------
+    children : list[PatternBtn]
+        All the children of the view
+    player : Member
+        The user playing the game
+    count : int
+        Number of plays done by the player
+    grid : NDArray
+        A 3x3 grid representing game's UI
+    """
+
     children: list[PatternBtn]
 
     def __init__(
@@ -99,6 +129,15 @@ class PatternView(BaseView):
         
 
 class Pattern(BaseGame):
+    """
+    Represents the pattern game extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__("pattern")
         self.bot = bot

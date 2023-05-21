@@ -8,6 +8,17 @@ from database.database import DatabaseHandler
 import os
 
 class Games(commands.Cog):
+    """
+    Represents the games functionalities extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        A handler to perform requests on the database
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.description = "games : Base"
@@ -29,6 +40,16 @@ class Games(commands.Cog):
 # ------------
 
 class BaseGame(commands.Cog):
+    """
+    Base class for all the games.
+    Used to be inherited by all the games to access common functionalities
+
+    Attributes
+    ----------
+    name : str
+        The name of the game
+    """
+
     def __init__(self, gameName: str) -> None:
         self.name = gameName
         self._db = DatabaseHandler(self.name)
@@ -65,6 +86,22 @@ class BaseGame(commands.Cog):
 
 
 class BaseView(View):
+    """
+    Base class for all the views.
+    Used to be inherited by all the views of each game to access common functionalities
+
+    Attributes
+    ----------
+    interaction : Interaction
+        The interaction that called the View
+    game : BaseGame
+        The game launched by the user
+    ogPlayer : Member
+        The user that started the game
+    idGame : int
+        The ID of the game in the database
+    """
+
     def __init__(self, interaction: discord.Interaction, game: BaseGame, idGame: int, ogPlayer: Member, *args) -> None:
         super().__init__(timeout=180.0, disable_on_timeout=True, *args)
         self.interaction = interaction

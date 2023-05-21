@@ -9,6 +9,17 @@ import os
 from database.database import DatabaseHandler
 
 class XP(commands.Cog):
+    """
+    Represents the XP system extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db: DatabaseHandler
+        The database handler of this extension
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))

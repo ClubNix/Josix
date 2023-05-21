@@ -15,7 +15,21 @@ import json
 
 
 class Events(commands.Cog):
-    """Main class for events that are not used for a specific cog"""
+    """
+    Represents the extension for all the events that can't be used
+    in specific extensions
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        A handler to perform requests on the database
+    close : str
+        Close tag name
+    open : str
+        Open tag name
+    """
     
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')

@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 
-from types import TracebackType
-
 from dotenv import load_dotenv
 from os import getenv
 
@@ -10,6 +8,19 @@ import logwrite as log
 
 
 class Josix(commands.Bot):
+    """
+    The main class that represents Josix bot
+
+    Attributes
+    ----------
+    bot_intents : discord.Intents
+        The intents that the bot will use
+
+    Methods
+    -------
+    run()
+        Run the bot
+    """
     load_dotenv()
     _TOKEN = getenv("discord")
 

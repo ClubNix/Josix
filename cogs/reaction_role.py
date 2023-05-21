@@ -9,6 +9,17 @@ import logwrite as log
 
 
 class ReactionRole(commands.Cog):
+    """
+    Represents the Reaction Role extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        The database handler of this extension
+    """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))

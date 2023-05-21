@@ -8,9 +8,21 @@ from cogs.games.games_base import BaseGame, BaseView
 import numpy as np
 
 class C4Button(discord.ui.Button["C4View"]):
+    """
+    Button for the game Connect-4
+    Represents the column number where the user place its token
+
+    Attributes
+    ----------
+    x : int
+        Column number
+    label : str
+        Button label, i.e. its column number
+        
+    """
+
     def __init__(self, x: int):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b")
-        
         self.x = x
         self.label = x+1
 
@@ -54,6 +66,24 @@ class C4Button(discord.ui.Button["C4View"]):
         
 
 class C4View(BaseView):
+    """
+    View for the game Connect-4
+    Represents the UI view and game functioning
+
+    Attributes
+    ----------
+    children : list[C4Button]
+        All the children of the view
+    redPlayer : Member
+        The player of the red tokens
+    yellowPlayer : Member
+        The player of the yellow tokens
+    currentPlayer : Member
+        The user currently playing
+    grid : NDArray
+        A 6x7 grid representing the game's UI (the board)
+    """
+
     children: list[C4Button]
     def __init__(
         self,
@@ -142,6 +172,15 @@ class C4View(BaseView):
 
 
 class Connect4(BaseGame):
+    """
+    Represents the Connect-4 game extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__("connect4")
         self.bot = bot

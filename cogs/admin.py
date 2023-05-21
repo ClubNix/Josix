@@ -13,6 +13,17 @@ from cogs.logger import LoggerView
 
 
 class Admin(commands.Cog):
+    """
+    Represents the admin commands extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        A handler to perform requests on the database
+    """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))

@@ -14,20 +14,43 @@ from dataclasses import dataclass
 
 
 class HTTPMethod(Enum):
+    """Enumerator that represents HTTP method used for the bot"""
     GET = "GET"
     POST = "POST"
 
 
 class MonixAPIError(Exception):
-    """
-    Exception for every Monix API errors
-    """
+    """Exception for every Monix API errors"""
 
 
 class Monix(commands.Cog):
+    """
+    Represents the Monix extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    base_url : str
+        The url of the Monix API
+    session : Session
+        The session for every request to the API
+
+    Methods
+    -------
+    generate_token():
+        Generate the token for the session with the given username and password
+
+    request(target: str, method: HTTPMethod, json: str = None):
+        Execute a request to the target endpoint of the API and retrieves the result
+    """
+
     @dataclass()
     class Element:
-        """Class for an element"""
+        """
+        Dataclass for a Monix Element.
+        It can be a product or a user
+        """
         name: str
         value: int
         isMember: bool

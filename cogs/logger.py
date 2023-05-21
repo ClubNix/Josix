@@ -16,6 +16,7 @@ import logwrite as log
 
 
 class Logs(IntEnum):
+    """Enumerator that represents all differents logs"""
     AUTOMOD = 1
     GUILD_UPDATE = 2
     CHANNEL_LIFE = 3
@@ -32,6 +33,21 @@ class Logs(IntEnum):
 
 
 class LoggerView(discord.ui.View):
+    """
+    Represents the view for the set_logger command
+
+    Attributes
+    ----------
+    db : DatabaseHandler
+        Handler for the database
+    keep : bool
+        Value representing if the old selected logs should be keep or not
+
+    Methods
+    -------
+    select_callback(select: Select, interaction: Interaction):
+        A callback called when the view is executed
+    """
     def __init__(self, db: DatabaseHandler, keep: bool) -> None:
         super().__init__(disable_on_timeout=True, timeout=180.0)
         self.db = db
@@ -126,6 +142,23 @@ class LoggerView(discord.ui.View):
 
 
 class Logger(commands.Cog):
+    """
+    Represents the logs handler extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        A handler to perform requests on the database
+    addColor : int
+        Hexadecimal green color for embeds
+    updColor : int
+        Hexadecimal yellow color for embeds
+    noColor : int
+        Hexadecimal red color for embeds 
+    """
+
     addColor = 0x1cb82b
     updColor = 0xf1c232
     noColor = 0xc90e3a

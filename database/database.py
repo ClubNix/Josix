@@ -13,6 +13,15 @@ BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 DAILY_BACKUP_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql')
 
 class DatabaseHandler():
+    """
+    Represents an handler for the database.
+    Allows to execute queries on the database
+
+    Attributes
+    ----------
+    filename : str
+        The filename which called the handler
+    """
     def __init__(self, filename: str) -> None:
         try:
             conn = psycopg2.connect(

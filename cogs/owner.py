@@ -10,6 +10,20 @@ import os
 import logwrite as log
 
 class Owner(commands.Cog):
+    """
+    Represents the Owner functions extension of the bot
+
+    By default it also allows the administrator of servers to perform these commands
+    because it was better to handler for the Club*Nix
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db : DatabaseHandler
+        The database handler of this extension
+    """
+
     _SCRIPT_DIR = os.path.dirname(__file__)
     _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
     
@@ -39,7 +53,6 @@ class Owner(commands.Cog):
         await ctx.respond("Backup done !")
 
     @commands.slash_command(description="Execute a query")
-    @commands.is_owner()
     @option(
         input_type=str,
         name="query",
@@ -54,7 +67,6 @@ class Owner(commands.Cog):
             await ctx.respond(e)
 
     @commands.slash_command(description="Execute the backup file")
-    @commands.is_owner()
     async def execute_backup(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
         count = 0

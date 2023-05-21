@@ -16,6 +16,17 @@ from math import ceil
 
 
 class Usage(commands.Cog):
+    """
+    Represents the common use functions extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    db: DatabaseHandler
+        The database handler of this extension
+    """
+    
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 

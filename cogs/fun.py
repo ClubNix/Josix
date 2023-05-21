@@ -15,6 +15,17 @@ from json import JSONDecodeError
 
 
 class Fun(commands.Cog):
+    """
+    Represents the fun functionalities extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    jokes : BlaguesAPI
+        Instance to perform requests on a french jokes generator API
+    """
+
     load_dotenv()
     _KEY = os.getenv("jokes")
     _SCRIPT_DIR = os.path.dirname(__file__)

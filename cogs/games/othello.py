@@ -8,6 +8,13 @@ from cogs.games.games_base import BaseGame, BaseView
 import numpy as np
 
 class OthelloInput(discord.ui.Select):
+    """
+    Input for the game Othello
+    Represents the input for the game
+        - Letter A - H for rows
+        - Number of 1 - 8 for columns
+    """
+
     def __init__(self, custom_id: str, placeholder: str, options: list[SelectOption]):
         super().__init__(
             custom_id=custom_id,
@@ -79,8 +86,29 @@ class OthelloInput(discord.ui.Select):
         await interaction.response.edit_message(embed=embed, view=view)
 
 
-
 class OthelloView(BaseView):
+    """
+    View for the game TicTacToe
+    Represents the UI view and game functioning
+
+    Attributes
+    ----------
+    children : list[OthelloInput]
+        All the children of the view
+    __directions : list[tuple[int, int]]
+        All the possible directions
+    whitePlayer : Member
+        Player who use white tokens
+    blackPlayer : Member
+        Player who use black tokens
+    grid : NDArray
+        A 8x8 grid representing the game's UI (the board)
+    xMove : int
+        X value of the move chose by the player
+    yMove : int
+        Y value of the move chose by the player
+    """
+
     children: list[OthelloInput]
     __directions = [(0,-1), (0,1), (-1,0), (1, 0), (-1,-1), (1,-1), (-1,1), (1,1)]
     
@@ -214,7 +242,7 @@ class OthelloView(BaseView):
     def __str__(self) -> str:
         res = ""
         for i in range(1, 9):
-            res += f"⠀**{i}**"
+            res += f" **{i}**"
         res += "\n**\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_**\n"
         for i, row in enumerate(self.grid):
             res += "**|** "
@@ -225,6 +253,15 @@ class OthelloView(BaseView):
         return res
 
 class Othello(BaseGame):
+    """
+    Represents the othello game extension of the bot
+
+    Attributes
+    ----------
+    bot : discord.ext.commands.Bot
+        The bot that loaded this extension
+    """
+
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__("othello")
         self.bot = bot
