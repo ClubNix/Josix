@@ -732,7 +732,6 @@ class Logger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_user_update(self, before: User, after: User):
-        print(after.mutual_guilds)
         for guild in after.mutual_guilds:
             chan: TextChannel = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
             if not chan:

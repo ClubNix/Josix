@@ -1,8 +1,12 @@
 *.json
-__pycache__/
-.vscode
 *.env
 *.DS_Store
 *.sql
+
+devdoc.md
+.vscode
+
+__pycache__/
 logs/
+
 !config.json
