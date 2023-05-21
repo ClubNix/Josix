@@ -374,7 +374,8 @@ class Logger(commands.Cog):
                 value=", ".join([perm for perm, allow in after.permissions if allow])[:1023],
                 inline=False
             )
-        await chan.send(embed=embed)
+        if len(embed.fields) > 0:
+            await chan.send(embed=embed)
 
 #
 # Update logs
@@ -429,13 +430,13 @@ class Logger(commands.Cog):
         if before.afk_timeout != after.afk_timeout:
             embed.add_field(name="AFK Timeout", value=f"{before.afk_timeout} **-->** {after.afk_timeout}", inline=False)
         if before.banner != after.banner:
-            embed.add_field(name="Banner", value=f"[before]{before.banner} **-->** [after]{after.banner}", inline=False)
+            embed.add_field(name="Banner", value=f"[before]({before.banner}) **-->** [after]({after.banner})", inline=False)
         if before.description != after.description:
             embed.add_field(name="Description", value=f"{before.description} **-->** {after}"[:1023], inline=False)
         if before.explicit_content_filter != after.explicit_content_filter:
             embed.add_field(name="Filter", value=f"{before.explicit_content_filter} **-->** {after.explicit_content_filter}", inline=False)
         if before.icon != after.icon:
-            embed.add_field(name="Banner", value=f"[before]{before.icon} **-->** [after]{after.icon}", inline=False)
+            embed.add_field(name="Banner", value=f"[before]({before.icon}) **-->** [after]({after.icon})", inline=False)
         if before.mfa_level != after.mfa_level:
             embed.add_field(name="Staff secure level", value=f"{before.mfa_level} **-->** {after.mfa_level}", inline=False)
         if before.name != after.name:
@@ -444,7 +445,9 @@ class Logger(commands.Cog):
             embed.add_field(name="NSFW Level", value=f"{before.nsfw_level} **-->** {after.nsfw_level}", inline=False)
         if before.verification_level != after.verification_level:
             embed.add_field(name="Verification level", value=f"{before.verification_level} **-->** {after.verification_level}", inline=False)
-        await chan.send(embed=embed)
+
+        if len(embed.fields) > 0:
+            await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
@@ -500,7 +503,8 @@ class Logger(commands.Cog):
             if resB.roles != resA.roles:
                 embed.add_field(name="Roles allowed before", value=", ".join(map(str, resB.roles)), inline=False)
                 embed.add_field(name="Roles allowed after", value=", ".join(map(str, resA.roles)), inline=False)
-            await chan.send(embed=embed)
+            if len(embed.fields) > 0:
+                await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_stickers_update(self, guild: Guild, before: Sequence[GuildSticker], after: Sequence[GuildSticker]):
@@ -555,7 +559,8 @@ class Logger(commands.Cog):
                 embed.add_field(name="Format", value=f"{resB.format} **-->** {resA.format}", inline=False)
             if resB.name != resA.name:
                 embed.add_field(name="Name", value=f"{resB.name} **-->** {resA.name}", inline=False)
-            await chan.send(embed=embed)
+            if len(embed.fields) > 0:
+                await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_webhooks_update(self, channel: GuildChannel):
@@ -574,17 +579,53 @@ class Logger(commands.Cog):
 # Member logs
 #
 
+    def _join_embed(self, user: discord.User | Member, join: bool) -> Embed:
+        title = (
+            f"{user.mention} joined the server" if join else f"{user.name} left the server"
+        )
+        color = Logger.addColor if join else Logger.noColor
+        embed = discord.Embed(title=title, color=color)
+        embed.set_thumbnail(url=user.display_avatar)
+        embed.add_field("Name", value=user.name)
+        embed.add_field("Creation date", value=dt.strftime(user.created_at, '%d/%m/%Y'))
+        embed.set_footer(text=f"{user.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+        return embed
+
     @commands.Cog.listener()
     async def on_member_ban(self, guild: Guild, user: User | Member):
         chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
 
+        embed = discord.Embed(title=f"User {user.name} banned", color=Logger.noColor)
+        embed.set_thumbnail(url=user.display_avatar)
+        embed.add_field(name="Name", value=user.name)
+        embed.set_footer(text=f"{user.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+        async for ban in guild.bans():
+            if ban.user == user:
+                if ban.reason:
+                    embed.add_field("Reason", ban.reason[:1023])
+                break
+        await chan.send(embed=embed)
+
     @commands.Cog.listener()
-    async def on_member_ban(self, guild: Guild, user: User):
+    async def on_member_unban(self, guild: Guild, user: User):
         chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
+
+        embed = discord.Embed(title=f"User {user.name} unbanned", color=Logger.updColor)
+        embed.set_thumbnail(url=user.display_avatar)
+        embed.add_field(name="Name", value=user.name)
+        embed.set_footer(text=f"{user.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+        async for unban in guild.audit_logs(oldest_first=True, action=discord.AuditLogAction.unban):
+            if unban.user:
+                if unban.reason:
+                    embed.add_field("Reason", unban.reason[:1023])
+                break
+        await chan.send(embed=embed) 
 
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
@@ -592,11 +633,15 @@ class Logger(commands.Cog):
         if not chan:
             return
 
+        await chan.send(embed=self._join_embed(member, True))
+
     @commands.Cog.listener()
     async def on_raw_member_remove(self, payload: RawMemberRemoveEvent):
         chan: TextChannel = await self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
         if not chan:
             return
+
+        await chan.send(embed=self._join_embed(payload.user, False))
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
@@ -604,12 +649,41 @@ class Logger(commands.Cog):
         if not chan:
             return
 
+        embed = Embed(title=f"{after.name} updated", color=Logger.updColor)
+        embed.set_thumbnail(url=after.display_avatar)
+        embed.set_footer(text=f"{after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+        if before.nick != after:
+            embed.add_field(name="", value=f"{before} **-->** {after}", inline=False)
+        if before.timed_out != after.timed_out:
+            embed.add_field(name="", value=f"{before} **-->** {after}", inline=False)
+            if after.timed_out and after.communication_disabled_until:
+                embed.add_field(
+                    name="Time remaining",
+                    value=dt.strftime(after.communication_disabled_until, '%d/%m/%Y %H:%M'),
+                    inline=False
+                )
+        if len(embed.fields) > 0:
+            await chan.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_user_update(self, before: User, after: User):
         for guild in before.mutual_guilds:
             chan: TextChannel = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
             if not chan:
                 return
+
+            embed = Embed(title=f"{after.name} updated its profile", color=Logger.updColor)
+            embed.set_thumbnail(url=after.display_avatar)
+            embed.set_footer(text=f"{after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
+
+            if before.avatar != after.avatar:
+                embed.add_field(name="Avatar", value=f"[before]({before.avatar}) **-->** [after]({after.avatar})", inline=False)
+            if before.name != after.name:
+                embed.add_field(name="Username", value=f"{before.name} **-->** {after.name}", inline=False)
+            
+            if len(embed.fields) > 0:
+                await chan.send(embed=embed)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Logger(bot))
