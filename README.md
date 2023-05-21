@@ -38,7 +38,11 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
   - `cd Josix`
 
 - Get all the required packages :
-`pip install -r requirements.txt`
+  - `pip install -r requirements.txt`
+
+- Configure the database :
+  - Go on the project [BDDNix](https://github.com/ClubNix/BDDNix)
+  - Install and launch the project by following the instructions in the [README](https://github.com/ClubNix/BDDNix/blob/main/Readme.md) file
 
 - Add your informations :
 	- Create a `.env` file with these informations :
@@ -82,13 +86,13 @@ logs = log_repository_in_your_home
 ```
 
 - Run the bot :
-`python3 josix.py`
+  - `python3 josix.py`
 
 
 ## Warning
 You can get an error on installing psycopg2, enter the following commands :
-- pip3 install psycopg2-binary
-- sudo apt install libpq-dev python3-dev
+- `pip3 install psycopg2-binary`
+- `sudo apt install libpq-dev python3-dev`
 
 And then you can retry to install psycopg2
 <br>
