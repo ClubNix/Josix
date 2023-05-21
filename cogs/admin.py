@@ -193,7 +193,13 @@ class Admin(commands.Cog):
         description="Custom welcoming message",
         default=""
     )
-    async def set_custom_welcome(self, ctx: ApplicationContext, channel: discord.TextChannel, role: discord.Role, message: str):
+    @option(
+        input_type=bool,
+        name="keep",
+        description="Keep old parameters if not set",
+        default=True
+    )
+    async def set_custom_welcome(self, ctx: ApplicationContext, channel: discord.TextChannel, role: discord.Role, message: str, keep: bool):
         if not (channel or role or message):
             await ctx.respond("Can't set up your custom welcome")
             return
@@ -210,8 +216,13 @@ class Admin(commands.Cog):
             self.db.addGuild(idGuild)
             dbGuild = self.db.getGuild(idGuild)
 
-        idChan = channel.id if channel else None
-        idRole = role.id if role else None
+        if not channel:
+            idChan = dbGuild.wChan if keep else None
+        if not role:
+            idRole = dbGuild.wRole if keep else None
+        if not message:
+            message = dbGuild.wText if keep else ""
+
         self.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
         await ctx.respond("Your custome welcome message has been set")
 
@@ -235,8 +246,13 @@ class Admin(commands.Cog):
     @commands.slash_command(description="Choose which logs to register")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
-    async def set_logger(self, ctx: ApplicationContext):
-        await ctx.respond("Choose your logs :", view=LoggerView(self.db))
+    @option(
+        input_type=bool,
+        name="keep",
+        description="Keep old selected logs if not set"
+    )
+    async def set_logger(self, ctx: ApplicationContext, keep: bool):
+        await ctx.respond("Choose your logs :", view=LoggerView(self.db, keep))
 
     @commands.slash_command(description="Choose where to send the logs")
     @commands.has_permissions(manage_guild=True)

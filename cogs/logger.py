@@ -32,9 +32,10 @@ class Logs(IntEnum):
 
 
 class LoggerView(discord.ui.View):
-    def __init__(self, db: DatabaseHandler) -> None:
+    def __init__(self, db: DatabaseHandler, keep: bool) -> None:
         super().__init__(disable_on_timeout=True, timeout=180.0)
         self.db = db
+        self.keep = keep
 
     @discord.ui.select(
         placeholder="Choose the desired logs",
@@ -99,11 +100,21 @@ class LoggerView(discord.ui.View):
         if not interaction.guild_id:
             return
 
+        idGuild = interaction.guild_id
+        if not self.db.getGuild(idGuild):
+            self.db.addGuild(idGuild)
+        
+        old = self.db.getSelectLogs(idGuild)
+
         try:
             values = list(map(int, select.values))
         except ValueError as e:
             log.writeError(log.formatError(e))
             return
+
+        for logValue in old.logs:
+            if logValue not in values and self.keep:
+                values.append(logValue)
 
         self.db.updateLogSelects(interaction.guild_id, values)
         await interaction.response.edit_message(content="Your logs selection has been updated")
