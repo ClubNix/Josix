@@ -713,8 +713,13 @@ class Logger(commands.Cog):
         if not chan:
             return
 
-        embed = Embed(title=f"{after.name} updated", color=Logger.updColor)
+        embed = Embed(
+            title="",
+            description=f"{after.mention} updated their profile",
+            color=Logger.updColor
+        )
         embed.set_thumbnail(url=after.display_avatar)
+        embed.set_author(name=after, icon_url=after.display_avatar)
         embed.set_footer(text=f"{after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
         if before.nick != after.nick:
@@ -737,8 +742,13 @@ class Logger(commands.Cog):
             if not chan:
                 return
 
-            embed = Embed(title=f"{after.name} updated its profile", color=Logger.updColor)
+            embed = Embed(
+                title="",
+                description=f"{after.mention} updated their profile",
+                color=Logger.updColor
+            )
             embed.set_thumbnail(url=after.display_avatar)
+            embed.set_author(name=after, icon_url=after.display_avatar)
             embed.set_footer(text=f"{after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
 
             if before.avatar != after.avatar:
