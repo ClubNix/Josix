@@ -88,7 +88,7 @@ class ReactionRole(commands.Cog):
                 return
 
             for couple in couples:
-                self.db.delReactCouple(couple[0])
+                self.db.delReactCouple(couple.id)
         except Exception as e:
             log.writeLog(log.formatError(e))
 

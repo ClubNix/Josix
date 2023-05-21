@@ -105,6 +105,9 @@ class LoggerView(discord.ui.View):
             self.db.addGuild(idGuild)
         
         old = self.db.getSelectLogs(idGuild)
+        oldLogs = old.logs
+        if oldLogs is None:
+            oldLogs = []
 
         try:
             values = list(map(int, select.values))
@@ -112,7 +115,7 @@ class LoggerView(discord.ui.View):
             log.writeError(log.formatError(e))
             return
 
-        for logValue in old.logs:
+        for logValue in oldLogs:
             if logValue not in values and self.keep:
                 values.append(logValue)
 

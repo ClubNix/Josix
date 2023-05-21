@@ -27,23 +27,23 @@ class XP(commands.Cog):
         return res
 
     async def _updateUser(self, idTarget: int, idGuild: int, xp: int):
-        userDB, guildDB, userGuildDB = self.db.getXPUtils(idTarget, idGuild)
+        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idTarget, idGuild)
 
         if not userDB:
             self.db.addUser(idTarget)
         if not guildDB:
             self.db.addGuild(idGuild)
-            guildDB = self.db.getGuildXP(idGuild)
+            guildDB = self.db.getGuild(idGuild)
         if not userGuildDB:
             self.db.addUserGuild(idTarget, idGuild)
-            userGuildDB = self.db.getUserGuildXP(idTarget, idGuild)
+            userGuildDB = self.db.getUserInGuild(idTarget, idGuild)
     
-        xpChanId = guildDB[0]
-        xpEnabled = guildDB[1]
+        xpChanId = guildDB.xpNews
+        xpEnabled = guildDB.enableXp
 
-        currentXP = userGuildDB[0]
-        currentLvl = userGuildDB[1]
-        lastSend = userGuildDB[2]
+        currentXP = userGuildDB.xp
+        currentLvl = userGuildDB.lvl
+        lastSend = userGuildDB.lastMessage
 
         if not xpEnabled:
             return
@@ -122,21 +122,20 @@ class XP(commands.Cog):
 
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.db.getXPUtils(member.id, guild.id)
+        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(member.id, guild.id)
 
         if not userDB:
             self.db.addUser(member.id)
         if not guildDB:
             self.db.addGuild(guild.id)
-            guildDB = self.db.getGuildXP(guild.id)
+            guildDB = self.db.getGuild(guild.id)
         if not userGuildDB:
             self.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
+            userGuildDB = self.db.getUserInGuild(member.id, guild.id)
 
-        currentXP = userGuildDB[0]
+        currentXP = userGuildDB.xp
 
         newXP = currentXP + amount
-        print(newXP, currentXP, amount)
         if newXP < 0:
             newXP = 0
         elif newXP > 1_899_250:
@@ -152,18 +151,18 @@ class XP(commands.Cog):
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.db.getXPUtils(member.id, guild.id)
+        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(member.id, guild.id)
 
         if not userDB:
             self.db.addUser(member.id)
         if not guildDB:
             self.db.addGuild(guild.id)
-            guildDB = self.db.getGuildXP(guild.id)
+            guildDB = self.db.getGuild(guild.id)
         if not userGuildDB:
             self.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.db.getUserGuildXP(member.id, guild.id)
+            userGuildDB = self.db.getUserInGuild(member.id, guild.id)
 
-        currentLvl = userGuildDB[1]
+        currentLvl = userGuildDB.lvl
         newLvl = currentLvl + amount
         if newLvl < 0:
             newLvl = 0
@@ -321,12 +320,12 @@ class XP(commands.Cog):
         idGuild = ctx.guild.id
 
         try:
-            guildDB = self.db.getGuildXP(idGuild)
+            guildDB = self.db.getGuild(idGuild)
             if not guildDB:
                 self.db.addGuild(idGuild)
                 await ctx.respond("Server registered now. Try this command later")
                 return
-            elif not guildDB[1]:
+            elif not guildDB.enableXp:
                 await ctx.respond("The xp system is not enabled in this server.")
                 return
             lb = self.db.getXpLeaderboard(idGuild, limit)
@@ -340,12 +339,15 @@ class XP(commands.Cog):
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.set_thumbnail(url=self.bot.user.display_avatar)
+        if not lb:
+            await ctx.respond(embed=embed)
+            return
 
         count = 0
         nbFields = 0
         res = ""
         for i, row in enumerate(lb):
-            idUser, xp, _ = row
+            idUser, xp = row.idUser, row.xp
             text = f"**{i+1}** - <@{idUser}> ({xp})\n"
             if len(text) + count > 1024:
                 embed.append_field(
@@ -383,19 +385,17 @@ class XP(commands.Cog):
             return
 
         idGuild = ctx.guild.id
-        stats = self.db.safeExecute(self.db.getUserGuildXP, member.id, idGuild)
+        stats = self.db.getUserInGuild(member.id, idGuild)
         if not stats:
             await ctx.respond("This user is not registered")
             return
 
-        xp: int
-        lvl: int
-        xp, lvl, _ = stats
+        xp, lvl = stats.xp, stats.lvl
         lastNeed = self.totalLevelXP(lvl)
         xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
         nextXp = self.nextLevelXP(lvl, xp-lastNeed)
         progress = round((xp / xpNeed) * 100, 2)
-        pos = self.db.safeExecute(self.db.getLeaderboardPos, member.id, idGuild)
+        pos = self.db.getLeaderboardPos(member.id, idGuild)
 
         embed = discord.Embed(
             title=f"{member}'s card",

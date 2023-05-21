@@ -34,6 +34,24 @@ class MsgReact:
     idGuild: int
 
 @dataclass()
+class ReactCouple:
+    id: int
+    emoji: str
+    idRole: int
+
+@dataclass()
 class LogSelection:
     idGuild: int
     logs: list[int]
+
+@dataclass()
+class GameType:
+    id: int
+    name: str
+    
+@dataclass()
+class Game:
+    id: int
+    idType: int
+    idUser: int
+    opponent: int

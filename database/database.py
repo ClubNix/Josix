@@ -5,8 +5,7 @@ import datetime as dt
 import logwrite as log
 
 from typing import Callable, Any
-from datetime import datetime, date
-from database.db_utils import UserDB, GuildDB, LinkUserGuild, MsgReact, LogSelection
+from database.db_utils import *
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -180,19 +179,6 @@ class DatabaseHandler():
             self.getUserInGuild(userId, guildId)
         )
 
-    def getSelectLogs(self, guildId: int) -> LogSelection | None:
-        query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
-        self.cursor.execute(query, (guildId,))
-        res = self.cursor.fetchall()
-
-        if res:
-            logs = []
-            for row in res:
-                logs.append(row[1])
-            return LogSelection(guildId, logs)
-        return None
-
-
     @_error_handler
     def getPlayerStat(self, userId: int) -> tuple[int, int] | None:
         query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
@@ -209,61 +195,53 @@ class DatabaseHandler():
         return self.cursor.fetchone()
 
     @_error_handler
-    def getCouples(self, msgId: int = None) -> list[tuple[str, int]] | None:
+    def getCouples(self, msgId: int = None) -> list[ReactCouple] | None:
         if not msgId:
-            query = """SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
+            query = """SELECT rc.idCouple, rc.nomEmoji, rc.idRole FROM josix.ReactCouple rc
                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
             params = ()
         else:
-            query = """SELECT rc.nomEmoji AS "name", rc.idRole AS "idRole" FROM josix.ReactCouple rc
+            query = """SELECT rc.idCouple, rc.nomEmoji, rc.idRole FROM josix.ReactCouple rc
                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
                        WHERE mc.idMsg = %s;"""
             params = (msgId,)
         self.cursor.execute(query, params)
-        return self.cursor.fetchall()
-
-    @_error_handler
-    def getCoupleFromRole(self, roleId: int) -> list[tuple[int]]:
-        query = "SELECT idCouple FROM josix.ReactCouple WHERE idRole = %s;"
-        self.cursor.execute(query, (roleId,))
-        return self.cursor.fetchall()
-
-    @_error_handler
-    def getUserXP(self, userId: int) -> tuple[int] | None:
-        query = "SELECT idUser FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
-        return self.cursor.fetchone()
-
-    @_error_handler
-    def getGuildXP(self, guildId: int) -> tuple[int, bool] | None:
-        query = "SELECT xpNews, enableXP FROM josix.Guild WHERE idGuild = %s;"
-        self.cursor.execute(query, (guildId,))
-        return self.cursor.fetchone()
-
-    @_error_handler
-    def getUserGuildXP(self, userId: int, guildId: int) -> tuple[int, int, datetime] | None:
-        query = """SELECT xp, lvl, lastMessage FROM josix.UserGuild
-                   WHERE idUser = %s AND idGuild  = %s;"""
-        params = (userId, guildId)
         self.cursor.execute(query, params)
-        return self.cursor.fetchone()
-
-    def getXPUtils(self, userId: int, guildId: int) -> tuple[tuple[int] | None, tuple[int, bool] | None, tuple[int, int, datetime] | None]:
-        return (
-            self.getUserXP(userId),
-            self.getGuildXP(guildId),
-            self.getUserGuildXP(userId, guildId)
-        )
+        res = self.cursor.fetchall()
+        if res:
+            couples = []
+            for row in res:
+                couples.append(ReactCouple(*row))
+            return couples
+        return None
 
     @_error_handler
-    def getXpLeaderboard(self, guildId: int, limit: int) -> list[tuple[int, int, int]]:
-        query = """SELECT idUser, xp, lvl FROM josix.UserGuild
+    def getCoupleFromRole(self, roleId: int) -> list[ReactCouple] | None:
+        query = "SELECT * FROM josix.ReactCouple WHERE idRole = %s;"
+        self.cursor.execute(query, (roleId,))
+        res = self.cursor.fetchone()
+        if res:
+            couples = []
+            for row in res:
+                couples.append(ReactCouple(*row))
+            return couples
+        return None
+
+    @_error_handler
+    def getXpLeaderboard(self, guildId: int, limit: int) -> list[LinkUserGuild] | None:
+        query = """SELECT * FROM josix.UserGuild
                    WHERE idGuild = %s
                    ORDER BY xp DESC
                    LIMIT %s"""
         params = (guildId, limit)
         self.cursor.execute(query, params)
-        return self.cursor.fetchall()
+        res = self.cursor.fetchall()
+        if res:
+            leaderboard = []
+            for row in res:
+                leaderboard.append(LinkUserGuild(*row))
+            return leaderboard
+        return None
 
     @_error_handler
     def getLeaderboardPos(self, userId: int, guildId: int) -> tuple[int] | None:
@@ -275,7 +253,7 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         return self.cursor.fetchone()
 
-        
+
     @_error_handler
     def getNewsChan(self, userId: int) -> list[tuple[int]]:
         query = """SELECT chanNews 
@@ -315,32 +293,51 @@ class DatabaseHandler():
         self.cursor.execute(query, (guildId, month))
         return self.cursor.fetchall()
 
-    @_error_handler
-    def getBDUser(self, userId: int) -> tuple[date] | None:
-        query = "SELECT hbDate FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
-        return self.cursor.fetchone()
-
 
     @_error_handler
-    def getGameFromUser(self, userId: int) -> tuple[int] | None:
-        query = "SELECT idGame FROM josix.Games WHERE idUser = %s OR opponent = %s;"
+    def getGameFromUser(self, userId: int) -> Game | None:
+        query = "SELECT * FROM josix.Games WHERE idUser = %s OR opponent = %s;"
         self.cursor.execute(query, (userId, userId))
-        return self.cursor.fetchone()
+        res = self.cursor.fetchone()
+
+        if res:
+            return Game(*res)
+        return None
 
     @_error_handler
-    def getGameType(self, gameName: str) -> tuple[int] | None:
-        query = "SELECT idType FROM josix.GameType WHERE gameName = %s;"
+    def getGameType(self, gameName: str) -> GameType | None:
+        query = "SELECT * FROM josix.GameType WHERE gameName = %s;"
         self.cursor.execute(query, (gameName,))
-        return self.cursor.fetchone()
+        res = self.cursor.fetchone()
+
+        if res:
+            return GameType(*res)
+        return None
 
     @_error_handler
-    def getExistingGame(self, gameId: int, userId: int) -> tuple[int] | None:
-        query = """SELECt idGame FROM josix.Games
+    def getExistingGame(self, gameId: int, userId: int) -> Game | None:
+        query = """SELECT * FROM josix.Games
                    WHERE idGame = %s AND (idUser = %s OR opponent = %s);"""
         params = (gameId, userId, userId)
         self.cursor.execute(query, params)
-        return self.cursor.fetchone()
+        res = self.cursor.fetchone()
+
+        if res:
+            return Game(*res)
+        return None
+
+    def getSelectLogs(self, guildId: int) -> LogSelection | None:
+        query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
+        self.cursor.execute(query, (guildId,))
+        res = self.cursor.fetchall()
+
+        if res:
+            logs = []
+            for row in res:
+                logs.append(row[1])
+            return LogSelection(guildId, logs)
+        return None
+
 
     ###############
     # Adders

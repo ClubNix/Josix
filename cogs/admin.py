@@ -102,19 +102,20 @@ class Admin(commands.Cog):
             log.writeError(str(e))
 
         duos = self.db.getCouples(msgId)
-        for duo in duos:
-            if emoji == duo[0]:
-                await ctx.respond("The emoji is already used in the message")
-                if new:
-                    self.db.delMessageReact(msgId)
-                return
+        if duos:
+            for duo in duos:
+                if emoji == duo.emoji:
+                    await ctx.respond("The emoji is already used in the message")
+                    if new:
+                        self.db.delMessageReact(msgId)
+                    return
 
-            elif roleId == duo[1]:
-                await ctx.respond("The role is already used in the message")
-                await msg.clear_reaction(emoji)
-                if new:
-                    self.db.delMessageReact(msgId)
-                return
+                elif roleId == duo.idRole:
+                    await ctx.respond("The role is already used in the message")
+                    await msg.clear_reaction(emoji)
+                    if new:
+                        self.db.delMessageReact(msgId)
+                    return
 
         self.db.addCouple((emoji, roleId), msgId)
         await ctx.respond("Done !", delete_after=5.0)
@@ -163,12 +164,12 @@ class Admin(commands.Cog):
         xpState = None
         idGuild = ctx.guild_id
 
-        xpState = self.db.getGuildXP(idGuild)
+        xpState = self.db.getGuild(idGuild)
         if not xpState:
             self.db.addGuild(idGuild)
-            xpState = self.db.getGuildXP(idGuild)
+            xpState = self.db.getGuild(idGuild)
 
-        enabled = xpState[1]
+        enabled = xpState.enableXp
         self.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 

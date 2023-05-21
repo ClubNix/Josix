@@ -357,25 +357,29 @@ class Usage(commands.Cog):
         required=True
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
-        res = self.db.getBDUser(user.id)
+        res = self.db.getUser(user.id)
         if not res:
             await ctx.respond("User not registered")
             return
 
-        date: datetime.date = res[0]
+        hbDate = res.hbDate
         embed = discord.Embed(title=f"Birthday of {user}", color=0x0089FF)
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
-        embed.add_field(name="Date", value=f"**{date.strftime('%d/%m')}**")
+        embed.add_field(name="Date", value=f"**{hbDate.strftime('%d/%m')}**")
         await ctx.respond(embed=embed)
 
     @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
-        bd = self.db.safeExecute(self.db.checkBD, today.day, today.month)
+        bd: list[tuple[int, int, int, int]] = self.db.safeExecute(self.db.checkBD, today.day, today.month)
+        if not bd:
+            return
 
         for value in bd:
             idUser = value[0]
-            results = self.db.safeExecute(self.db.getNewsChan, idUser)
+            results: list[tuple[int]] = self.db.safeExecute(self.db.getNewsChan, idUser)
+            if not results:
+                continue
 
             for row in results:
                 chan = self.bot.get_channel(row[0])
