@@ -171,7 +171,7 @@ class Fun(commands.Cog):
                 input_type=str,
                 name="askip_name",
                 description="Name of an askip you searching (take a random askip if no name is given)",
-                default=None
+                default=""
             )
         ]
     )
@@ -191,9 +191,11 @@ class Fun(commands.Cog):
         if askip_name and not username:
             await ctx.respond("To choose a specific askip you need to specify the user")
             return
-            
+        
+        userParam = False
         if username:
             username = username.lower()
+            userParam = True
         else:
             username = random.choice(list(credentials.keys()))
         
@@ -207,11 +209,13 @@ class Fun(commands.Cog):
             else:
                 blg = random.choice(list(credentials[username].keys()))
 
-            await ctx.respond(credentials[username][blg])
+            res = f"**{username}** : " if not userParam else ""
+            res += credentials[username][blg]
+            await ctx.respond(res)
         except KeyError:
             await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     
-    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str):
+    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str) -> None:
         """
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters

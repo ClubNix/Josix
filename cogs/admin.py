@@ -36,7 +36,7 @@ class Admin(commands.Cog):
         name="limit",
         description="Limit of messages to delete (default 10, can't be more than 50)",
         default=10,
-        min_value=0,
+        min_value=1,
         max_value=50
     )
     async def clear(self, ctx: ApplicationContext, limit: int):

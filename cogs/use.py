@@ -86,8 +86,9 @@ class Usage(commands.Cog):
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 
-            if command.cog and command.cog.qualified_name.lower() == "owner" and not await self.bot.is_owner(
-                    ctx.author):
+            if command.cog and command.cog.qualified_name.lower() == "owner" and not (
+                await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
+            ):
                 await ctx.respond(f":x: Unknown command, see /help :x:")
                 return
 

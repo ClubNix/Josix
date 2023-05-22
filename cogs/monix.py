@@ -219,6 +219,21 @@ class Monix(commands.Cog):
             await ctx.respond(embed=highEmbed)
 
     def compareTop(self, top: list[Element], recordVal: int) -> int:
+        """
+        Compare a value to the top 5 elements
+
+        Parameters
+        ----------
+        top : list[Element]
+            The best elements
+        recordVal : int
+            The index of the value to compare 
+
+        Returns
+        -------
+        int
+            The index of the element in the top 5. Returns -1 if it does not fit in the top.
+        """
         if len(top) >= 5:
             if top[4].value >= recordVal:
                 return -1
@@ -234,6 +249,21 @@ class Monix(commands.Cog):
             return len(top)
 
     def compareBottom(self, bottom: list[Element], recordVal: int) -> int:
+        """
+        Compare a value to the bottom 5 elements
+
+        Parameters
+        ----------
+        bottom : list[Element]
+            The worst elements
+        recordVal : int
+            The index of the value to comapre
+
+        Returns
+        -------
+        int
+            The index of the element in the bottom 5. Returns -1 if it does not fit in the bottom.
+        """
         if len(bottom) >= 5:
             if bottom[4].value <= recordVal:
                 return -1
@@ -316,6 +346,19 @@ class Monix(commands.Cog):
         await ctx.respond(embed=embed)
 
     def getHistoryValues(self, isMember: bool) -> dict[int, Element]:
+        """
+        Get an historic of the transactions made during the last 7 days
+
+        Parameters
+        ----------
+        isMember : bool
+            A boolean to specify if the historic checks the members (or else it's the products) 
+
+        Returns
+        -------
+        dict[int, Element]
+            a dictionary containing all the elements found with their IDs as the key
+        """
         data = self.request(
             "/history/",
             HTTPMethod.GET,
@@ -359,6 +402,22 @@ class Monix(commands.Cog):
         return elements
 
     def sortElements(self, elements: list[Element], isMember: bool) -> list[Element]:
+        """
+        Sort the elements
+        This sort is not made to be efficient
+
+        Parameters
+        ----------
+        elements : list[Element]
+            The elements to sort 
+        isMember : bool
+            Specify if the sort is made on members (or else it's on products)
+
+        Returns
+        -------
+        list[Element]
+            The sorted elements
+        """
         n = len(elements)
         if n == 1:
             return elements

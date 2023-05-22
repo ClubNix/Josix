@@ -101,7 +101,8 @@ Disable the monix extension by deleting `cogs/monix.py` or by renaming the pytho
 All the commands of the extension [owner](cogs/owner.py) can be executed by the administrators of the server.
 It has been made like this because our organization has a special case but it can leads to security issues with your bot if you use it cross-server.
 To avoid this, make sure to edit the `cog_check` method in the `owner.py` file. <br>
-e.g. remove `or ctx.author.guild_permissions.administrator` if you want the commands to be executed only by the bot's owner.
+e.g. remove `or ctx.author.guild_permissions.administrator` if you want the commands to be executed only by the bot's owner. Also, the same thing applies
+for displaying the owner commands with the `help` command. Change the condition, according to your will.
 
 ## License
 Josix is under the [Apache 2-0 license](https://github.com/ClubNix/Josix/blob/master/LICENSE)
