@@ -121,10 +121,15 @@ class LoggerView(discord.ui.View):
         if not self.db.getGuild(idGuild):
             self.db.addGuild(idGuild)
         
-        old = self.db.getSelectLogs(idGuild)
-        oldLogs = old.logs
-        if oldLogs is None:
-            oldLogs = []
+        try:
+            old = self.db.getSelectLogs(idGuild)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+            old = None
+
+        oldLogs = []
+        if old and old.logs:
+            oldLogs = old.logs
 
         try:
             values = list(map(int, select.values))
