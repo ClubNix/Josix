@@ -103,8 +103,8 @@ class LoggerView(discord.ui.View):
                 description="A member joins or leaves the server"
             ),
             discord.SelectOption(
-                label="User update", value=str(Logs.MEMBER_UPDATE.value),
-                description="All updates on the member of the server"
+                label="Member update", value=str(Logs.MEMBER_UPDATE.value),
+                description="All updates of user's server profile"
             ),
             discord.SelectOption(
                 label="User update", value=str(Logs.USER_UPDATE.value),
@@ -114,6 +114,7 @@ class LoggerView(discord.ui.View):
     )
     async def select_callback(self, select: Select, interaction: discord.Interaction) -> None:
         if not interaction.guild_id:
+            await interaction.response.edit_message(content="Impossible to reach the server")
             return
 
         idGuild = interaction.guild_id
@@ -129,13 +130,20 @@ class LoggerView(discord.ui.View):
             values = list(map(int, select.values))
         except ValueError as e:
             log.writeError(log.formatError(e))
+            await interaction.response.edit_message(content="Unknown error occured")
             return
 
         for logValue in oldLogs:
             if logValue not in values and self.keep:
                 values.append(logValue)
 
-        self.db.updateLogSelects(interaction.guild_id, values)
+        try:
+            self.db.updateLogSelects(idGuild, values)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+            await interaction.response.edit_message(content="Unknown error occured")
+            return
+
         await interaction.response.edit_message(content="Your logs selection has been updated")
         self.disable_all_items()
         self.stop()
