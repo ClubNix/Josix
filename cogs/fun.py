@@ -70,7 +70,7 @@ class Fun(commands.Cog):
         input_type=int,
         name="joke_type",
         description="Category of the joke",
-        default=None,
+        default=-1,
         choices=[
             discord.OptionChoice(name="None 🎲", value=-1),
             discord.OptionChoice(name="Global 🤡", value=0),
