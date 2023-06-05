@@ -55,6 +55,8 @@ All the following commands are made to be run by discord servers staff to handle
   - `emoji` The emoji of the reaction (must not already used in the message and not be a custom emoji)
   - `role` The role to give/remove (must not already used in the message)
 
+- `delete_couple` Take the same parameter as the previous command but it deletes the given couple from the message (Reacting with the emoji will no longer give/remove the role).
+
 - `set_news_channel` Set the current channel so it will receive all the news from the bot (for now it just apply for birthdays reminder)
 
 - `set_xp_channel` Set the current channel so it will receive all the announce for xp from the bot (Mentions when you pass a level if the XP is enabled)

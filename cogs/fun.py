@@ -61,9 +61,10 @@ class Fun(commands.Cog):
             required=True
         )]
     )
+    @commands.has_permissions(manage_messages=True)
     async def say(self, ctx: ApplicationContext, text: str):
+        await ctx.send(text)
         await ctx.delete()
-        await ctx.respond(text)
 
     @commands.slash_command(description="Send a random joke")
     @option(
