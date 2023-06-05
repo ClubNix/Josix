@@ -573,6 +573,13 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
+    def delMessageCouple(self, msgId: int, coupleId: int) -> None:
+        query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s AND idCouple = %s;"
+        params = (msgId, coupleId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    @_error_handler
     def quitGame(self, userId: int) -> None:
         query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
         self.cursor.execute(query, (userId, userId))

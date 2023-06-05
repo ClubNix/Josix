@@ -68,8 +68,8 @@ class Admin(commands.Cog):
     async def add_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
         await ctx.defer(ephemeral=False, invisible=False)
 
-        roleId = role.id
-        msgId = 0
+        idRole = role.id
+        idMsg = 0
         new = False
         testEmj = None
         testMsg = None
@@ -83,12 +83,12 @@ class Admin(commands.Cog):
             return
 
         try:
-            msgId = int(msg_id)
+            idMsg = int(msg_id)
         except ValueError:
             await ctx.respond("Incorrect value given for the message_id parameter")
             return
 
-        msg = await ctx.channel.fetch_message(msgId)
+        msg = await ctx.channel.fetch_message(idMsg)
         if not msg:
             await ctx.respond("Unknown message")
             return
@@ -104,32 +104,105 @@ class Admin(commands.Cog):
             if not testGuild:
                 self.db.addGuild(ctx.guild_id, ctx.channel_id)
 
-            testMsg = self.db.getMsg(msgId)
+            testMsg = self.db.getMsg(idMsg)
             if not testMsg:
-                self.db.addMsg(ctx.guild_id, msgId)
+                self.db.addMsg(ctx.guild_id, idMsg)
                 new = True
         except Exception as e:
             await msg.clear_reaction(emoji)
             log.writeError(str(e))
 
-        duos = self.db.getCouples(msgId)
+        duos = self.db.getCouples(idMsg)
         if duos:
             for duo in duos:
                 if emoji == duo.emoji:
                     await ctx.respond("The emoji is already used in the message")
                     if new:
-                        self.db.delMessageReact(msgId)
+                        self.db.delMessageReact(idMsg)
                     return
 
-                elif roleId == duo.idRole:
+                elif idRole == duo.idRole:
                     await ctx.respond("The role is already used in the message")
                     await msg.clear_reaction(emoji)
                     if new:
-                        self.db.delMessageReact(msgId)
+                        self.db.delMessageReact(idMsg)
                     return
 
-        self.db.addCouple((emoji, roleId), msgId)
+        self.db.addCouple((emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
+
+    @commands.slash_command(description="Delete a couple in a reaction-role message")
+    @commands.has_permissions(manage_messages=True)
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="msg_id",
+        description="ID of the message you want to add the couple",
+        required=True
+    )
+    @option(
+        input_type=str,
+        name="emoji",
+        description="Emoji of the couple (no custom)",
+        required=True
+    )
+    @option(
+        input_type=discord.Role,
+        name="role",
+        description="Mention of the role of the couple",
+        required=True
+    )
+    async def delete_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
+        testMsg = await ctx.respond("Testing...")
+        og: discord.InteractionMessage = await testMsg.original_response()
+
+        idRole = role.id
+        idMsg = 0
+        testEmj = None
+        duos = None
+        msg: discord.Message = None
+        idCouple = 0
+
+        testEmj = re.compile("[<>:]")
+        if testEmj.match(emoji):
+            await og.edit(content="❌ You can't use a custom emoji")
+            return
+
+        try:
+            idMsg = int(msg_id)
+        except ValueError:
+            await og.edit(content="❌ Incorrect value given for the message_id parameter")
+            return
+
+        msg = await ctx.channel.fetch_message(idMsg)
+        if not msg:
+            await og.edit(content="❌ Unknown message")
+            return
+
+        try:
+            await og.add_reaction(emoji)
+        except (NotFound, InvalidArgument, HTTPException):
+            await og.edit(content="❌ Unknown error with the emoji")
+            return
+
+        if not (self.db.getGuild(ctx.guild_id) and self.db.getMsg(idMsg)):
+            await og.edit(content="❌ This message is unregistered")
+            return
+
+        duos = self.db.getCouples(idMsg)
+        test = False
+        for duo in duos:
+            if duo.emoji == emoji and duo.idRole == idRole:
+                idCouple = duo.id
+                test = True
+                break
+        
+        if test:
+            self.db.delMessageCouple(idMsg, idCouple)
+            await og.edit(content="✅ Done !")
+            await msg.clear_reaction(emoji)
+        else:
+            await og.edit(content="❌ Unknow couple")
 
     @commands.slash_command(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)
