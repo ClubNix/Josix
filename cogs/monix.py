@@ -71,6 +71,13 @@ class Monix(commands.Cog):
         self.session.verify = False
         self.generate_token()
 
+    def cog_check(self, ctx: ApplicationContext):
+        """
+        An automatic check that disable the commands of this extension
+        if they are not executed in the server of the Club*Nix
+        """
+        return ctx.guild.id == 751012516477403176
+
     def generate_token(self) -> None:
         """
         Method to get the token of the bot and implements it in headers.
