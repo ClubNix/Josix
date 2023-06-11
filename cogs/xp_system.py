@@ -127,8 +127,11 @@ class XP(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         await self.bot.process_commands(message)
-        if message.author.bot:
-            return
+        if (
+            message.author.bot or 
+            isinstance(message.channel, discord.DMChannel) or
+            isinstance(message.channel, discord.GroupChannel)
+        ): return
 
         msgLen = len(message.content)
         xp = 100 if msgLen >= 75 else 50 if msgLen >= 20 else 25
@@ -157,8 +160,14 @@ class XP(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.member.bot:
-            return
+        channel = self.bot.get_channel(payload.channel_id)
+
+        if (
+            payload.member.bot or
+            isinstance(channel, discord.DMChannel) or
+            isinstance(channel, discord.GroupChannel)
+        ): return
+
 
         try:
             await self._updateUser(
