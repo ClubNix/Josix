@@ -424,7 +424,7 @@ class DatabaseHandler():
 
     @_error_handler
     def addGameFromName(self, gameName: str, userId:int, opponent: int = None) -> tuple[int] | None:
-        typeId = self.getGameType(gameName)[0]
+        typeId = self.getGameType(gameName).id
         query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
         params = (typeId, userId, opponent)
         self.cursor.execute(query, params)

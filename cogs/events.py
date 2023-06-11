@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.errors import NotFound, Forbidden
 from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
     CommandOnCooldown, NotOwner, CheckFailure
-from discord import RawThreadUpdateEvent ,ApplicationContext, DiscordException
+from discord import RawThreadUpdateEvent, ApplicationContext, DiscordException
 from discord.utils import get as discordGet
 
 from json import JSONDecodeError
@@ -88,7 +88,7 @@ class Events(commands.Cog):
         _, oTag = await Events.getTags(thread, self.close, self.open)
         if oTag and oTag not in thread.applied_tags:
             tags = thread.applied_tags.copy()
-            if not tags or len(tags <= 0):
+            if not tags:
                 tags = [oTag]
             else:
                 tags.append(oTag)

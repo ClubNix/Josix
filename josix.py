@@ -63,6 +63,7 @@ if __name__ == "__main__":
     intents = discord.Intents.none()
     intents.members = True
     intents.guilds = True
+    intents.guild_messages = True
     intents.bans = True
     intents.emojis_and_stickers = True
     intents.webhooks = True
