@@ -59,6 +59,8 @@ class TTTBtn(discord.ui.Button["TTTView"]):
 
         if view.checkWin():
             msg = f"{view.currentPlayer.mention} won !"
+            if not interaction.guild: return
+            view.game.grantsXP(view.currentPlayer, interaction.guild, 10)
             stop = True
 
         elif view.isFull():

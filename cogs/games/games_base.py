@@ -4,9 +4,11 @@ from discord.ext import commands
 from discord import ApplicationContext, Member
 
 import os
+import datetime as dt
 
 from database.database import DatabaseHandler
 from bot_utils import josix_slash
+from cogs.xp_system import XP
 
 class Games(commands.Cog):
     """
@@ -23,16 +25,16 @@ class Games(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.description = "games : Base"
-        self.db = DatabaseHandler(os.path.basename(__file__))
+        self._db = DatabaseHandler(os.path.basename(__file__))
         self._cleanGames()
 
     def _cleanGames(self):
-        self.db.deleteGames()
+        self._db.deleteGames()
 
     @josix_slash(description="Quit your current game")
     async def quit_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        self.db.quitGame(ctx.author.id)
+        self._db.quitGame(ctx.author.id)
         await ctx.respond("You just left your game")
 
 
@@ -57,6 +59,24 @@ class BaseGame(commands.Cog):
 
         if not self.checkGame():
             self._db.addGameType(self.name)
+
+    def grantsXP(self, member: Member, guild: discord.Guild, amount: int):
+        idMember = member.id
+        userDB, guildDB, userGuildDB = self._db.getUserGuildLink(idMember, guild.id)
+
+        if not userDB:
+            self._db.addUser(idMember)
+        if not guildDB:
+            self._db.addGuild(guild.id)
+            guildDB = self._db.getGuild(guild.id)
+        if not userGuildDB:
+            self._db.addUserGuild(idMember, guild.id)
+            userGuildDB = self._db.getUserInGuild(idMember, guild.id)
+
+        currentXP = userGuildDB.xp
+        newXP, level = XP.checkUpdateXP(currentXP, amount)
+        self._db.updateUserXP(idMember, guild.id, level, newXP, dt.datetime.now())
+
 
     def checkGame(self) -> bool:
         return bool(self._db.getGameType(self.name))

@@ -25,7 +25,8 @@ class XP(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
-    def nextLevelXP(self, lvl: int, xp: int = 0) -> int:
+    @staticmethod
+    def nextLevelXP(lvl: int, xp: int = 0) -> int:
         """
         Calculate the XP needed to get to the next level
 
@@ -45,7 +46,8 @@ class XP(commands.Cog):
         """
         return 5 * (lvl**2) + (50 * lvl) + 100 - xp
 
-    def totalLevelXP(self, lvl: int) -> int:
+    @staticmethod
+    def totalLevelXP(lvl: int) -> int:
         """
         Calculate the XP needed to get to reach a level starting from 0
 
@@ -66,7 +68,7 @@ class XP(commands.Cog):
 
         res = 0
         for i in range(0, lvl):
-            res += self.nextLevelXP(i, 0)
+            res += XP.nextLevelXP(i, 0)
         return res
 
     async def _updateUser(self, idTarget: int, idGuild: int, xp: int) -> None:
@@ -193,6 +195,23 @@ class XP(commands.Cog):
 # 
 ####################
 
+    @staticmethod
+    def checkUpdateXP(currentXP: int, amount: int) -> tuple[int, int]:
+        """Check the new level and xp after an update and returns these values"""
+        newXP = currentXP + amount
+        if newXP < 0:
+            newXP = 0
+        elif newXP > 1_899_250:
+            newXP = 1_899_250
+
+        level = 0
+        xpNeed = XP.nextLevelXP(level)
+        while xpNeed < newXP:
+            level += 1
+            xpNeed += XP.nextLevelXP(level)
+
+        return newXP, level
+
 
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
@@ -208,19 +227,7 @@ class XP(commands.Cog):
             userGuildDB = self.db.getUserInGuild(member.id, guild.id)
 
         currentXP = userGuildDB.xp
-
-        newXP = currentXP + amount
-        if newXP < 0:
-            newXP = 0
-        elif newXP > 1_899_250:
-            newXP = 1_899_250
-
-        level = 0
-        xpNeed = self.nextLevelXP(level)
-        while xpNeed < newXP:
-            level += 1
-            xpNeed += self.nextLevelXP(level)
-
+        newXP, level = self.checkUpdateXP(currentXP, amount)
         self.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:

@@ -72,6 +72,8 @@ class OthelloInput(discord.ui.Select):
                 desc = "It's a tie !"
             else:
                 desc = f"{winner.mention} won !"
+                if not interaction.guild: return
+                view.game.grantsXP(winner, interaction.guild, 50)
 
         else:
             view.enable_all_items()

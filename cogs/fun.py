@@ -6,14 +6,16 @@ from discord import option
 import os
 import json
 import random
+import datetime as dt
 
 from blagues_api import BlaguesAPI
 from aiohttp import ClientResponseError
 from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
-
 from bot_utils import josix_slash
+from database.database import DatabaseHandler
+from cogs.xp_system import XP
 
 
 class Fun(commands.Cog):
@@ -35,6 +37,7 @@ class Fun(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.db = DatabaseHandler(os.path.basename(__file__))
         self.jokes = BlaguesAPI(Fun._KEY)
 
     def checkJson(self, file: dict) -> bool:
@@ -349,6 +352,25 @@ class Fun(commands.Cog):
         # update the json file
         with open("askip.json", "w") as askipfile:
             askipfile.write(json.dumps(credentials, indent=4))  # write new askip file
+
+        guild = ctx.guild
+        idAuth = ctx.author.id
+        amount = 100
+        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idAuth, guild.id)
+
+        if not userDB:
+            self.db.addUser(idAuth)
+        if not guildDB:
+            self.db.addGuild(guild.id)
+            guildDB = self.db.getGuild(guild.id)
+        if not userGuildDB:
+            self.db.addUserGuild(idAuth, guild.id)
+            userGuildDB = self.db.getUserInGuild(idAuth, guild.id)
+
+        currentXP = userGuildDB.xp
+        newXP, level = XP.checkUpdateXP(currentXP, amount)
+        self.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())
+
 
     @josix_slash(description="Get the avatar of someone")
     @option(

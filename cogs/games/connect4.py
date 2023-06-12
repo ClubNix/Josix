@@ -46,6 +46,8 @@ class C4Button(discord.ui.Button["C4View"]):
         if view.checkWin(self.x, y):
             view.stopGame()
             desc = f"{view.currentPlayer.name} won !"
+            if not interaction.guild: return
+            view.game.grantsXP(view.currentPlayer, interaction.guild, 50)
 
         elif view.isFull():
             view.stopGame()
