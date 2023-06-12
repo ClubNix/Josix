@@ -57,12 +57,17 @@ class Usage(JosixCog):
             for cogName, cog in self.bot.cogs.items():
                 lstCmd = ""
 
-                lcn = cogName.lower()
-                if not cog or lcn == "events" or lcn == "logger" or lcn == "reactionrole" or (
-                        cogName.lower() == "owner" and not await self.bot.is_owner(ctx.author)):
+                if not isinstance(cog, JosixCog):
                     continue
 
-                if cog.description.lower().startswith("games"):
+                cog: JosixCog = cog
+                if (
+                    not cog or
+                    not cog.showHelp or
+                    (cog.isOwner and not await self.bot.is_owner(ctx.author))
+                ): continue
+
+                if cog.isGame:
                     for cmd in cog.get_commands():
                         gamesCmd.append(cmd.qualified_name)
                     continue
