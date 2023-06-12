@@ -6,13 +6,13 @@ from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOve
 from discord import User, Member, RawMemberRemoveEvent, Embed
 from discord.abc import GuildChannel
 
+import os
+import logwrite as log
+
 from database.database import DatabaseHandler
 from enum import IntEnum
 from typing import Sequence
 from datetime import datetime as dt
-
-import os
-import logwrite as log
 
 
 class Logs(IntEnum):

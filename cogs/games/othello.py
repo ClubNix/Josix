@@ -2,10 +2,12 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Interaction, SelectOption, option
 
+import numpy as np
+
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
+from bot_utils import josix_slash
 
-import numpy as np
 
 class OthelloInput(discord.ui.Select):
     """
@@ -267,7 +269,7 @@ class Othello(BaseGame):
         self.bot = bot
         self.description = "games : Othello"
 
-    @commands.slash_command(description="Launch a game of Othello")
+    @josix_slash(description="Launch a game of Othello")
     @option(
         input_type=discord.Member,
         name="opponent",
@@ -294,7 +296,7 @@ class Othello(BaseGame):
         embed.add_field(name="", value=view)
         await ctx.respond(embed=embed, view=view)
 
-    @commands.slash_command(description="See othello's rules")
+    @josix_slash(description="See othello's rules")
     async def othello_rules(self, ctx: ApplicationContext):
         embed = discord.Embed(
             title="Rules",

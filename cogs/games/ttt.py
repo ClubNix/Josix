@@ -6,6 +6,7 @@ import numpy as np
 
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
+from bot_utils import josix_slash
 
 class TTTBtn(discord.ui.Button["TTTView"]):
     """
@@ -153,7 +154,7 @@ class TicTacToe(BaseGame):
         self.bot = bot
         self.description = "games : TicTacToe"
 
-    @commands.slash_command(description="Launch a game of tic-tac-toe")
+    @josix_slash(description="Launch a game of tic-tac-toe")
     @commands.guild_only()
     @option(
         input_type=Member,

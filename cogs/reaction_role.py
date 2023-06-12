@@ -2,10 +2,10 @@ import discord
 from discord.ext import commands
 from discord import RawReactionActionEvent, RawMessageDeleteEvent, RawBulkMessageDeleteEvent
 
-from database.database import DatabaseHandler
-
 import os
 import logwrite as log
+
+from database.database import DatabaseHandler
 
 
 class ReactionRole(commands.Cog):

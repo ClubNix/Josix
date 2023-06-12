@@ -11,6 +11,7 @@ from urllib3 import disable_warnings
 from requests import Session
 from urllib3.exceptions import InsecureRequestWarning
 from dataclasses import dataclass
+from bot_utils import josix_slash
 
 
 class HTTPMethod(Enum):
@@ -171,7 +172,7 @@ class Monix(commands.Cog):
     #
     # -----------------------------
 
-    @commands.slash_command(description="Check the current stocks and ping the treasurer if they are low")
+    @josix_slash(description="Check the current stocks and ping the treasurer if they are low")
     @commands.cooldown(1, 60, commands.BucketType.user)
     @option(
         input_type=bool,
@@ -285,7 +286,7 @@ class Monix(commands.Cog):
                     return index
             return len(bottom)
 
-    @commands.slash_command(description="Leaderboard of the most and least rich members in Monix")
+    @josix_slash(description="Leaderboard of the most and least rich members in Monix")
     @commands.cooldown(1, 60, commands.BucketType.user)
     @option(
         input_type=int,
@@ -446,7 +447,7 @@ class Monix(commands.Cog):
 
         return elements
 
-    @commands.slash_command(description="Ranking of the most consumed products during the last 7 days")
+    @josix_slash(description="Ranking of the most consumed products during the last 7 days")
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def products_ranking(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -466,7 +467,7 @@ class Monix(commands.Cog):
         embed.add_field(name="Rank", value="".join(map(str, sortedElmts)))
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(description="Ranking of the biggest consumers during the last 7 days")
+    @josix_slash(description="Ranking of the biggest consumers during the last 7 days")
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def members_ranking(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)

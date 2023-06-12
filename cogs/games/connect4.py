@@ -2,10 +2,11 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Interaction, option
 
+import numpy as np
+
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
-
-import numpy as np
+from bot_utils import josix_slash
 
 class C4Button(discord.ui.Button["C4View"]):
     """
@@ -186,7 +187,7 @@ class Connect4(BaseGame):
         self.bot = bot
         self.description = "games : Connect 4"
 
-    @commands.slash_command(description="Launch a game of Connect 4")
+    @josix_slash(description="Launch a game of Connect 4")
     @option(
         input_type=discord.Member,
         name="opponent",

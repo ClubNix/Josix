@@ -6,6 +6,7 @@ import numpy as np
 
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
+from bot_utils import josix_slash
 
 class PatternBtn(discord.ui.Button["PatternView"]):
     """
@@ -143,7 +144,7 @@ class Pattern(BaseGame):
         self.bot = bot
         self.description = "games : pattern"
 
-    @commands.slash_command(description="Launch a game of tic-tac-toe")
+    @josix_slash(description="Launch a game of tic-tac-toe")
     @commands.guild_only()
     async def pattern_game(self, ctx: ApplicationContext):
         if self.checkPlayers(ctx.author.id):

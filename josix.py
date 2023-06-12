@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
 
+import logwrite as log
+
 from dotenv import load_dotenv
 from os import getenv
-
-import logwrite as log
 
 
 class Josix(commands.Bot):

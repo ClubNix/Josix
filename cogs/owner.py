@@ -2,12 +2,13 @@ import discord
 from discord.ext import commands, tasks
 from discord import ApplicationContext, option
 
+import os
+import logwrite as log
+
 from database.database import DatabaseHandler
 from logwrite import LOG_FILE, ERROR_FILE
 from psycopg2 import Error as DBError
-
-import os
-import logwrite as log
+from bot_utils import josix_slash
 
 class Owner(commands.Cog):
     """
@@ -36,12 +37,12 @@ class Owner(commands.Cog):
         """Check automatically called for every command of this cog"""
         return self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
 
-    @commands.slash_command(description="Stop the bot")
+    @josix_slash(description="Stop the bot")
     async def stop_josix(self, ctx: ApplicationContext):
         await ctx.respond("Stopping...")
         await self.bot.close()
 
-    @commands.slash_command(description="Create a backup for the database")
+    @josix_slash(description="Create a backup for the database")
     @option(
         input_type=str,
         name="table",
@@ -53,7 +54,7 @@ class Owner(commands.Cog):
         self.db.backup(table)
         await ctx.respond("Backup done !")
 
-    @commands.slash_command(description="Execute a query")
+    @josix_slash(description="Execute a query")
     @option(
         input_type=str,
         name="query",
@@ -67,7 +68,7 @@ class Owner(commands.Cog):
         except discord.HTTPException as e:
             await ctx.respond(e)
 
-    @commands.slash_command(description="Execute the backup file")
+    @josix_slash(description="Execute the backup file")
     async def execute_backup(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
         count = 0
@@ -125,7 +126,7 @@ class Owner(commands.Cog):
 
         await ctx.respond(f"```{msg}```")
 
-    @commands.slash_command(description="Display the last logs")
+    @josix_slash(description="Display the last logs")
     @option(
         input_type=int,
         name="count",
@@ -136,7 +137,7 @@ class Owner(commands.Cog):
         await ctx.defer(ephemeral=False, invisible=False)
         await self.lineDisplay(ctx, LOG_FILE, count, False)
 
-    @commands.slash_command(description="Display the last errors")
+    @josix_slash(description="Display the last errors")
     @option(
         input_type=int,
         name="count",

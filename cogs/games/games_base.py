@@ -3,9 +3,10 @@ from discord.ui import View
 from discord.ext import commands
 from discord import ApplicationContext, Member
 
-from database.database import DatabaseHandler
-
 import os
+
+from database.database import DatabaseHandler
+from bot_utils import josix_slash
 
 class Games(commands.Cog):
     """
@@ -28,7 +29,7 @@ class Games(commands.Cog):
     def _cleanGames(self):
         self.db.deleteGames()
 
-    @commands.slash_command(description="Quit your current game")
+    @josix_slash(description="Quit your current game")
     async def quit_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
         self.db.quitGame(ctx.author.id)

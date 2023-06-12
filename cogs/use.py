@@ -13,6 +13,7 @@ from database.database import DatabaseHandler
 from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
+from bot_utils import josix_slash
 
 
 class Usage(commands.Cog):
@@ -35,7 +36,7 @@ class Usage(commands.Cog):
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.checkBirthday.start()
 
-    @commands.slash_command(description="Get the help menu")
+    @josix_slash(description="Get the help menu")
     @option(
         input_type=str,
         name="command_name",
@@ -126,7 +127,7 @@ class Usage(commands.Cog):
             embed2.add_field(name="Options : ", value=options, inline=False)
             await ctx.respond(embed=embed2)
 
-    @commands.slash_command(description="All the links related to the bot and club")
+    @josix_slash(description="All the links related to the bot and club")
     async def links(self, ctx: ApplicationContext):
         try:
             with open(Usage._FILE_PATH, "r") as f:
@@ -156,7 +157,7 @@ class Usage(commands.Cog):
         embed.add_field(name="", value="\n".join(links))
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(description="Randomly choose a sentence from a list")
+    @josix_slash(description="Randomly choose a sentence from a list")
     @option(
         input_type=str,
         name="sentences",
@@ -170,7 +171,7 @@ class Usage(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(
+    @josix_slash(
         description="Close a thread in the forum channel. Can only be used by the creator of the thread or a moderator")
     @commands.guild_only()
     @option(
@@ -218,7 +219,7 @@ class Usage(commands.Cog):
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
 
-    @commands.slash_command(description="Get full price for a 3D print")
+    @josix_slash(description="Get full price for a 3D print")
     @option(
         input_type=float,
         name="cura_price",
@@ -256,7 +257,7 @@ class Usage(commands.Cog):
         finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
         await ctx.respond(f"The price for this print is : **{finalPrice} €**")
 
-    @commands.slash_command(description="Add your birthday in the database !")
+    @josix_slash(description="Add your birthday in the database !")
     @commands.guild_only()
     @option(
         input_type=int,
@@ -335,7 +336,7 @@ class Usage(commands.Cog):
 
         return embed.add_field(name=months[monthInt - 1], value=" , ".join(res))
 
-    @commands.slash_command(description="See all the birthdays of this server")
+    @josix_slash(description="See all the birthdays of this server")
     @commands.guild_only()
     @option(
         input_type=int,
@@ -360,7 +361,7 @@ class Usage(commands.Cog):
                 embed = self.getMonthField(embed, ctx.guild_id, i + 1)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(description="Get the birthday of a user")
+    @josix_slash(description="Get the birthday of a user")
     @commands.guild_only()
     @option(
         input_type=discord.User,

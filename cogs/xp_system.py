@@ -7,7 +7,7 @@ import logwrite as log
 import os
 
 from database.database import DatabaseHandler
-from bot_utils import JosixSlash
+from bot_utils import JosixSlash, josix_slash
 
 class XP(commands.Cog):
     """
@@ -246,7 +246,7 @@ class XP(commands.Cog):
         xp = self.totalLevelXP(newLvl)
         self.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
 
-    @commands.slash_command(description="Gives XP to a user")
+    @josix_slash(description="Gives XP to a user")
     @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -279,7 +279,7 @@ class XP(commands.Cog):
 
         await ctx.respond("Done !")
 
-    @commands.slash_command(description="Removes XP to a user")
+    @josix_slash(description="Removes XP to a user")
     @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -312,7 +312,7 @@ class XP(commands.Cog):
 
         await ctx.respond("Done !")
 
-    @commands.slash_command(description="Gives levels to a user")
+    @josix_slash(description="Gives levels to a user")
     @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -345,7 +345,7 @@ class XP(commands.Cog):
 
         await ctx.respond("Done !")
 
-    @commands.slash_command(description="Removes levels to a user")
+    @josix_slash(description="Removes levels to a user")
     @commands.has_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -379,7 +379,7 @@ class XP(commands.Cog):
         await ctx.respond("Done !")
 
 
-    @commands.slash_command(description="Leaderboard of users based on their xp points in the server")
+    @josix_slash(description="Leaderboard of users based on their xp points in the server")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=int,
@@ -441,7 +441,7 @@ class XP(commands.Cog):
             )
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(description="Show the XP card of the user")
+    @josix_slash(description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=discord.Member,

@@ -10,6 +10,7 @@ import os
 
 from database.database import DatabaseHandler
 from cogs.logger import LoggerView
+from bot_utils import josix_slash
 
 
 class Admin(commands.Cog):
@@ -28,7 +29,7 @@ class Admin(commands.Cog):
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
-    @commands.slash_command(description="Clear messages from the channel")
+    @josix_slash(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
@@ -44,7 +45,7 @@ class Admin(commands.Cog):
         await ctx.channel.purge(limit=limit)
         await ctx.respond("Done !", delete_after=5.0)
 
-    @commands.slash_command(description="Add a couple of reaction-role to the message")
+    @josix_slash(description="Add a couple of reaction-role to the message")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
@@ -131,7 +132,7 @@ class Admin(commands.Cog):
         self.db.addCouple((emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
 
-    @commands.slash_command(description="Delete a couple in a reaction-role message")
+    @josix_slash(description="Delete a couple in a reaction-role message")
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
@@ -204,7 +205,7 @@ class Admin(commands.Cog):
         else:
             await og.edit(content="❌ Unknow couple")
 
-    @commands.slash_command(description="Set this channel as an announcement channel for the bot")
+    @josix_slash(description="Set this channel as an announcement channel for the bot")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
@@ -221,7 +222,7 @@ class Admin(commands.Cog):
             self.db.changeNewsChan(idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
 
-    @commands.slash_command(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
+    @josix_slash(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
     @commands.has_permissions(manage_channels=True)
     @commands.guild_only()
     async def set_xp_channel(self, ctx: ApplicationContext):
@@ -239,7 +240,7 @@ class Admin(commands.Cog):
         await ctx.respond("this channel will now the XP news !")
 
 
-    @commands.slash_command(description="Enable or disable the xp system on the server")
+    @josix_slash(description="Enable or disable the xp system on the server")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def enable_xp_system(self, ctx: ApplicationContext):
@@ -257,7 +258,7 @@ class Admin(commands.Cog):
         self.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
-    @commands.slash_command(description="Set up the custom welcome system for your server")
+    @josix_slash(description="Set up the custom welcome system for your server")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
@@ -316,7 +317,7 @@ class Admin(commands.Cog):
         await ctx.respond("Your custome welcome message has been set")
 
 
-    @commands.slash_command(description="Enable or disable the welcome system")
+    @josix_slash(description="Enable or disable the welcome system")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     async def enable_welcome(self, ctx: ApplicationContext):
@@ -332,7 +333,7 @@ class Admin(commands.Cog):
         self.db.updateGuildWelcomeEnabled(idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
-    @commands.slash_command(description="Choose which logs to register")
+    @josix_slash(description="Choose which logs to register")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
@@ -343,7 +344,7 @@ class Admin(commands.Cog):
     async def set_logger(self, ctx: ApplicationContext, keep: bool):
         await ctx.respond("Choose your logs :", view=LoggerView(self.db, keep))
 
-    @commands.slash_command(description="Choose where to send the logs")
+    @josix_slash(description="Choose where to send the logs")
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
