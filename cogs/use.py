@@ -13,11 +13,11 @@ from database.database import DatabaseHandler
 from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 from database.db_utils import BirthdayAuto
 
 
-class Usage(commands.Cog):
+class Usage(JosixCog):
     """
     Represents the common use functions extension of the bot
 
@@ -32,7 +32,8 @@ class Usage(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.checkBirthday.start()
@@ -409,4 +410,4 @@ class Usage(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Usage(bot))
+    bot.add_cog(Usage(bot, True))

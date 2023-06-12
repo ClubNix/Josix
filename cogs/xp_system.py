@@ -7,9 +7,9 @@ import logwrite as log
 import os
 
 from database.database import DatabaseHandler
-from bot_utils import JosixSlash, josix_slash
+from bot_utils import JosixSlash, JosixCog, josix_slash
 
-class XP(commands.Cog):
+class XP(JosixCog):
     """
     Represents the XP system extension of the bot
 
@@ -21,7 +21,8 @@ class XP(commands.Cog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
@@ -534,8 +535,7 @@ class XP(commands.Cog):
         blocked = userGuildDB.isUserBlocked
         self.db.updateUserBlock(idTarget, idGuild)
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
-        
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(XP(bot))
+    bot.add_cog(XP(bot, True))

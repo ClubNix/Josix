@@ -8,9 +8,9 @@ import logwrite as log
 from database.database import DatabaseHandler
 from logwrite import LOG_FILE, ERROR_FILE
 from psycopg2 import Error as DBError
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 
-class Owner(commands.Cog):
+class Owner(JosixCog):
     """
     Represents the Owner functions extension of the bot
 
@@ -28,7 +28,8 @@ class Owner(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
     
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp, isOwner=True)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.daily_backup.start()
@@ -158,4 +159,4 @@ class Owner(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Owner(bot))
+    bot.add_cog(Owner(bot, True))

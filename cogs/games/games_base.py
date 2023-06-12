@@ -7,10 +7,10 @@ import os
 import datetime as dt
 
 from database.database import DatabaseHandler
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 
-class Games(commands.Cog):
+class Games(JosixCog):
     """
     Represents the games functionalities extension of the bot
 
@@ -23,6 +23,7 @@ class Games(commands.Cog):
     """
 
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__(isGame=True)
         self.bot = bot
         self.description = "games : Base"
         self._db = DatabaseHandler(os.path.basename(__file__))
@@ -42,7 +43,7 @@ class Games(commands.Cog):
 # Base Classes
 # ------------
 
-class BaseGame(commands.Cog):
+class BaseGame(JosixCog):
     """
     Base class for all the games.
     Used to be inherited by all the games to access common functionalities
@@ -54,6 +55,7 @@ class BaseGame(commands.Cog):
     """
 
     def __init__(self, gameName: str) -> None:
+        super().__init__(isGame=True)
         self.name = gameName
         self._db = DatabaseHandler(self.name)
 

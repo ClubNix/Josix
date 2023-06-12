@@ -13,12 +13,12 @@ from aiohttp import ClientResponseError
 from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 from database.database import DatabaseHandler
 from cogs.xp_system import XP
 
 
-class Fun(commands.Cog):
+class Fun(JosixCog):
     """
     Represents the fun functionalities extension of the bot
 
@@ -35,7 +35,8 @@ class Fun(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../askip.json')
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.jokes = BlaguesAPI(Fun._KEY)
@@ -392,4 +393,4 @@ class Fun(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Fun(bot))
+    bot.add_cog(Fun(bot, True))

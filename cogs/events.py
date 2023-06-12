@@ -11,8 +11,9 @@ import json
 
 from json import JSONDecodeError
 from database.database import DatabaseHandler
+from bot_utils import JosixCog
 
-class Events(commands.Cog):
+class Events(JosixCog):
     """
     Represents the extension for all the events that can't be used
     in specific extensions
@@ -32,7 +33,8 @@ class Events(commands.Cog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
         self.close = ""
@@ -203,4 +205,4 @@ class Events(commands.Cog):
         
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Events(bot))
+    bot.add_cog(Events(bot, False))

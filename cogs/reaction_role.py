@@ -6,9 +6,10 @@ import os
 import logwrite as log
 
 from database.database import DatabaseHandler
+from bot_utils import JosixCog
 
 
-class ReactionRole(commands.Cog):
+class ReactionRole(JosixCog):
     """
     Represents the Reaction Role extension of the bot
 
@@ -20,7 +21,8 @@ class ReactionRole(commands.Cog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
@@ -118,4 +120,4 @@ class ReactionRole(commands.Cog):
             log.writeLog(log.formatError(e))
 
 def setup(bot: commands.Bot):
-    bot.add_cog(ReactionRole(bot))
+    bot.add_cog(ReactionRole(bot, False))

@@ -11,7 +11,7 @@ from urllib3 import disable_warnings
 from requests import Session
 from urllib3.exceptions import InsecureRequestWarning
 from dataclasses import dataclass
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 
 
 class HTTPMethod(Enum):
@@ -24,7 +24,7 @@ class MonixAPIError(Exception):
     """Exception for every Monix API errors"""
 
 
-class Monix(commands.Cog):
+class Monix(JosixCog):
     """
     Represents the Monix extension of the bot
 
@@ -65,7 +65,8 @@ class Monix(commands.Cog):
     _JOSIX_PSSWD = getenv("monix_psswd")
     _LOG_STOCK = getenv("home") + getenv("logs") + "stocks.txt"
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.base_url = "https://monix.clubnix.fr/api"
         self.session = Session()
@@ -489,4 +490,4 @@ class Monix(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Monix(bot))
+    bot.add_cog(Monix(bot, True))

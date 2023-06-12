@@ -10,10 +10,10 @@ import os
 
 from database.database import DatabaseHandler
 from cogs.logger import LoggerView
-from bot_utils import josix_slash
+from bot_utils import JosixCog, josix_slash
 
 
-class Admin(commands.Cog):
+class Admin(JosixCog):
     """
     Represents the admin commands extension of the bot
 
@@ -25,7 +25,8 @@ class Admin(commands.Cog):
         A handler to perform requests on the database
     """
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
 
@@ -364,4 +365,4 @@ class Admin(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Admin(bot))
+    bot.add_cog(Admin(bot, True))

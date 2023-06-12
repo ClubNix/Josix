@@ -13,6 +13,7 @@ from database.database import DatabaseHandler
 from enum import IntEnum
 from typing import Sequence
 from datetime import datetime as dt
+from bot_utils import JosixCog
 
 
 class Logs(IntEnum):
@@ -154,7 +155,7 @@ class LoggerView(discord.ui.View):
         self.stop()
 
 
-class Logger(commands.Cog):
+class Logger(JosixCog):
     """
     Represents the logs handler extension of the bot
 
@@ -176,7 +177,8 @@ class Logger(commands.Cog):
     updColor = 0xf1c232
     noColor = 0xc90e3a
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, showHelp: bool):
+        super().__init__(showHelp=showHelp)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
         self._updateLogs()
@@ -773,4 +775,4 @@ class Logger(commands.Cog):
                 await chan.send(embed=embed)
 
 def setup(bot: commands.Bot):
-    bot.add_cog(Logger(bot))
+    bot.add_cog(Logger(bot, False))
