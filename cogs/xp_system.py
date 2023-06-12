@@ -104,8 +104,9 @@ class XP(commands.Cog):
         currentXP = userGuildDB.xp
         currentLvl = userGuildDB.lvl
         lastSend = userGuildDB.lastMessage
+        userBlocked = userGuildDB.isUserBlocked
 
-        if not xpEnabled:
+        if not xpEnabled or userBlocked:
             return
 
         nowTime = dt.datetime.now()
@@ -137,7 +138,7 @@ class XP(commands.Cog):
         ): return
 
         msgLen = len(message.content)
-        xp = 75 if msgLen >= 75 else 50 if msgLen >= 20 else 25
+        xp = 75 if msgLen >= 100 else 50 if msgLen >= 30 else 25
         try:
             await self._updateUser(
                 message.author.id,
@@ -226,6 +227,9 @@ class XP(commands.Cog):
             self.db.addUserGuild(member.id, guild.id)
             userGuildDB = self.db.getUserInGuild(member.id, guild.id)
 
+        if userGuildDB.isUserBlocked:
+            return
+
         currentXP = userGuildDB.xp
         newXP, level = self.checkUpdateXP(currentXP, amount)
         self.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
@@ -242,6 +246,9 @@ class XP(commands.Cog):
         if not userGuildDB:
             self.db.addUserGuild(member.id, guild.id)
             userGuildDB = self.db.getUserInGuild(member.id, guild.id)
+
+        if userGuildDB.isUserBlocked:
+            return
 
         currentLvl = userGuildDB.lvl
         newLvl = currentLvl + amount
@@ -495,6 +502,39 @@ class XP(commands.Cog):
             f"`Leaderboard` : **{pos[0] if pos else '?'}**"
         )))
         await ctx.respond(embed=embed)
+
+    @josix_slash(description="Block or unblock xp progression for a member")
+    @commands.has_permissions(moderate_members=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the targeted user",
+        required=True
+    )
+    async def block_user_xp(self, ctx: ApplicationContext, member: discord.Member):
+        if member.bot:
+            await ctx.respond("You can't perform this action on a bot")
+            return
+
+        await ctx.defer(invisible=False, ephemeral=False)
+        idTarget = member.id
+        idGuild = ctx.guild_id
+        
+        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idTarget, idGuild)
+
+        if not userDB:
+            self.db.addUser(idTarget)
+        if not guildDB:
+            self.db.addGuild(idGuild)
+        if not userGuildDB:
+            self.db.addUserGuild(idTarget, idGuild)
+            userGuildDB = self.db.getUserInGuild(idTarget, idGuild)
+
+        blocked = userGuildDB.isUserBlocked
+        self.db.updateUserBlock(idTarget, idGuild)
+        await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
+        
 
 
 def setup(bot: commands.Bot):

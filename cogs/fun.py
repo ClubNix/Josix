@@ -367,6 +367,9 @@ class Fun(commands.Cog):
             self.db.addUserGuild(idAuth, guild.id)
             userGuildDB = self.db.getUserInGuild(idAuth, guild.id)
 
+        if userGuildDB.isUserBlocked:
+            return
+
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
         self.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())

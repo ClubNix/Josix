@@ -501,6 +501,15 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
+    def updateUserBlock(self, userId: int, guildId: int) -> None:
+        query = """UPDATE josix.UserGuild
+                   SET xpBlocked = NOT xpBlocked
+                   WHERE idUser = %s AND idGuild = %s;"""
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    @_error_handler
     def updateWelcomeGuild(self, guildId: int, chanId: int | None, roleId: int | None, message: str):
         if not chanId:
             chanId = 0

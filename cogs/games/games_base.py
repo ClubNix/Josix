@@ -73,6 +73,9 @@ class BaseGame(commands.Cog):
             self._db.addUserGuild(idMember, guild.id)
             userGuildDB = self._db.getUserInGuild(idMember, guild.id)
 
+        if userGuildDB.isUserBlocked:
+            return
+
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
         self._db.updateUserXP(idMember, guild.id, level, newXP, dt.datetime.now())

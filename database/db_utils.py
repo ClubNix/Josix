@@ -30,6 +30,7 @@ class LinkUserGuild:
     xp: int
     lvl: int
     lastMessage: datetime
+    isUserBlocked: bool
 
 @dataclass()
 class MsgReact:
