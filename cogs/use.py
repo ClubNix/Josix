@@ -14,6 +14,7 @@ from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
 from bot_utils import josix_slash
+from database.db_utils import BirthdayAuto
 
 
 class Usage(commands.Cog):
@@ -332,7 +333,7 @@ class Usage(commands.Cog):
             return embed
 
         for val in values:
-            res.append(f"`{val[0]}/{val[1]}` (<@{val[2]}>)")
+            res.append(f"`{val.day}/{val.month}` (<@{val.idUser}>)")
 
         return embed.add_field(name=months[monthInt - 1], value=" , ".join(res))
 
@@ -384,18 +385,18 @@ class Usage(commands.Cog):
     @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
-        bd: list[tuple[int, int, int, int]] = self.db.safeExecute(self.db.checkBD, today.day, today.month)
+        bd: list[BirthdayAuto] | None = self.db.safeExecute(self.db.checkBD, today.day, today.month)
         if not bd:
             return
 
         for value in bd:
-            idUser = value[0]
-            results: list[tuple[int]] = self.db.safeExecute(self.db.getNewsChan, idUser)
+            idUser = value.idUser
+            results: list[int] | None = self.db.safeExecute(self.db.getNewsChanFromUser, idUser)
             if not results:
                 continue
 
-            for row in results:
-                chan = self.bot.get_channel(row[0])
+            for idChan in results:
+                chan = self.bot.get_channel(idChan)
                 if not chan:
                     continue
 

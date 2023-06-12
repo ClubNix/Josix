@@ -499,7 +499,7 @@ class XP(commands.Cog):
         embed.add_field(name="", value="\n".join((
             f"`Next Level XP` : **{nextXp}**",
             f"`Total XP needed` : **{xpNeed}**",
-            f"`Leaderboard` : **{pos[0] if pos else '?'}**"
+            f"`Leaderboard` : **{'?' if pos is None else pos}**"
         )))
         await ctx.respond(embed=embed)
 

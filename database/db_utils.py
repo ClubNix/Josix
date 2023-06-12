@@ -64,3 +64,18 @@ class Game:
     idType: int
     idUser: int
     opponent: int
+
+@dataclass()
+class BirthdayAuto:
+    """Dataclass that represents data retrieved from the database for automatic birthday reminder"""
+    idUser: int
+    idGuild: int
+    day: int
+    month: int
+
+@dataclass()
+class Birthday:
+    """Dataclass that represent the birthday of a user"""
+    idUser: int
+    day: int
+    month: int

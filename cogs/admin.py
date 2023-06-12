@@ -202,6 +202,7 @@ class Admin(commands.Cog):
             self.db.delMessageCouple(idMsg, idCouple)
             await og.edit(content="✅ Done !")
             await msg.clear_reaction(emoji)
+            testMsg.delete()
         else:
             await og.edit(content="❌ Unknow couple")
 

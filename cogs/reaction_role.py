@@ -56,11 +56,11 @@ class ReactionRole(commands.Cog):
             guild = self.bot.get_guild(guildId)
             member = guild.get_member(userId)
 
-            resRoles = self.db.getRoleFromReact(msgId, emojiName)
-            if not resRoles:
+            resRole = self.db.getRoleFromReact(msgId, emojiName)
+            if resRole is None:
                 return
 
-            roleId = resRoles[0]
+            roleId = resRole
             role = guild.get_role(roleId)
 
             if add:

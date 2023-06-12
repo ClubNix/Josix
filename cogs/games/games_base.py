@@ -103,7 +103,9 @@ class BaseGame(commands.Cog):
             self._db.addUser(oppoId)
             
         res = self._db.addGameFromName(self.name, playerId, oppoId)
-        return res[0]
+        if res is None:
+            raise Exception("The game could not be loaded")
+        return res
 
     def stopGame(self, idGame: int) -> None:
         self._db.deleteGame(idGame)
