@@ -7,6 +7,7 @@ import logwrite as log
 import os
 
 from database.database import DatabaseHandler
+from bot_utils import JosixSlash
 
 class XP(commands.Cog):
     """
@@ -134,7 +135,7 @@ class XP(commands.Cog):
         ): return
 
         msgLen = len(message.content)
-        xp = 100 if msgLen >= 75 else 50 if msgLen >= 20 else 25
+        xp = 75 if msgLen >= 75 else 50 if msgLen >= 20 else 25
         try:
             await self._updateUser(
                 message.author.id,
@@ -146,14 +147,22 @@ class XP(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx: ApplicationContext):
-        if ctx.author.bot:
+        if (
+            ctx.author.bot or 
+            isinstance(ctx.channel, discord.DMChannel) or
+            isinstance(ctx.channel, discord.GroupChannel) or
+            not isinstance(ctx.command, JosixSlash)
+        ): return
+
+        cmd: JosixSlash = ctx.command
+        if not cmd.give_xp:
             return
 
         try:
             await self._updateUser(
                 ctx.author.id,
                 ctx.guild.id,
-                50
+                25
             )
         except Exception as e:
             log.writeError(log.formatError(e))
@@ -167,7 +176,6 @@ class XP(commands.Cog):
             isinstance(channel, discord.DMChannel) or
             isinstance(channel, discord.GroupChannel)
         ): return
-
 
         try:
             await self._updateUser(

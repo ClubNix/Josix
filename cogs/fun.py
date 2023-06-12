@@ -13,6 +13,8 @@ from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
 
+from bot_utils import JosixSlash, josix_slash
+
 
 class Fun(commands.Cog):
     """
@@ -38,11 +40,11 @@ class Fun(commands.Cog):
     def checkJson(self, file: dict) -> bool:
         return (file.keys()) or (len(file.keys()) > 0)
 
-    @commands.slash_command(description="The bot greets you")
+    @josix_slash(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
         await ctx.respond("Hello !")
 
-    @commands.slash_command(description="Ping the bot !")
+    @josix_slash(description="Ping the bot !")
     @commands.cooldown(1, 3.0, commands.BucketType.user)
     async def ping(self, ctx: ApplicationContext):
         embed = discord.Embed(title="Pong !", color=0x0089FF)
@@ -51,7 +53,7 @@ class Fun(commands.Cog):
         embed.add_field(name="", value=f"Ping : {round(self.bot.latency*1000, 2)} ms")
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(
+    @josix_slash(
         description="Send the message as if it is his own sentence",
         options=[discord.Option(
             input_type=str,
@@ -66,7 +68,7 @@ class Fun(commands.Cog):
         await ctx.send(text)
         await ctx.delete()
 
-    @commands.slash_command(description="Send a random joke")
+    @josix_slash(description="Send a random joke")
     @option(
         input_type=int,
         name="joke_type",
@@ -117,7 +119,7 @@ class Fun(commands.Cog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(
+    @josix_slash(
         description="See all the people that got one or more askip",
         options=[discord.Option(
             input_type=str,
@@ -159,7 +161,7 @@ class Fun(commands.Cog):
             await ctx.respond("Empty json file")
             return
 
-    @commands.slash_command(
+    @josix_slash(
         description="Get a private joke from your group",
         options=[
             discord.Option(
@@ -286,7 +288,7 @@ class Fun(commands.Cog):
         await og.edit(embed=noEmbed)
         return False
 
-    @commands.slash_command(description="fills my collection of private jokes")
+    @josix_slash(description="fills my collection of private jokes")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -348,7 +350,7 @@ class Fun(commands.Cog):
         with open("askip.json", "w") as askipfile:
             askipfile.write(json.dumps(credentials, indent=4))  # write new askip file
 
-    @commands.slash_command(description="Get the avatar of someone")
+    @josix_slash(description="Get the avatar of someone")
     @option(
         input_type=discord.User,
         name="user",
