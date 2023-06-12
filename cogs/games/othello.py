@@ -269,7 +269,7 @@ class Othello(BaseGame):
         self.bot = bot
         self.description = "games : Othello"
 
-    @josix_slash(description="Launch a game of Othello")
+    @josix_slash(description="Launch a game of Othello", give_xp=True)
     @option(
         input_type=discord.Member,
         name="opponent",

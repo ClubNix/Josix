@@ -154,7 +154,7 @@ class TicTacToe(BaseGame):
         self.bot = bot
         self.description = "games : TicTacToe"
 
-    @josix_slash(description="Launch a game of tic-tac-toe")
+    @josix_slash(description="Launch a game of tic-tac-toe", give_xp=True)
     @commands.guild_only()
     @option(
         input_type=Member,

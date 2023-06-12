@@ -157,7 +157,7 @@ class Usage(commands.Cog):
         embed.add_field(name="", value="\n".join(links))
         await ctx.respond(embed=embed)
 
-    @josix_slash(description="Randomly choose a sentence from a list")
+    @josix_slash(description="Randomly choose a sentence from a list", give_xp=True)
     @option(
         input_type=str,
         name="sentences",
@@ -257,7 +257,7 @@ class Usage(commands.Cog):
         finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
         await ctx.respond(f"The price for this print is : **{finalPrice} €**")
 
-    @josix_slash(description="Add your birthday in the database !")
+    @josix_slash(description="Add your birthday in the database !", give_xp=True)
     @commands.guild_only()
     @option(
         input_type=int,

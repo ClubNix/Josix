@@ -187,7 +187,7 @@ class Connect4(BaseGame):
         self.bot = bot
         self.description = "games : Connect 4"
 
-    @josix_slash(description="Launch a game of Connect 4")
+    @josix_slash(description="Launch a game of Connect 4", give_xp=True)
     @option(
         input_type=discord.Member,
         name="opponent",

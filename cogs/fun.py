@@ -13,7 +13,7 @@ from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
 
-from bot_utils import JosixSlash, josix_slash
+from bot_utils import josix_slash
 
 
 class Fun(commands.Cog):
@@ -288,7 +288,7 @@ class Fun(commands.Cog):
         await og.edit(embed=noEmbed)
         return False
 
-    @josix_slash(description="fills my collection of private jokes")
+    @josix_slash(description="fills my collection of private jokes", give_xp=True)
     @commands.guild_only()
     @option(
         input_type=str,
