@@ -17,6 +17,38 @@ from bot_utils import JosixCog, josix_slash
 from database.db_utils import BirthdayAuto
 
 
+class Poll(discord.ui.Modal):
+    def __init__(self) -> None:
+        super().__init__(title="Poll", timeout=300.0)
+        self.add_item(discord.ui.InputText(
+            label="Title (optional)",
+            max_length=64,
+            style=discord.InputTextStyle.singleline,
+            row=0,
+            required=False
+        ))
+        self.add_item(discord.ui.InputText(
+            label="Content",
+            min_length=1,
+            max_length=512,
+            style=discord.InputTextStyle.paragraph,
+            row=1
+        ))
+
+    async def callback(self, interaction: discord.Interaction):
+        if not interaction:
+            return
+
+        title = self.children[0]
+        content = self.children[1]
+        text = (f"# {title.value} :\n\n" if title.value else "") + content.value
+
+        msg = await interaction.response.send_message(content=text)
+        og = await msg.original_response()
+        await og.add_reaction("✅")
+        await og.add_reaction("❌")
+
+
 class Usage(JosixCog):
     """
     Represents the common use functions extension of the bot
@@ -263,6 +295,12 @@ class Usage(JosixCog):
         minutesFactor = 1 + (((minutes_count // 30) + (1 if minutes_count % 30 > 0 else 0)) / 20)
         finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
         await ctx.respond(f"The price for this print is : **{finalPrice} €**")
+
+    @josix_slash(description="Create a poll on this server")
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def create_poll(self, ctx: ApplicationContext):
+        await ctx.send_modal(Poll())
 
     @josix_slash(description="Add your birthday in the database !", give_xp=True)
     @commands.guild_only()
