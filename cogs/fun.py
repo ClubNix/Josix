@@ -26,6 +26,8 @@ class Fun(JosixCog):
     ----------
     bot : discord.ext.commands.Bot
         The bot that loaded this extension
+    db : DatabaseHandler
+        Handler for the database
     jokes : BlaguesAPI
         Instance to perform requests on a french jokes generator API
     """

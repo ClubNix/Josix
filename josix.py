@@ -11,11 +11,6 @@ class Josix(commands.Bot):
     """
     The main class that represents Josix bot
 
-    Attributes
-    ----------
-    bot_intents : discord.Intents
-        The intents that the bot will use
-
     Methods
     -------
     run()

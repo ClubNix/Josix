@@ -18,6 +18,8 @@ from database.db_utils import BirthdayAuto
 
 
 class Poll(discord.ui.Modal):
+    """A class representing a modal to create custom polls on discord"""
+
     def __init__(self) -> None:
         super().__init__(title="Poll", timeout=300.0)
         self.add_item(discord.ui.InputText(
