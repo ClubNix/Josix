@@ -42,9 +42,8 @@ class Admin(JosixCog):
         max_value=50
     )
     async def clear(self, ctx: ApplicationContext, limit: int):
-        await ctx.defer(ephemeral=False, invisible=False)
         await ctx.channel.purge(limit=limit)
-        await ctx.respond("Done !", delete_after=5.0)
+        await ctx.delete()
 
     @josix_slash(description="Add a couple of reaction-role to the message")
     @commands.has_permissions(manage_messages=True)
