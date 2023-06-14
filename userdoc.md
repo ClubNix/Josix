@@ -80,6 +80,10 @@ All the following commands are made to be run by discord servers staff to handle
 - `set_log_channel` Set a channel as the logs displayer. It will display all the choosen logs in the previous command
   - `channel` The targeted channel
 
+- `block_category` Block (or unblock) a category to prevent people for getting xp here
+  - `category` The category to block or unblock
+
+
 ## XP system
 The XP system is based on the [MEE6 documentation](https://github.com/Mee6/Mee6-documentation/blob/master/docs/levels_xp.md)
 
@@ -87,10 +91,10 @@ You can only earn xp each 60 seconds, meaning that after a gain you need to wait
 
 You can earn xp by :
 - Sending a message, the xp obtained will depend of the length of the message
-  - **25** if it's less than or equal to 20 characters
-  - **50** if it's less than 75 characters
-  - **100** if it' greater than or equal to 75 characters
-- Using a Josix's command : **50 xp**
+  - **75** if it's longer or equal to 100 characters
+  - **50** if it's between 99 and 30 characters (include)
+  - **25** else
+- Using a Josix's command : **25 xp** (Warning : All the commands does not grant xp)
 - Adding a reaction to message : **25 xp**
 
 ![MEE6_need_up](https://github.com/Mee6/Mee6-documentation/raw/master/docs/pics/xp_level_up.png)
@@ -113,6 +117,10 @@ Commands :
 
 - `profile` Show the profile card of a user with its current level, xp and progress towards the next level
   - `member` The member's card to display (default the user who called the command)
+
+- (**STAFF**) `block_user_xp` Block (or unblock) user from earning xp in your server
+  - `member` The member you want to block or unblock
+
 
 ## Reaction role
 The reaction role helps a discord server staff to automatically gives role to their users.
@@ -144,6 +152,9 @@ The bot will also add a `Open` or `Close` tag to forum's thread when they are op
   - `minutes_count` The number of minutes needed to perform the whole print, must be rounded to the superior.
   - `is_member` If the user asking for the print is a member or not.
 ![Function](https://cdn.discordapp.com/attachments/751051007110283365/987326536837373992/Screenshot_from_2022-06-17_14-02-05.png)
+
+
+- `create_poll` Create a custom poll on discord with a title (optional) and a text
 
 - `add_birthday` Add your birthday to the database so the bot can wish you a **happy birthday** !
   - `day` The day of your birthday (1-31)
