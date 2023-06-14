@@ -531,6 +531,24 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
+    def blockCategory(self, catId: int, guildId: int) -> None:
+        query = """UPDATE josix.Guild
+                   SET blockedCategories = ARRAY_APPEND(blockedCategories, %s)
+                   WHERE idGuild = %s;"""
+        params = (catId, guildId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    @_error_handler
+    def unblockCategory(self, catId: int, guildId: int) -> None:
+        query = """UPDATE josix.Guild
+                   SET blockedCategories = ARRAY_REMOVE(blockedCategories, %s)
+                   WHERE idGuild = %s;"""
+        params = (catId, guildId)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+    @_error_handler
     def updateWelcomeGuild(self, guildId: int, chanId: int | None, roleId: int | None, message: str) -> None:
         if not chanId:
             chanId = 0

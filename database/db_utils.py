@@ -21,6 +21,7 @@ class GuildDB:
     wRole: int
     wText: str
     logNews: int
+    blockedCat: list[int]
 
 @dataclass()
 class LinkUserGuild:

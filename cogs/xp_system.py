@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.abc import Messageable
 from discord import ApplicationContext, option
 
 import datetime as dt
@@ -72,7 +73,7 @@ class XP(JosixCog):
             res += XP.nextLevelXP(i, 0)
         return res
 
-    async def _updateUser(self, idTarget: int, idGuild: int, xp: int) -> None:
+    async def _updateUser(self, idTarget: int, idGuild: int, xp: int, idCat: int = 0) -> None:
         """
         Updates a user xp and level in the database
 
@@ -110,6 +111,9 @@ class XP(JosixCog):
         if not xpEnabled or userBlocked:
             return
 
+        if idCat != 0 and idCat in guildDB.blockedCat:
+            return
+
         nowTime = dt.datetime.now()
         if ((nowTime - lastSend).seconds < 60):
             return
@@ -138,13 +142,16 @@ class XP(JosixCog):
             isinstance(message.channel, discord.GroupChannel)
         ): return
 
+        idCat = message.channel.category_id
         msgLen = len(message.content)
         xp = 75 if msgLen >= 100 else 50 if msgLen >= 30 else 25
+
         try:
             await self._updateUser(
                 message.author.id,
                 message.guild.id,
-                xp
+                xp,
+                idCat if idCat else 0
             )
         except Exception as e:
             log.writeError(log.formatError(e))
@@ -158,6 +165,7 @@ class XP(JosixCog):
             not isinstance(ctx.command, JosixSlash)
         ): return
 
+        idCat = ctx.channel.category_id
         cmd: JosixSlash = ctx.command
         if not cmd.give_xp:
             return
@@ -166,7 +174,8 @@ class XP(JosixCog):
             await self._updateUser(
                 ctx.author.id,
                 ctx.guild.id,
-                25
+                25,
+                idCat if idCat else 0
             )
         except Exception as e:
             log.writeError(log.formatError(e))
@@ -181,11 +190,13 @@ class XP(JosixCog):
             isinstance(channel, discord.GroupChannel)
         ): return
 
+        idCat = channel.category_id
         try:
             await self._updateUser(
                 payload.user_id,
                 payload.guild_id,
-                25
+                25,
+                idCat if idCat else 0
             )
         except Exception as e:
             log.writeError(log.formatError(e))

@@ -363,6 +363,33 @@ class Admin(JosixCog):
             self.db.updateLogChannel(ctx.guild.id, None)
             await ctx.respond("Logs channel unset")
 
+    @josix_slash(description="Block or unblock a category from xp leveling")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        input_type=discord.CategoryChannel,
+        name="category",
+        description="The category to block or unblock",
+        required=True
+    )
+    async def block_category(self, ctx: ApplicationContext, category: discord.CategoryChannel):
+        await ctx.defer(ephemeral=False, invisible=False)
+        idCat = category.id
+        idGuild = ctx.guild_id
+        dbGuild = self.db.getGuild(idGuild)
+
+        if not dbGuild:
+            self.db.addGuild(idGuild)
+            dbGuild = self.db.getGuild(idGuild)
+
+        if idCat in dbGuild.blockedCat:
+            self.db.unblockCategory(idCat, idGuild)
+            text = "unblocked"
+        else:
+            self.db.blockCategory(idCat, idGuild)
+            text = "blocked"
+        await ctx.respond(f"The category **{category.name}** is now **{text}**")
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot, True))
