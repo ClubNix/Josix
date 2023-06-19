@@ -82,8 +82,8 @@ class Events(JosixCog):
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):
-        if not isinstance(thread.parent, discord.ForumChannel):
-            return
+        if not isinstance(thread.parent, discord.ForumChannel): return
+        if thread.can_send: await thread.send("This thread is now open. You can close it automatically by using `/close`")
 
         _, oTag = await Events.getTags(thread, self.close, self.open)
         if oTag and oTag not in thread.applied_tags:
@@ -94,7 +94,6 @@ class Events(JosixCog):
                 tags.append(oTag)
 
             await thread.edit(applied_tags=tags)
-        await thread.send("This thread is now open. You can close it automatically by using `/close`")
 
     @commands.Cog.listener()
     async def on_raw_thread_update(self, payload: RawThreadUpdateEvent):
