@@ -300,7 +300,7 @@ class DatabaseHandler():
 
     @_error_handler
     def getBDMonth(self, guildId: int, month: int) -> list[Birthday] | None:
-        query = """SELECT u.idUser, EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate), 
+        query = """SELECT u.idUser, EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
                    WHERE ug.idGuild = %s AND EXTRACT(MONTH FROM u.hbDate) = %s
                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
