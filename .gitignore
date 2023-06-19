@@ -2,6 +2,8 @@
 *.env
 *.DS_Store
 *.sql
+*
+*.old
 
 devdoc.md
 .vscode

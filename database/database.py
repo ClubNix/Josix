@@ -6,11 +6,13 @@ import logwrite as log
 
 from typing import Callable, Any
 from database.db_utils import *
+from shutil import copyfile
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
 BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 DAILY_BACKUP_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql')
+OLD_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql.old')
 
 class DatabaseHandler():
     """
@@ -98,6 +100,8 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
 
         file = DAILY_BACKUP_PATH if daily else BACKUP_PATH
+        if daily: copyfile(DAILY_BACKUP_PATH, OLD_PATH)
+
         with open(file, "w") as f:
             f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
             for rowTable in res:
