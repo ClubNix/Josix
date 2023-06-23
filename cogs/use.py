@@ -442,7 +442,7 @@ class Usage(JosixCog):
                 continue
 
             for idChan in results:
-                chan = self.bot.get_channel(idChan)
+                chan = await self.bot.fetch_channel(idChan)
                 if not chan:
                     continue
 
