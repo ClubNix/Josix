@@ -142,7 +142,7 @@ class DatabaseHandler():
 
         if res:
             return GuildDB(*res)
-        return None
+        
 
     @_error_handler
     def getUser(self, userId: int) -> UserDB | None:
@@ -152,7 +152,7 @@ class DatabaseHandler():
 
         if res:
             return UserDB(*res)
-        return None
+        
 
     @_error_handler
     def getUsers(self, limit: int = 10) -> list[UserDB] | None:
@@ -161,7 +161,7 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
         if res:
             return [UserDB(row) for row in res]
-        return None
+        
 
     @_error_handler
     def getMsg(self, msgId: int) -> MsgReact | None:
@@ -171,7 +171,7 @@ class DatabaseHandler():
 
         if res:
             return MsgReact(*res)
-        return None
+        
 
     @_error_handler
     def getUserInGuild(self, userId: int, guildId: int) -> LinkUserGuild | None:
@@ -183,7 +183,7 @@ class DatabaseHandler():
 
         if res:
             return LinkUserGuild(*res)
-        return None
+        
 
     def getUserGuildLink(self, userId: int, guildId: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
         return (
@@ -202,7 +202,7 @@ class DatabaseHandler():
         res = self.cursor.fetchone()
         if res:
             return res[0]
-        return None
+        
 
     @_error_handler
     def getCouples(self, msgId: int = None) -> list[ReactCouple] | None:
@@ -223,7 +223,7 @@ class DatabaseHandler():
             for row in res:
                 couples.append(ReactCouple(*row))
             return couples
-        return None
+        
 
     @_error_handler
     def getCoupleFromRole(self, roleId: int) -> list[ReactCouple] | None:
@@ -235,7 +235,7 @@ class DatabaseHandler():
             for row in res:
                 couples.append(ReactCouple(*row))
             return couples
-        return None
+        
 
     @_error_handler
     def getXpLeaderboard(self, guildId: int, limit: int) -> list[LinkUserGuild] | None:
@@ -251,7 +251,7 @@ class DatabaseHandler():
             for row in res:
                 leaderboard.append(LinkUserGuild(*row))
             return leaderboard
-        return None
+        
 
     @_error_handler
     def getLeaderboardPos(self, userId: int, guildId: int) -> int | None:
@@ -264,7 +264,7 @@ class DatabaseHandler():
         res = self.cursor.fetchone()
         if res:
             return res[0]
-        return None
+        
 
     @_error_handler
     def getNewsChanFromUser(self, userId: int) -> list[int] | None:
@@ -278,7 +278,7 @@ class DatabaseHandler():
             for row in res:
                 ids.append(row[0])
             return ids
-        return None
+        
 
     @_error_handler
     def checkBD(self, day: int, month: int) -> list[BirthdayAuto] | None:
@@ -296,7 +296,8 @@ class DatabaseHandler():
             lstBD = []
             for row in res:
                 lstBD.append(BirthdayAuto(*row))
-        return None
+            return lstBD
+        
 
     @_error_handler
     def getBDMonth(self, guildId: int, month: int) -> list[Birthday] | None:
@@ -311,7 +312,7 @@ class DatabaseHandler():
             for row in res:
                 birthdays.append(Birthday(*row))
             return birthdays
-        return None
+        
 
 
     @_error_handler
@@ -322,7 +323,7 @@ class DatabaseHandler():
 
         if res:
             return Game(*res)
-        return None
+        
 
     @_error_handler
     def getGameType(self, gameName: str) -> GameType | None:
@@ -332,7 +333,7 @@ class DatabaseHandler():
 
         if res:
             return GameType(*res)
-        return None
+        
 
     @_error_handler
     def getExistingGame(self, gameId: int, userId: int) -> Game | None:
@@ -344,7 +345,7 @@ class DatabaseHandler():
 
         if res:
             return Game(*res)
-        return None
+        
 
     def getSelectLogs(self, guildId: int) -> LogSelection | None:
         query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
@@ -356,7 +357,7 @@ class DatabaseHandler():
             for row in res:
                 logs.append(row[1])
             return LogSelection(guildId, logs)
-        return None
+        
 
 
     ###
@@ -454,7 +455,7 @@ class DatabaseHandler():
         res = self.cursor.fetchone()
         if res:
             return res[0]
-        return None
+        
 
 
     ###############
