@@ -2,7 +2,6 @@
 *.env
 *.DS_Store
 *.sql
-*
 *.old
 
 devdoc.md
@@ -12,3 +11,4 @@ __pycache__/
 logs/
 
 !config.json
+!table_order.sql

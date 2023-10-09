@@ -13,6 +13,7 @@ SCRIPT_DIR = os.path.dirname(__file__)
 BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
 DAILY_BACKUP_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql')
 OLD_PATH = os.path.join(SCRIPT_DIR, 'daily_backup.sql.old')
+TABLE_ORDER_PATH = os.path.join(SCRIPT_DIR, 'table_order.sql')
 
 class DatabaseHandler():
     """
@@ -90,13 +91,13 @@ class DatabaseHandler():
 
     @_error_handler
     def backup(self, table: str, daily: bool = False) -> None:
-        checkTable = f"AND table_name = '{table}'" if len(table) > 0 else None
         if table:
-            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' %s;"
+            query = f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix' AND table_name = '{table}';"
         else:
-            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'josix';"
-            
-        self.cursor.execute(query, (checkTable,))
+            with open(TABLE_ORDER_PATH, 'r') as order_file:
+                query = order_file.read()
+
+        self.cursor.execute(query)
         res = self.cursor.fetchall()
 
         file = DAILY_BACKUP_PATH if daily else BACKUP_PATH
