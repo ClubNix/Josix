@@ -98,7 +98,7 @@ class Usage(JosixCog):
                 if (
                     not cog or
                     not cog.showHelp or
-                    (cog.isOwner and not await self.bot.is_owner(ctx.author))
+                    (cog.isOwner and not (await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator))
                 ): continue
 
                 if cog.isGame:
