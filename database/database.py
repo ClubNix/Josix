@@ -126,6 +126,10 @@ class DatabaseHandler():
                             row_data.append("'%s'" % (rd.strftime('%Y-%m-%d')))
                         elif isinstance(rd, dt.datetime):
                             row_data.append("'%s'" % (rd.strftime('%Y-%m-%d %H:%M:%S')))
+                        elif isinstance(rd, str):
+                            row_data.append("E'%s'" % (rd.replace("'", "\\'")))
+                        elif isinstance(rd, list):
+                            row_data.append("ARRAY%s::BIGINT[]" % (repr(rd)))
                         else:
                             row_data.append(repr(rd))
                     f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))

@@ -287,6 +287,7 @@ class Admin(JosixCog):
         default=True
     )
     async def set_custom_welcome(self, ctx: ApplicationContext, channel: discord.TextChannel, role: discord.Role, message: str, keep: bool):
+        await ctx.defer(ephemeral=False, invisible=False)
         if not (channel or role or message):
             await ctx.respond("Can't set up your custom welcome")
             return
@@ -295,7 +296,6 @@ class Admin(JosixCog):
             await ctx.respond("The message is too long")
             return
 
-        await ctx.defer(ephemeral=False, invisible=False)
         idGuild = ctx.guild_id
         dbGuild = self.db.getGuild(idGuild)
 
