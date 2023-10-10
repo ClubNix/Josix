@@ -325,6 +325,8 @@ class Usage(JosixCog):
         default=None
     )
     async def add_birthday(self, ctx: ApplicationContext, day: int, month: int, user: discord.User):
+        await ctx.defer(ephemeral=False, invisible=False)
+
         month_days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         testReject = not ((1 <= month and month <= 12) and (1 <= day and day <= month_days[month - 1]))
         userId = ctx.author.id
@@ -394,6 +396,7 @@ class Usage(JosixCog):
         default=None
     )
     async def birthdays(self, ctx: ApplicationContext, month: int):
+        await ctx.defer(ephemeral=False, invisible=False)
         embed = discord.Embed(
             title=f"Birthdays of **{ctx.guild.name}**",
             description="All the birthdays from the server",
@@ -417,6 +420,7 @@ class Usage(JosixCog):
         required=True
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
+        await ctx.defer(ephemeral=False, invisible=False)
         res = self.db.getUser(user.id)
         if not res:
             await ctx.respond("User not registered")

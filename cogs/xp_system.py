@@ -525,11 +525,11 @@ class XP(JosixCog):
         required=True
     )
     async def block_user_xp(self, ctx: ApplicationContext, member: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
         if member.bot:
             await ctx.respond("You can't perform this action on a bot")
             return
 
-        await ctx.defer(invisible=False, ephemeral=False)
         idTarget = member.id
         idGuild = ctx.guild_id
         

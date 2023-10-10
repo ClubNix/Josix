@@ -355,6 +355,7 @@ class Admin(JosixCog):
         default=None
     )
     async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
+        await ctx.defer(ephemeral=False, invisible=False)
         if channel:     
             self.db.updateLogChannel(ctx.guild.id, channel.id)
             await ctx.respond("Logs channel set")

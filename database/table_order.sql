@@ -3,13 +3,13 @@
 
 WITH RECURSIVE fk_tree AS (
     -- All tables not referencing anything else
-    SELECT t.oid as reloid, 
-  	       t.relname AS table_name, 
+    SELECT t.oid as reloid,
+  	       t.relname AS table_name,
   	       s.nspname AS schema_name,
   	       null::text COLLATE "en_US" AS referenced_table_name,
   	       null::text COLLATE "en_US" AS referenced_schema_name,
   	       1 AS level
-         
+
     FROM pg_class t JOIN pg_namespace s ON s.oid = t.relnamespace
     WHERE relkind = 'r' AND NOT EXISTS (SELECT *
   				                        FROM pg_constraint
@@ -18,8 +18,8 @@ WITH RECURSIVE fk_tree AS (
   	AND s.nspname = 'josix' -- limit to one schema 
 
     UNION ALL 
-    SELECT ref.oid, 
-  	       ref.relname, 
+    SELECT ref.oid,
+           ref.relname,
            rs.nspname,
            p.table_name,
            p.schema_name,
@@ -33,7 +33,7 @@ WITH RECURSIVE fk_tree AS (
     SELECT schema_name,
            table_name,
            level, 
-           row_number() OVER (partition by schema_name, table_name order by level desc) AS last_table_row
+           row_number() OVER (PARTITION BY schema_name, table_name ORDER BY level DESC) AS last_table_row
     FROM fk_tree
 )
 SELECT table_name, schema_name, level

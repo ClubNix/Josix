@@ -279,6 +279,7 @@ class Othello(BaseGame):
         required=True
     )
     async def othello(self, ctx: ApplicationContext, opponent: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
         if ctx.author.id == opponent.id:
             await ctx.respond("You can't challenge yourself")
             return
