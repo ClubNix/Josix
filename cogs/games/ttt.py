@@ -165,6 +165,7 @@ class TicTacToe(BaseGame):
         required=True
     )
     async def tic_tac_toe(self, ctx: ApplicationContext, opponent: Member):
+        await ctx.defer(ephemeral=False, invisible=False)
         if ctx.author.id == opponent.id:
             await ctx.respond("You can't play against yourself")
             return

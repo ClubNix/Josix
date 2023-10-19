@@ -147,6 +147,7 @@ class Pattern(BaseGame):
     @josix_slash(description="Launch a game of tic-tac-toe")
     @commands.guild_only()
     async def pattern_game(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
         if self.checkPlayers(ctx.author.id):
             await ctx.respond("You are already in a game. If not, use `/quit_game` command")
             return
