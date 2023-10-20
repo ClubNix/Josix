@@ -496,6 +496,14 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
+    def removeUserBD(self, userId: int) -> None:
+        query = """UPDATE josix.User
+                   SET hbDate = NULL
+                   WHERE idUser = %s;"""
+        self.cursor.execute(query, (userId,))
+        self.conn.commit() 
+
+    @_error_handler
     def resetBd(self, userId: int) -> None:
         query = """UPDATE josix.User
                    SET hbDate = hbDate - INTERVAL '1 year'
