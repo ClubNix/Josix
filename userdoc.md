@@ -161,11 +161,20 @@ The bot will also add a `Open` or `Close` tag to forum's thread when they are op
   - `month` The month of your birthday (1-12)
   - `user` Which user's birthday it is. Can only be used by a staff member. To add your own birthday you don't need to specifiy this parameter.
 
+
+- `remove_birthday` Remove the birthday of given member from the bot's database
+  - `member` The target member. You need **moderate_members** permissions to delete another member birthday !
+
+
 - `birthdays` Shows all the birthdays registered for the users in this server.
   - `month` Specify this parameter if you want to see the birthdays for a specific month.
 
+
+
 - `user_birthday` See the birthday of a user
   - `user` The user's whose you want to see the birthday
+
+
 
 - (**TASK**) `checkBirthday` A task that runs every 6 hours and that check if there's any birthdays to wish in every server.
 
