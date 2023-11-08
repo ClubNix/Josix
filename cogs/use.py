@@ -371,6 +371,24 @@ class Usage(JosixCog):
         self.db.updateUserBD(userId, day, month, bdYear)
         await ctx.respond(stringRes)
 
+    @josix_slash(description="Remove a birthday date")
+    @commands.guild_only()
+    @option(
+        name="member",
+        input_type=discord.Member,
+        description="The target member who will get its birthday removed",
+        required=True
+    )
+    async def remove_birthday(self, ctx: ApplicationContext, member: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        if member != ctx.author and ctx.author.guild_permissions.moderate_members:
+            await ctx.respond("You don't have the required permissions to remove another user birthday")
+            return
+
+        self.db.removeUserBD(member.id)
+        await ctx.respond("Birthday successfully removed !")
+
     def getMonthField(self, embed: discord.Embed, idGuild: int, monthInt: int):
         months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
                   "November", "December"]
