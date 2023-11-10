@@ -16,8 +16,8 @@ class Josix(commands.Bot):
     run()
         Run the bot
     """
-    load_dotenv()
-    _TOKEN = getenv("discord")
+    load_dotenv(".env.dev")
+    _TOKEN = getenv("DISCORD")
 
     def __init__(self, bot_intents: discord.Intents) -> None:
         super().__init__(

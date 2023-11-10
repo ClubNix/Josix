@@ -32,8 +32,8 @@ class Fun(JosixCog):
         Instance to perform requests on a french jokes generator API
     """
 
-    load_dotenv()
-    _KEY = os.getenv("jokes")
+    load_dotenv(".env.dev")
+    _KEY = os.getenv("JOKES")
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../askip.json')
 

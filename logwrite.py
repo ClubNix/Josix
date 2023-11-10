@@ -4,11 +4,11 @@ import sys
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(".env.dev")
 
 # GLOBAL PATHS
-HOME_PATH = os.getenv("home")
-LOGS_PATH = HOME_PATH + os.getenv("logs")
+HOME_PATH = os.getenv("HOME")
+LOGS_PATH = HOME_PATH + os.getenv("LOGS")
 LOG_FILE = LOGS_PATH + "josixout.log"
 ERROR_FILE = LOGS_PATH + "josixerr.log"
 

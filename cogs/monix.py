@@ -60,10 +60,10 @@ class Monix(JosixCog):
             return f"• {self.name} (**{self.value}**" + (" coins)" if self.isMember else ")") + "\n"
 
     disable_warnings(InsecureRequestWarning)
-    load_dotenv()
-    _JOSIX_LOGIN = getenv("monix_log")
-    _JOSIX_PSSWD = getenv("monix_psswd")
-    _LOG_STOCK = getenv("home") + getenv("logs") + "stocks.txt"
+    load_dotenv(".env.dev")
+    _JOSIX_LOGIN = getenv("MONIX_LOG")
+    _JOSIX_PSSWD = getenv("MONIX_PASSWORD")
+    _LOG_STOCK = getenv("HOME") + getenv("LOGS") + "stocks.txt"
 
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp)

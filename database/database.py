@@ -7,6 +7,7 @@ import logwrite as log
 from typing import Callable, Any
 from database.db_utils import *
 from shutil import copyfile
+from dotenv import load_dotenv
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -26,12 +27,14 @@ class DatabaseHandler():
         The filename which called the handler
     """
     def __init__(self, filename: str) -> None:
+        load_dotenv(".env.dev")
+
         try:
             conn = psycopg2.connect(
-                host=os.getenv("host"),
-                database=os.getenv("db_name"),
-                user=os.getenv("db_user"),
-                password=os.getenv("db_pwd")
+                host=os.getenv("HOST"),
+                database=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD")
             )
 
             log.writeLog(f" - Connection on the database for {filename} done - ")

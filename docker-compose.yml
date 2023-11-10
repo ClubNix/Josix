@@ -5,12 +5,11 @@ services:
     build: .
     container_name: josix
     restart: always
-    environment:
-      -
+    env_file: .env.dev
     volumes:
+      - ./config.json:/app/config.json
       - ./data/logs:/app/logs
       - ./data/askip.json:/app/askip.json
-      - ./data/config.json:/app/config.json
       - ./data/backup.sql:/app/database/backup.sql
       - ./data/daily_backup.sql:/app/database/daily_backup.sql
       - ./data/daily_backup.sql.old:/app/database/daily_backup.sql.old
@@ -19,7 +18,7 @@ services:
         condition: service_healthy
     networks:
       BridgeServer:
-        ipv4_address: 
+        ipv4_address: ${JOSIX_IP}
 
   adminer:
     image: adminer:latest
@@ -33,13 +32,12 @@ services:
       - db
     networks:
       BridgeServer:
-        ipv4_address: 
+        ipv4_address: ${ADMINER_IP}
 
   db:
     image: postgres:latest
     restart: always
-    environment:
-      -
+    env_file: .env.db
     volumes:
       - ./initialization-scripts:/docker-entrypoint-initdb.d/
     ports:
@@ -52,16 +50,16 @@ services:
       start_period: 30s
     networks:
       BridgeServer:
-        ipv4_address: 
+        ipv4_address: ${DB_IP}
 
 
 networks:
   BridgeServer:
     name: BridgeServer
-    driver: 
+    driver: ${DRIVER}
     driver_opts:
-      parent: 
+      parent: ${PARENT}
     ipam:
       config:
-        - subnet: ""
-          gateway: ""
+        - subnet: "${SUBNET}"
+          gateway: "${GATEWAY}"
