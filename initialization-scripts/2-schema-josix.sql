@@ -1,3 +1,4 @@
+/*
 DROP TABLE IF EXISTS josix.MsgCouple;
 DROP TABLE IF EXISTS josix.LogSelector;
 DROP TABLE IF EXISTS josix.UserGuild;
@@ -9,6 +10,7 @@ DROP TABLE IF EXISTS josix.Games;
 DROP TABLE IF EXISTS josix.GameType;
 DROP TABLE IF EXISTS josix.Guild;
 DROP TABLE IF EXISTS josix.User;
+*/
 
 --
 
