@@ -32,6 +32,7 @@ class Owner(JosixCog):
         super().__init__(showHelp=showHelp, isOwner=True)
         self.bot = bot
         self.db = DatabaseHandler(os.path.basename(__file__))
+        self.startup = True
         self.daily_backup.start()
 
     def cog_check(self, ctx: ApplicationContext):
@@ -152,6 +153,9 @@ class Owner(JosixCog):
     
     @tasks.loop(hours=24.0)
     async def daily_backup(self):
+        if self.startup: # Prevents daily backup on startup
+            self.startup = False
+            return
         try:
             self.db.backup("", True)
         except Exception as e:
