@@ -1,7 +1,7 @@
 *.json
-*.env
+*.env*
 *.DS_Store
-*.sql
+database/*.sql
 *.old
 
 devdoc.md
@@ -9,6 +9,7 @@ devdoc.md
 
 __pycache__/
 logs/
+data/
 
 !config.json
 !table_order.sql

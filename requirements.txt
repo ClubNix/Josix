@@ -3,5 +3,5 @@ python-dotenv==0.19.2
 blagues-api==1.0.1
 psycopg2==2.9.3
 urllib3>=1.26.17
-requests==2.28.2
+requests>=2.31.0
 numpy==1.24.2

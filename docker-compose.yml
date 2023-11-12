@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  josix:
+    build: .
+    container_name: josix
+    restart: always
+    env_file: .env.dev
+    volumes:
+      - ./config.json:/app/config.json
+      - ./data/logs:/app/logs
+      - ./data/askip.json:/app/askip.json
+      - ./data/backup.sql:/app/database/backup.sql
+      - ./data/daily_backup.sql:/app/database/daily_backup.sql
+      - ./data/daily_backup.sql.old:/app/database/daily_backup.sql.old
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      BridgeServer:
+        ipv4_address: ${JOSIX_IP}
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    environment:
+      ADMINER_DESIGN: 'hydra'
+      ADMINER_DEFAULT_SERVER: 'postgresql'
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    networks:
+      BridgeServer:
+        ipv4_address: ${ADMINER_IP}
+
+  db:
+    image: postgres:latest
+    restart: always
+    env_file: .env.db
+    volumes:
+      - ./initialization-scripts:/docker-entrypoint-initdb.d/
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U root -d nix'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      BridgeServer:
+        ipv4_address: ${DB_IP}
+
+
+networks:
+  BridgeServer:
+    name: BridgeServer
+    driver: ${DRIVER}
+    driver_opts:
+      parent: ${PARENT}
+    ipam:
+      config:
+        - subnet: "${SUBNET}"
+          gateway: "${GATEWAY}"
