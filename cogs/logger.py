@@ -14,7 +14,7 @@ from enum import IntEnum
 from typing import Sequence
 from datetime import datetime as dt
 from bot_utils import JosixCog
-
+from josix import Josix
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -119,11 +119,11 @@ class LoggerView(discord.ui.View):
             return
 
         idGuild = interaction.guild_id
-        if not self.bot.db.getGuild(idGuild):
-            self.bot.db.addGuild(idGuild)
+        if not self.db.getGuild(idGuild):
+            self.db.addGuild(idGuild)
         
         try:
-            old = self.bot.db.getSelectLogs(idGuild)
+            old = self.db.getSelectLogs(idGuild)
         except Exception as e:
             log.writeError(log.formatError(e))
             old = None
@@ -144,7 +144,7 @@ class LoggerView(discord.ui.View):
                 values.append(logValue)
 
         try:
-            self.bot.db.updateLogSelects(idGuild, values)
+            self.db.updateLogSelects(idGuild, values)
         except Exception as e:
             log.writeError(log.formatError(e))
             await interaction.response.edit_message(content="Unknown error occured")
@@ -177,10 +177,9 @@ class Logger(JosixCog):
     updColor = 0xf1c232
     noColor = 0xc90e3a
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.bot.db = DatabaseHandler(os.path.basename(__file__))
         self._updateLogs()
 
     def _updateLogs(self):
@@ -209,7 +208,7 @@ class Logger(JosixCog):
         guildLogs = self.bot.db.getSelectLogs(idGuild)
         dbGuild = self.bot.db.getGuild(idGuild)
         
-        if not (guildLogs or dbGuild) or idLog not in guildLogs.logs:
+        if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):
             return None
         return self.bot.get_channel(dbGuild.logNews)
 

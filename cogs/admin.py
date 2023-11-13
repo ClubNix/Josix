@@ -6,9 +6,8 @@ from discord import NotFound, InvalidArgument, HTTPException
 
 import re
 import logwrite as log
-import os
 
-
+from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
 
@@ -25,7 +24,7 @@ class Admin(JosixCog):
         A handler to perform requests on the database
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
 
@@ -201,7 +200,7 @@ class Admin(JosixCog):
             self.bot.db.delMessageCouple(idMsg, idCouple)
             await og.edit(content="✅ Done !")
             await msg.clear_reaction(emoji)
-            testMsg.delete()
+            await testMsg.delete_original_response()
         else:
             await og.edit(content="❌ Unknow couple")
 

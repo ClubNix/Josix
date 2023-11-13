@@ -3,12 +3,12 @@ from discord.ui import View
 from discord.ext import commands
 from discord import ApplicationContext, Member
 
-import os
 import datetime as dt
 
-
+from josix import Josix
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
+from database.database import DatabaseHandler
 
 class Games(JosixCog):
     """
@@ -22,7 +22,7 @@ class Games(JosixCog):
         A handler to perform requests on the database
     """
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: Josix) -> None:
         super().__init__(isGame=True)
         self.bot = bot
         self.description = "games : Base"
@@ -53,10 +53,10 @@ class BaseGame(JosixCog):
         The name of the game
     """
 
-    def __init__(self, gameName: str) -> None:
+    def __init__(self, gameName: str, db: DatabaseHandler) -> None:
         super().__init__(isGame=True)
         self.name = gameName
-        self._db = DatabaseHandler(self.name)
+        self._db = db
 
         if not self.checkGame():
             self._db.addGameType(self.name)

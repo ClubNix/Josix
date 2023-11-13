@@ -27,7 +27,7 @@ class Josix(commands.Bot):
             intents=bot_intents,
             help_command=None
         )
-        self.bot.db = DatabaseHandler()
+        self.db = DatabaseHandler()
         self._extensions()
 
     def _extensions(self) -> None:

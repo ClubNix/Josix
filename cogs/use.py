@@ -15,6 +15,7 @@ from cogs.events import Events
 from math import ceil
 from bot_utils import JosixCog, josix_slash
 from database.db_utils import BirthdayAuto
+from josix import Josix
 
 
 class Poll(discord.ui.Modal):
@@ -62,11 +63,11 @@ class Usage(JosixCog):
     db: DatabaseHandler
         The database handler of this extension
     """
-    
+        
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
         self.checkBirthday.start()

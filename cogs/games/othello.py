@@ -7,7 +7,7 @@ import numpy as np
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
-
+from josix import Josix
 
 class OthelloInput(discord.ui.Select):
     """
@@ -266,8 +266,8 @@ class Othello(BaseGame):
         The bot that loaded this extension
     """
 
-    def __init__(self, bot: commands.Bot) -> None:
-        super().__init__("othello")
+    def __init__(self, bot: Josix) -> None:
+        super().__init__("othello", bot.db)
         self.bot = bot
         self.description = "games : Othello"
 

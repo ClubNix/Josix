@@ -14,7 +14,7 @@ from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
 from bot_utils import JosixCog, josix_slash
-
+from josix import Josix
 from cogs.xp_system import XP
 
 
@@ -37,7 +37,7 @@ class Fun(JosixCog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../askip.json')
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
         self.jokes = BlaguesAPI(Fun._KEY)

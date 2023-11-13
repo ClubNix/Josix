@@ -7,6 +7,7 @@ import numpy as np
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
+from josix import Josix
 
 class C4Button(discord.ui.Button["C4View"]):
     """
@@ -184,8 +185,8 @@ class Connect4(BaseGame):
         The bot that loaded this extension
     """
 
-    def __init__(self, bot: commands.Bot) -> None:
-        super().__init__("connect4")
+    def __init__(self, bot: Josix) -> None:
+        super().__init__("connect4", bot.db)
         self.bot = bot
         self.description = "games : Connect 4"
 

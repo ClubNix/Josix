@@ -2,12 +2,10 @@ import discord
 from discord.ext import commands
 from discord import RawReactionActionEvent, RawMessageDeleteEvent, RawBulkMessageDeleteEvent
 
-import os
 import logwrite as log
 
-
 from bot_utils import JosixCog
-
+from josix import Josix
 
 class ReactionRole(JosixCog):
     """
@@ -21,7 +19,7 @@ class ReactionRole(JosixCog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
 
