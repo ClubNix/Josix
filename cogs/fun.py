@@ -14,7 +14,7 @@ from asyncio import TimeoutError
 from dotenv import load_dotenv
 from json import JSONDecodeError
 from bot_utils import JosixCog, josix_slash
-from database.database import DatabaseHandler
+
 from cogs.xp_system import XP
 
 
@@ -40,7 +40,6 @@ class Fun(JosixCog):
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self.jokes = BlaguesAPI(Fun._KEY)
 
     def checkJson(self, file: dict) -> bool:
@@ -359,23 +358,23 @@ class Fun(JosixCog):
         guild = ctx.guild
         idAuth = ctx.author.id
         amount = 100
-        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idAuth, guild.id)
+        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idAuth, guild.id)
 
         if not userDB:
-            self.db.addUser(idAuth)
+            self.bot.db.addUser(idAuth)
         if not guildDB:
-            self.db.addGuild(guild.id)
-            guildDB = self.db.getGuild(guild.id)
+            self.bot.db.addGuild(guild.id)
+            guildDB = self.bot.db.getGuild(guild.id)
         if not userGuildDB:
-            self.db.addUserGuild(idAuth, guild.id)
-            userGuildDB = self.db.getUserInGuild(idAuth, guild.id)
+            self.bot.db.addUserGuild(idAuth, guild.id)
+            userGuildDB = self.bot.db.getUserInGuild(idAuth, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
 
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
-        self.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())
+        self.bot.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())
 
 
     @josix_slash(description="Get the avatar of someone")

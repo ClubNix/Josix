@@ -5,6 +5,7 @@ import logwrite as log
 
 from dotenv import load_dotenv
 from os import getenv
+from database.database import DatabaseHandler
 
 
 class Josix(commands.Bot):
@@ -26,6 +27,7 @@ class Josix(commands.Bot):
             intents=bot_intents,
             help_command=None
         )
+        self.bot.db = DatabaseHandler()
         self._extensions()
 
     def _extensions(self) -> None:

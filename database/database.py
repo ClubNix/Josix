@@ -20,13 +20,8 @@ class DatabaseHandler():
     """
     Represents an handler for the database.
     Allows to execute queries on the database
-
-    Attributes
-    ----------
-    filename : str
-        The filename which called the handler
     """
-    def __init__(self, filename: str) -> None:
+    def __init__(self) -> None:
         load_dotenv(".env.dev")
 
         try:
@@ -37,7 +32,7 @@ class DatabaseHandler():
                 password=os.getenv("DB_PASSWORD")
             )
 
-            log.writeLog(f" - Connection on the database for {filename} done - ")
+            log.writeLog(f" - Connection on the database for Josix done")
         except psycopg2.Error as error:
             log.writeError(log.formatError(error))
             return

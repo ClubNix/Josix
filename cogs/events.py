@@ -10,7 +10,7 @@ import os
 import json
 
 from json import JSONDecodeError
-from database.database import DatabaseHandler
+
 from bot_utils import JosixCog
 
 class Events(JosixCog):
@@ -36,7 +36,6 @@ class Events(JosixCog):
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self.close = ""
         self.open = ""
 
@@ -156,7 +155,7 @@ class Events(JosixCog):
         if member.bot:
             return
 
-        dbGuild = self.db.getGuild(member.guild.id)
+        dbGuild = self.bot.db.getGuild(member.guild.id)
         if not dbGuild:
             return
 

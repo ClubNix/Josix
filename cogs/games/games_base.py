@@ -6,7 +6,7 @@ from discord import ApplicationContext, Member
 import os
 import datetime as dt
 
-from database.database import DatabaseHandler
+
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 
@@ -26,16 +26,15 @@ class Games(JosixCog):
         super().__init__(isGame=True)
         self.bot = bot
         self.description = "games : Base"
-        self._db = DatabaseHandler(os.path.basename(__file__))
         self._cleanGames()
 
     def _cleanGames(self):
-        self._db.deleteGames()
+        self.bot.db.deleteGames()
 
     @josix_slash(description="Quit your current game")
     async def quit_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        self._db.quitGame(ctx.author.id)
+        self.bot.db.quitGame(ctx.author.id)
         await ctx.respond("You just left your game")
 
 

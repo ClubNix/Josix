@@ -9,7 +9,7 @@ import os
 import logwrite as log
 import json
 
-from database.database import DatabaseHandler
+
 from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
@@ -69,7 +69,6 @@ class Usage(JosixCog):
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self.checkBirthday.start()
 
     @josix_slash(description="Get the help menu")
@@ -350,17 +349,17 @@ class Usage(JosixCog):
         else:
             stringRes = "Your birthday has been added !"
 
-        testUser = self.db.getUser(userId)
+        testUser = self.bot.db.getUser(userId)
         if not testUser:
-            self.db.addUser(userId)
+            self.bot.db.addUser(userId)
 
-        testGuild = self.db.getGuild(ctx.guild_id)
+        testGuild = self.bot.db.getGuild(ctx.guild_id)
         if not testGuild:
-            self.db.addGuild(ctx.guild_id)
+            self.bot.db.addGuild(ctx.guild_id)
 
-        testBoth = self.db.getUserInGuild(userId, ctx.guild_id)
+        testBoth = self.bot.db.getUserInGuild(userId, ctx.guild_id)
         if not testBoth:
-            self.db.addUserGuild(userId, ctx.guild_id)
+            self.bot.db.addUserGuild(userId, ctx.guild_id)
 
         today = datetime.date.today()
         if today.month < month or (today.month == month and today.day < day):
@@ -368,7 +367,7 @@ class Usage(JosixCog):
         else:
             bdYear = today.year
 
-        self.db.updateUserBD(userId, day, month, bdYear)
+        self.bot.db.updateUserBD(userId, day, month, bdYear)
         await ctx.respond(stringRes)
 
     @josix_slash(description="Remove a birthday date")
@@ -386,7 +385,7 @@ class Usage(JosixCog):
             await ctx.respond("You don't have the required permissions to remove another user birthday")
             return
 
-        self.db.removeUserBD(member.id)
+        self.bot.db.removeUserBD(member.id)
         await ctx.respond("Birthday successfully removed !")
 
     def getMonthField(self, embed: discord.Embed, idGuild: int, monthInt: int):
@@ -394,7 +393,7 @@ class Usage(JosixCog):
                   "November", "December"]
         res = []
 
-        values = self.db.getBDMonth(idGuild, monthInt)
+        values = self.bot.db.getBDMonth(idGuild, monthInt)
         if not values:
             return embed
 
@@ -439,7 +438,7 @@ class Usage(JosixCog):
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = self.db.getUser(user.id)
+        res = self.bot.db.getUser(user.id)
         if not res:
             await ctx.respond("User not registered")
             return
@@ -453,13 +452,13 @@ class Usage(JosixCog):
     @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
-        bd: list[BirthdayAuto] | None = self.db.safeExecute(self.db.checkBD, today.day, today.month)
+        bd: list[BirthdayAuto] | None = self.bot.db.safeExecute(self.bot.db.checkBD, today.day, today.month)
         if not bd:
             return
 
         for value in bd:
             idUser = value.idUser
-            results: list[int] | None = self.db.safeExecute(self.db.getNewsChanFromUser, idUser)
+            results: list[int] | None = self.bot.db.safeExecute(self.bot.db.getNewsChanFromUser, idUser)
             if not results:
                 continue
 
@@ -470,8 +469,8 @@ class Usage(JosixCog):
 
                 today = datetime.date.today()
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
-                self.db.safeExecute(
-                    self.db.updateUserBD,
+                self.bot.db.safeExecute(
+                    self.bot.db.updateUserBD,
                     idUser, today.day, today.month, today.year
                 )
 

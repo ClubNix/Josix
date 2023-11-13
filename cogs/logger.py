@@ -119,11 +119,11 @@ class LoggerView(discord.ui.View):
             return
 
         idGuild = interaction.guild_id
-        if not self.db.getGuild(idGuild):
-            self.db.addGuild(idGuild)
+        if not self.bot.db.getGuild(idGuild):
+            self.bot.db.addGuild(idGuild)
         
         try:
-            old = self.db.getSelectLogs(idGuild)
+            old = self.bot.db.getSelectLogs(idGuild)
         except Exception as e:
             log.writeError(log.formatError(e))
             old = None
@@ -144,7 +144,7 @@ class LoggerView(discord.ui.View):
                 values.append(logValue)
 
         try:
-            self.db.updateLogSelects(idGuild, values)
+            self.bot.db.updateLogSelects(idGuild, values)
         except Exception as e:
             log.writeError(log.formatError(e))
             await interaction.response.edit_message(content="Unknown error occured")
@@ -180,12 +180,12 @@ class Logger(JosixCog):
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
+        self.bot.db = DatabaseHandler(os.path.basename(__file__))
         self._updateLogs()
 
     def _updateLogs(self):
         logs = [(i.lower(), v.value) for i, v in Logs._member_map_.items()]
-        self.db.updateLogsEntries(logs)
+        self.bot.db.updateLogsEntries(logs)
 
     async def checkLogStatus(self, idGuild: int, idLog: int) -> discord.TextChannel | None:
         """
@@ -206,8 +206,8 @@ class Logger(JosixCog):
         TextChannel | None
             The text channel that displays the logs
         """
-        guildLogs = self.db.getSelectLogs(idGuild)
-        dbGuild = self.db.getGuild(idGuild)
+        guildLogs = self.bot.db.getSelectLogs(idGuild)
+        dbGuild = self.bot.db.getGuild(idGuild)
         
         if not (guildLogs or dbGuild) or idLog not in guildLogs.logs:
             return None

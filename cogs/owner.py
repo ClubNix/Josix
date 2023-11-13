@@ -5,7 +5,7 @@ from discord import ApplicationContext, option
 import os
 import logwrite as log
 
-from database.database import DatabaseHandler
+
 from logwrite import LOG_FILE, ERROR_FILE
 from psycopg2 import Error as DBError
 from bot_utils import JosixCog, josix_slash
@@ -31,7 +31,6 @@ class Owner(JosixCog):
     def __init__(self, bot: commands.Bot, showHelp: bool):
         super().__init__(showHelp=showHelp, isOwner=True)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self.startup = True
         self.daily_backup.start()
 
@@ -53,7 +52,7 @@ class Owner(JosixCog):
     )
     async def create_backup(self, ctx: ApplicationContext, table: str):
         await ctx.defer(ephemeral=False, invisible=False)
-        self.db.backup(table)
+        self.bot.db.backup(table)
         await ctx.respond("Backup done !")
 
     @josix_slash(description="Execute a query")
@@ -66,7 +65,7 @@ class Owner(JosixCog):
     async def execute(self, ctx: ApplicationContext, query: str):
         await ctx.defer(ephemeral=False, invisible=False)
         try:
-            await ctx.respond(self.db.execute(query))
+            await ctx.respond(self.bot.db.execute(query))
         except discord.HTTPException as e:
             await ctx.respond(e)
 
@@ -81,7 +80,7 @@ class Owner(JosixCog):
             lines = f.readlines()
         for index, line in enumerate(lines):
             try:
-                self.db.execute(line, True)
+                self.bot.db.execute(line, True)
             except DBError as db_error:
                 tmp = f"**l.{index+1}** : {str(db_error)}\n"
                 lenTmp = len(tmp)
@@ -157,7 +156,7 @@ class Owner(JosixCog):
             self.startup = False
             return
         try:
-            self.db.backup("", True)
+            self.bot.db.backup("", True)
         except Exception as e:
             log.writeError(log.formatError(e))
 

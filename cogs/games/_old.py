@@ -2,13 +2,12 @@ import discord
 from discord.ext import commands
 
 from asyncio import TimeoutError
-from database.database import DatabaseHandler
+
 
 
 class GamesBase(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseHandler()
 
     def updateElo(self, oldElo: int, foeElo: int, win: bool):
         """
@@ -46,7 +45,7 @@ class GamesBase(commands.Cog):
         for i, foe in enumerate(foes):
             newElo = self.updateElo(eloList[i], winnerElo, False)
             text += f"{foe.mention} : {eloList[i]} - {eloList[i] - newElo} -> **{newElo}**\n"
-            self.db.updatePlayerStat(foe.id, newElo)
+            self.bot.db.updatePlayerStat(foe.id, newElo)
         return text
 
     # Old command not updated because we don't have our dart game anymore
@@ -69,17 +68,17 @@ class GamesBase(commands.Cog):
 
         eloList = []
         for foe in foes:
-            playerStat = self.db.getPlayerStat(foe.id)
+            playerStat = self.bot.db.getPlayerStat(foe.id)
             if not playerStat:
                 eloList.append(1000)
-                self.db.addUser(foe.id)
+                self.bot.db.addUser(foe.id)
             else:
                 eloList.append(playerStat[0])
         foesElo = sum((eloList)) / len(eloList)
 
-        player1 = self.db.getPlayerStat(winner.id)
+        player1 = self.bot.db.getPlayerStat(winner.id)
         if not player1:
-            self.db.addUser(winner.id)
+            self.bot.db.addUser(winner.id)
             elo1 = 1000
         else:
             elo1 = player1[0]
@@ -102,9 +101,9 @@ class GamesBase(commands.Cog):
             return
 
         newElo1 = self.updateElo(elo1, foesElo, True)
-        self.db.updatePlayerStat(winner.id, newElo1)
+        self.bot.db.updatePlayerStat(winner.id, newElo1)
         text = self.updateFoes(foes, eloList, elo1)
-        self.db.addDartLog(ctx.guild.id, winner, foes)
+        self.bot.db.addDartLog(ctx.guild.id, winner, foes)
 
         embed = discord.Embed(title="Dart Game", description="Results of last dart game", color=0x0089FF)
         embed.set_author(name=ctx.author)
