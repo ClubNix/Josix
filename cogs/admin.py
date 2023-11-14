@@ -6,9 +6,8 @@ from discord import NotFound, InvalidArgument, HTTPException
 
 import re
 import logwrite as log
-import os
 
-from database.database import DatabaseHandler
+from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
 
@@ -25,10 +24,9 @@ class Admin(JosixCog):
         A handler to perform requests on the database
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
 
     @josix_slash(description="Clear messages from the channel")
     @commands.has_permissions(manage_messages=True)
@@ -101,35 +99,35 @@ class Admin(JosixCog):
             return
 
         try:
-            testGuild = self.db.getGuild(ctx.guild_id)
+            testGuild = self.bot.db.getGuild(ctx.guild_id)
             if not testGuild:
-                self.db.addGuild(ctx.guild_id, ctx.channel_id)
+                self.bot.db.addGuild(ctx.guild_id, ctx.channel_id)
 
-            testMsg = self.db.getMsg(idMsg)
+            testMsg = self.bot.db.getMsg(idMsg)
             if not testMsg:
-                self.db.addMsg(ctx.guild_id, idMsg)
+                self.bot.db.addMsg(ctx.guild_id, idMsg)
                 new = True
         except Exception as e:
             await msg.clear_reaction(emoji)
             log.writeError(str(e))
 
-        duos = self.db.getCouples(idMsg)
+        duos = self.bot.db.getCouples(idMsg)
         if duos:
             for duo in duos:
                 if emoji == duo.emoji:
                     await ctx.respond("The emoji is already used in the message")
                     if new:
-                        self.db.delMessageReact(idMsg)
+                        self.bot.db.delMessageReact(idMsg)
                     return
 
                 elif idRole == duo.idRole:
                     await ctx.respond("The role is already used in the message")
                     await msg.clear_reaction(emoji)
                     if new:
-                        self.db.delMessageReact(idMsg)
+                        self.bot.db.delMessageReact(idMsg)
                     return
 
-        self.db.addCouple((emoji, idRole), idMsg)
+        self.bot.db.addCouple((emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
 
     @josix_slash(description="Delete a couple in a reaction-role message")
@@ -186,11 +184,11 @@ class Admin(JosixCog):
             await og.edit(content="❌ Unknown error with the emoji")
             return
 
-        if not (self.db.getGuild(ctx.guild_id) and self.db.getMsg(idMsg)):
+        if not (self.bot.db.getGuild(ctx.guild_id) and self.bot.db.getMsg(idMsg)):
             await og.edit(content="❌ This message is unregistered")
             return
 
-        duos = self.db.getCouples(idMsg)
+        duos = self.bot.db.getCouples(idMsg)
         test = False
         for duo in duos:
             if duo.emoji == emoji and duo.idRole == idRole:
@@ -199,10 +197,10 @@ class Admin(JosixCog):
                 break
         
         if test:
-            self.db.delMessageCouple(idMsg, idCouple)
+            self.bot.db.delMessageCouple(idMsg, idCouple)
             await og.edit(content="✅ Done !")
             await msg.clear_reaction(emoji)
-            testMsg.delete()
+            await testMsg.delete_original_response()
         else:
             await og.edit(content="❌ Unknow couple")
 
@@ -216,11 +214,11 @@ class Admin(JosixCog):
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.db.getGuild(idGuild)
+        testGuild = self.bot.db.getGuild(idGuild)
         if not testGuild:
-            self.db.addGuild(idGuild, idChan)
+            self.bot.db.addGuild(idGuild, idChan)
         else:
-            self.db.changeNewsChan(idGuild, idChan)
+            self.bot.db.changeNewsChan(idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
 
     @josix_slash(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
@@ -233,11 +231,11 @@ class Admin(JosixCog):
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.db.getGuild(idGuild)
+        testGuild = self.bot.db.getGuild(idGuild)
         if not testGuild:
-            self.db.addGuild(idGuild, idChan)
+            self.bot.db.addGuild(idGuild, idChan)
         else:
-            self.db.changeXPChan(idGuild, idChan)
+            self.bot.db.changeXPChan(idGuild, idChan)
         await ctx.respond("this channel will now the XP news !")
 
 
@@ -250,13 +248,13 @@ class Admin(JosixCog):
         xpState = None
         idGuild = ctx.guild_id
 
-        xpState = self.db.getGuild(idGuild)
+        xpState = self.bot.db.getGuild(idGuild)
         if not xpState:
-            self.db.addGuild(idGuild)
-            xpState = self.db.getGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
+            xpState = self.bot.db.getGuild(idGuild)
 
         enabled = xpState.enableXp
-        self.db.updateGuildXpEnabled(idGuild)
+        self.bot.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
     @josix_slash(description="Set up the custom welcome system for your server")
@@ -297,11 +295,11 @@ class Admin(JosixCog):
             return
 
         idGuild = ctx.guild_id
-        dbGuild = self.db.getGuild(idGuild)
+        dbGuild = self.bot.db.getGuild(idGuild)
 
         if not dbGuild:
-            self.db.addGuild(idGuild)
-            dbGuild = self.db.getGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
+            dbGuild = self.bot.db.getGuild(idGuild)
 
         if not channel:
             idChan = dbGuild.wChan if keep else 0
@@ -314,7 +312,7 @@ class Admin(JosixCog):
         if not message:
             message = dbGuild.wText if keep else ""
 
-        self.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
+        self.bot.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
         await ctx.respond("Your custome welcome message has been set")
 
 
@@ -325,13 +323,13 @@ class Admin(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
 
         idGuild = ctx.guild_id
-        dbGuild = self.db.getGuild(idGuild)
+        dbGuild = self.bot.db.getGuild(idGuild)
         if not dbGuild:
-            self.db.addGuild(idGuild)
-            dbGuild = self.db.getGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
+            dbGuild = self.bot.db.getGuild(idGuild)
 
         enabled = dbGuild.enableWelcome
-        self.db.updateGuildWelcomeEnabled(idGuild)
+        self.bot.db.updateGuildWelcomeEnabled(idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
     @josix_slash(description="Choose which logs to register")
@@ -343,7 +341,7 @@ class Admin(JosixCog):
         description="Keep old selected logs if not set"
     )
     async def set_logger(self, ctx: ApplicationContext, keep: bool):
-        await ctx.respond("Choose your logs :", view=LoggerView(self.db, keep))
+        await ctx.respond("Choose your logs :", view=LoggerView(self.bot.db, keep))
 
     @josix_slash(description="Choose where to send the logs")
     @commands.has_permissions(manage_guild=True)
@@ -357,10 +355,10 @@ class Admin(JosixCog):
     async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
         await ctx.defer(ephemeral=False, invisible=False)
         if channel:     
-            self.db.updateLogChannel(ctx.guild.id, channel.id)
+            self.bot.db.updateLogChannel(ctx.guild.id, channel.id)
             await ctx.respond("Logs channel set")
         else:
-            self.db.updateLogChannel(ctx.guild.id, None)
+            self.bot.db.updateLogChannel(ctx.guild.id, None)
             await ctx.respond("Logs channel unset")
 
     @josix_slash(description="Block or unblock a category from xp leveling")
@@ -376,17 +374,17 @@ class Admin(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
         idCat = category.id
         idGuild = ctx.guild_id
-        dbGuild = self.db.getGuild(idGuild)
+        dbGuild = self.bot.db.getGuild(idGuild)
 
         if not dbGuild:
-            self.db.addGuild(idGuild)
-            dbGuild = self.db.getGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
+            dbGuild = self.bot.db.getGuild(idGuild)
 
         if idCat in dbGuild.blockedCat:
-            self.db.unblockCategory(idCat, idGuild)
+            self.bot.db.unblockCategory(idCat, idGuild)
             text = "unblocked"
         else:
-            self.db.blockCategory(idCat, idGuild)
+            self.bot.db.blockCategory(idCat, idGuild)
             text = "blocked"
         await ctx.respond(f"The category **{category.name}** is now **{text}**")
 

@@ -2,12 +2,10 @@ import discord
 from discord.ext import commands
 from discord import RawReactionActionEvent, RawMessageDeleteEvent, RawBulkMessageDeleteEvent
 
-import os
 import logwrite as log
 
-from database.database import DatabaseHandler
 from bot_utils import JosixCog
-
+from josix import Josix
 
 class ReactionRole(JosixCog):
     """
@@ -21,10 +19,9 @@ class ReactionRole(JosixCog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
 
     async def updateRole(self, payload: RawReactionActionEvent, add: bool) -> None:
         """
@@ -46,7 +43,7 @@ class ReactionRole(JosixCog):
             return
 
         msgId = payload.message_id
-        resMsg = self.db.getMsg(msgId)
+        resMsg = self.bot.db.getMsg(msgId)
         if not resMsg:
             return
 
@@ -55,15 +52,24 @@ class ReactionRole(JosixCog):
             guildId = payload.guild_id
             emojiName = emoji.name
 
-            guild = self.bot.get_guild(guildId)
-            member = guild.get_member(userId)
+            if not (guild := self.bot.get_guild(guildId)) and not (guild := await self.bot.fetch_guild(guildId)):
+                return
 
-            resRole = self.db.getRoleFromReact(msgId, emojiName)
+            if not (member := guild.get_member(userId)) and not (member := await guild.fetch_member(userId)):
+                return
+
+            resRole = self.bot.db.getRoleFromReact(msgId, emojiName)
             if resRole is None:
                 return
 
             roleId = resRole
-            role = guild.get_role(roleId)
+            if not (role := guild.get_role(roleId)):
+                for val in await guild.fetch_roles():
+                    if val.id == roleId:
+                        role = val
+                        break
+                else:
+                    return
 
             if add:
                 if not member.get_role(roleId):
@@ -89,10 +95,10 @@ class ReactionRole(JosixCog):
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
         try:
-            if not self.db.getMsg(payload.message_id):
+            if not self.bot.db.getMsg(payload.message_id):
                 return
 
-            self.db.delMessageReact(payload.message_id)
+            self.bot.db.delMessageReact(payload.message_id)
         except Exception as e:
             log.writeLog(log.formatError(e))
 
@@ -100,22 +106,22 @@ class ReactionRole(JosixCog):
     async def on_raw_bulk_message_delete(self, payload: RawBulkMessageDeleteEvent):
         try:
             for msg_id in payload.message_ids:
-                if not self.db.getMsg(msg_id):
+                if not self.bot.db.getMsg(msg_id):
                     continue
 
-                self.db.delMessageReact(msg_id)
+                self.bot.db.delMessageReact(msg_id)
         except Exception as e:
             log.writeLog(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
         try:
-            couples = self.db.getCoupleFromRole(role.id)
+            couples = self.bot.db.getCoupleFromRole(role.id)
             if not couples:
                 return
 
             for couple in couples:
-                self.db.delReactCouple(couple.id)
+                self.bot.db.delReactCouple(couple.id)
         except Exception as e:
             log.writeLog(log.formatError(e))
 

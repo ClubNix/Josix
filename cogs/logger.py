@@ -14,7 +14,7 @@ from enum import IntEnum
 from typing import Sequence
 from datetime import datetime as dt
 from bot_utils import JosixCog
-
+from josix import Josix
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -177,15 +177,14 @@ class Logger(JosixCog):
     updColor = 0xf1c232
     noColor = 0xc90e3a
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self._updateLogs()
 
     def _updateLogs(self):
         logs = [(i.lower(), v.value) for i, v in Logs._member_map_.items()]
-        self.db.updateLogsEntries(logs)
+        self.bot.db.updateLogsEntries(logs)
 
     async def checkLogStatus(self, idGuild: int, idLog: int) -> discord.TextChannel | None:
         """
@@ -206,12 +205,12 @@ class Logger(JosixCog):
         TextChannel | None
             The text channel that displays the logs
         """
-        guildLogs = self.db.getSelectLogs(idGuild)
-        dbGuild = self.db.getGuild(idGuild)
+        guildLogs = self.bot.db.getSelectLogs(idGuild)
+        dbGuild = self.bot.db.getGuild(idGuild)
         
-        if not (guildLogs or dbGuild) or idLog not in guildLogs.logs:
+        if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):
             return None
-        return self.bot.get_channel(dbGuild.logNews)
+        return self.bot.get_channel(dbGuild.logNews) or await self.bot.fetch_channel(dbGuild.logNews)
 
 #
 # Automod logs

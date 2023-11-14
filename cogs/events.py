@@ -10,7 +10,7 @@ import os
 import json
 
 from json import JSONDecodeError
-from database.database import DatabaseHandler
+from josix import Josix
 from bot_utils import JosixCog
 
 class Events(JosixCog):
@@ -33,10 +33,9 @@ class Events(JosixCog):
     _SCRIPT_DIR = os.path.dirname(__file__)
     _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
         self.close = ""
         self.open = ""
 
@@ -101,8 +100,7 @@ class Events(JosixCog):
 
     @commands.Cog.listener()
     async def on_raw_thread_update(self, payload: RawThreadUpdateEvent):
-        guild = self.bot.get_guild(payload.guild_id)
-        if not guild:
+        if not (guild := self.bot.get_guild(payload.guild_id)) or not (guild := await self.bot.fetch_guild(payload.guild_id)):
             return
 
         if not payload.thread:
@@ -156,7 +154,7 @@ class Events(JosixCog):
         if member.bot:
             return
 
-        dbGuild = self.db.getGuild(member.guild.id)
+        dbGuild = self.bot.db.getGuild(member.guild.id)
         if not dbGuild:
             return
 

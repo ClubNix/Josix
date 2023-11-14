@@ -1,13 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.abc import Messageable
 from discord import ApplicationContext, option
 
 import datetime as dt
 import logwrite as log
-import os
 
-from database.database import DatabaseHandler
+from josix import Josix
 from bot_utils import JosixSlash, JosixCog, josix_slash
 
 class XP(JosixCog):
@@ -22,10 +20,9 @@ class XP(JosixCog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.db = DatabaseHandler(os.path.basename(__file__))
 
     @staticmethod
     def nextLevelXP(lvl: int, xp: int = 0) -> int:
@@ -89,16 +86,16 @@ class XP(JosixCog):
         xp : int
             The XP the user will obtain
         """
-        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idTarget, idGuild)
+        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idTarget, idGuild)
 
         if not userDB:
-            self.db.addUser(idTarget)
+            self.bot.db.addUser(idTarget)
         if not guildDB:
-            self.db.addGuild(idGuild)
-            guildDB = self.db.getGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
+            guildDB = self.bot.db.getGuild(idGuild)
         if not userGuildDB:
-            self.db.addUserGuild(idTarget, idGuild)
-            userGuildDB = self.db.getUserInGuild(idTarget, idGuild)
+            self.bot.db.addUserGuild(idTarget, idGuild)
+            userGuildDB = self.bot.db.getUserInGuild(idTarget, idGuild)
     
         xpChanId = guildDB.xpNews
         xpEnabled = guildDB.enableXp
@@ -124,11 +121,10 @@ class XP(JosixCog):
         currentLvl = currentLvl + 1 if newLvl else currentLvl
         currentXP = min(1_899_250, currentXP+xp)
 
-        self.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
+        self.bot.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
-            xpChan = self.bot.get_channel(xpChanId)
-            if xpChan:
+            if (xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId)):
                 await xpChan.send(
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
@@ -182,7 +178,8 @@ class XP(JosixCog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        channel = self.bot.get_channel(payload.channel_id)
+        if not (channel := self.bot.get_channel(payload.channel_id)) and not (channel := await self.bot.fetch_channel(payload.channel_id)):
+            return
 
         if (
             payload.member.bot or
@@ -228,36 +225,36 @@ class XP(JosixCog):
 
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(member.id, guild.id)
+        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
 
         if not userDB:
-            self.db.addUser(member.id)
+            self.bot.db.addUser(member.id)
         if not guildDB:
-            self.db.addGuild(guild.id)
-            guildDB = self.db.getGuild(guild.id)
+            self.bot.db.addGuild(guild.id)
+            guildDB = self.bot.db.getGuild(guild.id)
         if not userGuildDB:
-            self.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.db.getUserInGuild(member.id, guild.id)
+            self.bot.db.addUserGuild(member.id, guild.id)
+            userGuildDB = self.bot.db.getUserInGuild(member.id, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
 
         currentXP = userGuildDB.xp
         newXP, level = self.checkUpdateXP(currentXP, amount)
-        self.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
+        self.bot.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(member.id, guild.id)
+        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
 
         if not userDB:
-            self.db.addUser(member.id)
+            self.bot.db.addUser(member.id)
         if not guildDB:
-            self.db.addGuild(guild.id)
-            guildDB = self.db.getGuild(guild.id)
+            self.bot.db.addGuild(guild.id)
+            guildDB = self.bot.db.getGuild(guild.id)
         if not userGuildDB:
-            self.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.db.getUserInGuild(member.id, guild.id)
+            self.bot.db.addUserGuild(member.id, guild.id)
+            userGuildDB = self.bot.db.getUserInGuild(member.id, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
@@ -270,7 +267,7 @@ class XP(JosixCog):
             newLvl = 100
 
         xp = self.totalLevelXP(newLvl)
-        self.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
+        self.bot.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
 
     @josix_slash(description="Gives XP to a user")
     @commands.has_permissions(moderate_members=True)
@@ -295,7 +292,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -328,7 +325,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -361,7 +358,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -394,7 +391,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.db.getUserInGuild(member.id, ctx.guild.id):
+            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -420,15 +417,15 @@ class XP(JosixCog):
         idGuild = ctx.guild.id
 
         try:
-            guildDB = self.db.getGuild(idGuild)
+            guildDB = self.bot.db.getGuild(idGuild)
             if not guildDB:
-                self.db.addGuild(idGuild)
+                self.bot.db.addGuild(idGuild)
                 await ctx.respond("Server registered now. Try this command later")
                 return
             elif not guildDB.enableXp:
                 await ctx.respond("The xp system is not enabled in this server.")
                 return
-            lb = self.db.getXpLeaderboard(idGuild, limit)
+            lb = self.bot.db.getXpLeaderboard(idGuild, limit)
         except Exception as e:
             log.writeError(log.formatError(e))
 
@@ -485,7 +482,7 @@ class XP(JosixCog):
             return
 
         idGuild = ctx.guild.id
-        stats = self.db.getUserInGuild(member.id, idGuild)
+        stats = self.bot.db.getUserInGuild(member.id, idGuild)
         if not stats:
             await ctx.respond("This user is not registered")
             return
@@ -495,7 +492,7 @@ class XP(JosixCog):
         xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
         nextXp = self.nextLevelXP(lvl, xp-lastNeed)
         progress = round((xp / xpNeed) * 100, 2)
-        pos = self.db.getLeaderboardPos(member.id, idGuild)
+        pos = self.bot.db.getLeaderboardPos(member.id, idGuild)
 
         embed = discord.Embed(
             title=f"{member}'s card",
@@ -533,18 +530,18 @@ class XP(JosixCog):
         idTarget = member.id
         idGuild = ctx.guild_id
         
-        userDB, guildDB, userGuildDB = self.db.getUserGuildLink(idTarget, idGuild)
+        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idTarget, idGuild)
 
         if not userDB:
-            self.db.addUser(idTarget)
+            self.bot.db.addUser(idTarget)
         if not guildDB:
-            self.db.addGuild(idGuild)
+            self.bot.db.addGuild(idGuild)
         if not userGuildDB:
-            self.db.addUserGuild(idTarget, idGuild)
-            userGuildDB = self.db.getUserInGuild(idTarget, idGuild)
+            self.bot.db.addUserGuild(idTarget, idGuild)
+            userGuildDB = self.bot.db.getUserInGuild(idTarget, idGuild)
 
         blocked = userGuildDB.isUserBlocked
-        self.db.updateUserBlock(idTarget, idGuild)
+        self.bot.db.updateUserBlock(idTarget, idGuild)
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
 
 
