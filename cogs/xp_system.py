@@ -1,13 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.abc import Messageable
 from discord import ApplicationContext, option
 
 import datetime as dt
 import logwrite as log
-import os
 
-
+from josix import Josix
 from bot_utils import JosixSlash, JosixCog, josix_slash
 
 class XP(JosixCog):
@@ -22,7 +20,7 @@ class XP(JosixCog):
         The database handler of this extension
     """
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
 
@@ -126,8 +124,7 @@ class XP(JosixCog):
         self.bot.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
-            xpChan = self.bot.get_channel(xpChanId)
-            if xpChan:
+            if (xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId)):
                 await xpChan.send(
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
@@ -181,7 +178,8 @@ class XP(JosixCog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        channel = self.bot.get_channel(payload.channel_id)
+        if not (channel := self.bot.get_channel(payload.channel_id)) and not (channel := await self.bot.fetch_channel(payload.channel_id)):
+            return
 
         if (
             payload.member.bot or

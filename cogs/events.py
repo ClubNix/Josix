@@ -100,8 +100,7 @@ class Events(JosixCog):
 
     @commands.Cog.listener()
     async def on_raw_thread_update(self, payload: RawThreadUpdateEvent):
-        guild = self.bot.get_guild(payload.guild_id)
-        if not guild:
+        if not (guild := self.bot.get_guild(payload.guild_id)) or not (guild := await self.bot.fetch_guild(payload.guild_id)):
             return
 
         if not payload.thread:

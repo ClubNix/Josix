@@ -52,15 +52,24 @@ class ReactionRole(JosixCog):
             guildId = payload.guild_id
             emojiName = emoji.name
 
-            guild = self.bot.get_guild(guildId)
-            member = guild.get_member(userId)
+            if not (guild := self.bot.get_guild(guildId)) and not (guild := await self.bot.fetch_guild(guildId)):
+                return
+
+            if not (member := guild.get_member(userId)) and not (member := await guild.fetch_member(userId)):
+                return
 
             resRole = self.bot.db.getRoleFromReact(msgId, emojiName)
             if resRole is None:
                 return
 
             roleId = resRole
-            role = guild.get_role(roleId)
+            if not (role := guild.get_role(roleId)):
+                for val in await guild.fetch_roles():
+                    if val.id == roleId:
+                        role = val
+                        break
+                else:
+                    return
 
             if add:
                 if not member.get_role(roleId):

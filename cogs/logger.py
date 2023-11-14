@@ -210,7 +210,7 @@ class Logger(JosixCog):
         
         if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):
             return None
-        return self.bot.get_channel(dbGuild.logNews)
+        return self.bot.get_channel(dbGuild.logNews) or await self.bot.fetch_channel(dbGuild.logNews)
 
 #
 # Automod logs
