@@ -36,8 +36,14 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
   - `git clone git@github.com:ClubNix/Josix.git`
   - `cd Josix`
 
-- Get all the required packages :
-  - `pip install -r requirements.txt`
+- Create a folder in the root directory of the project (`data` is the default name) and add the following files :
+  - `backup.sql`
+  - `daily_backup.sql`
+  - `daily_backup.sql.old`
+  - `askip.json`
+  - `logs` folder with :
+    - `josixout.log`
+    - `josixerr.log`
 
 - Add your informations :
 	- Create a `.env` file for the `docker-compose.yml` with these informations (default values given):
@@ -84,7 +90,7 @@ LOGS=logs_directory (logs/)
   - The `tags` field is here to automatically create "open" and "close" tags for the forum channel. **DO NOT** edit the names `open` and `close`, just edit their content. 
 
 - Add your own private jokes :
-	- Create a file `askip.json` (if you want to change the name you have to change it in the `fun.py` file)
+	- If not already done, create `askip.json` (if you want to change the name you have to change it in the `fun.py` file)
 	- Fill it with your private jokes like this :
 
 ```json
