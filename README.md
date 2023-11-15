@@ -39,10 +39,6 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
 - Get all the required packages :
   - `pip install -r requirements.txt`
 
-- Configure the database :
-  - Go on the project [BDDNix](https://github.com/ClubNix/BDDNix)
-  - Install and launch the project by following the instructions in the [README](https://github.com/ClubNix/BDDNix/blob/main/Readme.md) file
-
 - Add your informations :
 	- Create a `.env` file for the `docker-compose.yml` with these informations (default values given):
 ```
@@ -112,6 +108,13 @@ LOGS=logs_directory (logs/)
 - Run the bot :
   - `sudo docker-compose build` Build the bot (if the code have been modified).
   - `sudo docker-compose up` Launch the whole project.
+
+  - Access to the adminer page to manage your database at `adminer_ip:8080`. Then log with :
+    - PostgreSQL
+    - db (by default)
+    - postgres_user
+    - user_password
+    - postgres_db
 
 
 ## Warning
