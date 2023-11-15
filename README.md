@@ -44,23 +44,44 @@ Josix is a discord bot written with [py-cord](https://pypi.org/project/py-cord/)
   - Install and launch the project by following the instructions in the [README](https://github.com/ClubNix/BDDNix/blob/main/Readme.md) file
 
 - Add your informations :
-	- Create a `.env` file with these informations :
+	- Create a `.env` file for the `docker-compose.yml` with these informations (default values given):
 ```
-discord = your_discord_bot_token_here
-jokes = Blagues_API_token_here
-db_name = your_database_name
-db_user = user_for_bot_in_database
-db_pwd = password_for_your_bot
-host = address_of_the_database
-monix_log = username_for_monix (only for us)
-monix_psswd = password_for_monix (only for us)
-home = your_home_directory
-logs = log_repository_in_your_home
+JOSIX_IP=bot_ip (192.168.1.2)
+ADMINER_IP=adminer_ip (192.168.1.3)
+DB_IP=database_ip (192.168.1.4)
+DRIVER=bridge
+PARENT=ens18
+SUBNET=subnet_of_services (192.168.1.0/24)
+GATEWAY=gateway_of_subnet (192.168.1.1)
 ```
 
-> The "blagues_api" token is not required to launch the bot, it's for the `joke` command (french jokes only). <br>
-> The home, logs, log/error_file fields are here to get logs and get nothing in your terminal <br>
-> No need to give monix_log and monix_psswd
+  - Create a `.env.db` for all the secret informations about the database :
+
+```
+POSTGRES_USER=root
+POSTGRES_PASSWORD=root
+POSTGRES_DB=your_db
+PG_USER=root
+```
+
+  - Create a `.env.dev` file for all the secret informations for the bot :
+
+```
+DISCORD=discord_bot_token
+JOKES=blagues_api_token
+DB_NAME=database_name
+DB_USER=database_user
+DB_PASSWORD=database_user
+HOST=database_host
+MONIX_LOG=bot_monix_username (only for us)
+MONIX_PASSWORD=bot_monix_password (only for us)
+HOME=home_directory (./)
+LOGS=logs_directory (logs/)
+```
+
+> The `JOKES` field for `blagues_api` token is not required to launch the bot. It's used for the `joke` command (french jokes only). <br>
+> The `HOME` and `LOGS` fields are here to get logs and get nothing in your terminal <br>
+> No need to give `MONIX_LOG` and `MONIX_PASSWORD`, they are meant to be used only by Club\*Nix.
 
 - Edit the `config.json` file to give your informations.
   - The `links` field is here to give a list of your personal links (or whatever you want), it will work as an hypertext.
@@ -84,12 +105,17 @@ logs = log_repository_in_your_home
 }
 ```
 
+- Add some inserts in `initialization-scripts/3-data-josix.sql` to have auto-insert when creating the volumes.
+
+- Check `docker-compose.yml` to be sure that the volumes are well-linked.
+
 - Run the bot :
-  - `python3 josix.py`
+  - `sudo docker-compose build` Build the bot (if the code have been modified).
+  - `sudo docker-compose up` Launch the whole project.
 
 
 ## Warning
-You can get an error on installing psycopg2, enter the following commands :
+If you are launching the bot without docker, you can get an error on installing psycopg2 with `pip3 install -r requirements.txt`, enter the following commands :
 - `pip3 install psycopg2-binary`
 - `sudo apt install libpq-dev python3-dev`
 
