@@ -20,10 +20,8 @@ class Events(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
-    db : DatabaseHandler
-        A handler to perform requests on the database
     close : str
         Close tag name
     open : str

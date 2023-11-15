@@ -16,10 +16,8 @@ class Games(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
-    db : DatabaseHandler
-        A handler to perform requests on the database
     """
 
     def __init__(self, bot: Josix) -> None:

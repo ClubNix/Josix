@@ -13,10 +13,8 @@ class ReactionRole(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
-    db : DatabaseHandler
-        The database handler of this extension
     """
 
     def __init__(self, bot: Josix, showHelp: bool):

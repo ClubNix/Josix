@@ -12,6 +12,11 @@ class Josix(commands.Bot):
     """
     The main class that represents Josix bot
 
+    Attributes
+    ----------
+    db : DatabaseHandler
+        A handler for the connection with the database to perform requests
+
     Methods
     -------
     run()

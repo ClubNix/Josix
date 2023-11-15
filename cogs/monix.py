@@ -12,7 +12,7 @@ from requests import Session
 from urllib3.exceptions import InsecureRequestWarning
 from dataclasses import dataclass
 from bot_utils import JosixCog, josix_slash
-
+from josix import Josix
 
 class HTTPMethod(Enum):
     """Enumerator that represents HTTP method used for the bot"""
@@ -30,7 +30,7 @@ class Monix(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
     base_url : str
         The url of the Monix API
@@ -65,7 +65,7 @@ class Monix(JosixCog):
     _JOSIX_PSSWD = getenv("MONIX_PASSWORD")
     _LOG_STOCK = getenv("HOME") + getenv("LOGS") + "stocks.txt"
 
-    def __init__(self, bot: commands.Bot, showHelp: bool):
+    def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
         self.base_url = "https://monix.clubnix.fr/api"

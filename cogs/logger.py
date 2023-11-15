@@ -6,7 +6,6 @@ from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOve
 from discord import User, Member, RawMemberRemoveEvent, Embed
 from discord.abc import GuildChannel
 
-import os
 import logwrite as log
 
 from database.database import DatabaseHandler
@@ -161,10 +160,8 @@ class Logger(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
-    db : DatabaseHandler
-        A handler to perform requests on the database
     addColor : int
         Hexadecimal green color for embeds
     updColor : int

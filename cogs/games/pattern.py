@@ -136,7 +136,7 @@ class Pattern(BaseGame):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
     """
 

@@ -19,10 +19,8 @@ class Owner(JosixCog):
 
     Attributes
     ----------
-    bot : discord.ext.commands.Bot
+    bot : Josix
         The bot that loaded this extension
-    db : DatabaseHandler
-        The database handler of this extension
     """
 
     _SCRIPT_DIR = os.path.dirname(__file__)
