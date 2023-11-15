@@ -80,6 +80,9 @@ class Owner(JosixCog):
             try:
                 self.bot.db.execute(line, True)
             except DBError as db_error:
+                if str(db_error).lower() == "no results to fetch":
+                    continue
+
                 tmp = f"**l.{index+1}** : {str(db_error)}\n"
                 lenTmp = len(tmp)
                 if lenTmp + count > 2000:
