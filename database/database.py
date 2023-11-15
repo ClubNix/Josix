@@ -103,6 +103,8 @@ class DatabaseHandler():
 
         with open(file, "w") as f:
             f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
+            for rowTable in res[::-1]:
+                f.write("DELETE FROM josix." + rowTable[0] + ";\n")
             for rowTable in res:
                 table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")
