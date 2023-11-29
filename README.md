@@ -88,6 +88,7 @@ LOGS=logs_directory (logs/)
 - Edit the `config.json` file to give your informations.
   - The `links` field is here to give a list of your personal links (or whatever you want), it will work as an hypertext.
   - The `tags` field is here to automatically create "open" and "close" tags for the forum channel. **DO NOT** edit the names `open` and `close`, just edit their content. 
+  - The `report_channel` field will contain the ID of the channel where you want to receive database connection check error
 
 - Add your own private jokes :
 	- If not already done, create `askip.json` (if you want to change the name you have to change it in the `fun.py` file)
