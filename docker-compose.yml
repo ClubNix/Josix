@@ -22,6 +22,7 @@ services:
 
   adminer:
     image: adminer:latest
+    container_name: josix_adminer
     restart: always
     environment:
       ADMINER_DESIGN: 'hydra'
@@ -36,6 +37,7 @@ services:
 
   db:
     image: postgres:latest
+    container_name: josix_db
     restart: always
     env_file: .env.db
     volumes:
