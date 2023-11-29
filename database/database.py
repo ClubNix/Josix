@@ -24,18 +24,14 @@ class DatabaseHandler():
     def __init__(self) -> None:
         load_dotenv(".env.dev")
 
-        try:
-            conn = psycopg2.connect(
-                host=os.getenv("HOST"),
-                database=os.getenv("DB_NAME"),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD")
-            )
+        conn = psycopg2.connect(
+            host=os.getenv("HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD")
+        )
 
-            log.writeLog(f" - Connection on the database for Josix done")
-        except psycopg2.Error as error:
-            log.writeError(log.formatError(error))
-            return
+        log.writeLog(f" - Connection on the database for Josix done")
 
         self.conn = conn
         self.cursor = conn.cursor()
@@ -103,6 +99,8 @@ class DatabaseHandler():
 
         with open(file, "w") as f:
             f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
+            for rowTable in res[::-1]:
+                f.write("DELETE FROM josix." + rowTable[0] + ";\n")
             for rowTable in res:
                 table_name = rowTable[0]
                 f.write("\n-- Records for table : josix." + table_name + "\n")

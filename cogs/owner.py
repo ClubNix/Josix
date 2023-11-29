@@ -4,11 +4,13 @@ from discord import ApplicationContext, option
 
 import os
 import logwrite as log
+import json
 
 from josix import Josix
 from logwrite import LOG_FILE, ERROR_FILE
 from psycopg2 import Error as DBError
 from bot_utils import JosixCog, josix_slash
+from json import JSONDecodeError
 
 class Owner(JosixCog):
     """
@@ -25,12 +27,23 @@ class Owner(JosixCog):
 
     _SCRIPT_DIR = os.path.dirname(__file__)
     _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
+    _CONFIG_FILE = os.path.join(_SCRIPT_DIR, '../config.json')
     
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp, isOwner=True)
         self.bot = bot
         self.startup = True
+
+        try:
+            with open(Owner._CONFIG_FILE, 'r') as f:
+                data = json.load(f)
+
+            self.report = data["report_channel"]
+        except JSONDecodeError as _:
+            self.report = 0
+
         self.daily_backup.start()
+        self.check_connection.start()
 
     def cog_check(self, ctx: ApplicationContext):
         """Check automatically called for every command of this cog"""
@@ -80,6 +93,9 @@ class Owner(JosixCog):
             try:
                 self.bot.db.execute(line, True)
             except DBError as db_error:
+                if str(db_error).lower() == "no results to fetch":
+                    continue
+
                 tmp = f"**l.{index+1}** : {str(db_error)}\n"
                 lenTmp = len(tmp)
                 if lenTmp + count > 2000:
@@ -157,6 +173,17 @@ class Owner(JosixCog):
             self.bot.db.backup("", True)
         except Exception as e:
             log.writeError(log.formatError(e))
+
+    @tasks.loop(hours=6.0)
+    async def check_connection(self):
+        print("Hi")
+        try:
+            self.bot.db.getUser(0)
+        except Exception as e:
+            if self.report and ((reportChan := self.bot.get_channel(self.report)) or (reportChan := await self.bot.fetch_channel(self.report))):
+                await reportChan.send("Connection to database lost !\n" + str(e))
+        else:
+            log.writeLog("Database connection check passed !")
 
 
 def setup(bot: commands.Bot):
