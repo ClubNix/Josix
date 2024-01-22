@@ -145,7 +145,7 @@ class Pattern(BaseGame):
         self.bot = bot
         self.description = "games : pattern"
 
-    @josix_slash(description="Launch a game of tic-tac-toe")
+    @josix_slash(description="Launch a pattern game")
     @commands.guild_only()
     async def pattern_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)

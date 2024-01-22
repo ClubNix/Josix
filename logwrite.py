@@ -8,9 +8,9 @@ load_dotenv(".env.dev")
 
 # GLOBAL PATHS
 HOME_PATH = os.getenv("HOME")
-LOGS_PATH = HOME_PATH + os.getenv("LOGS")
-LOG_FILE = LOGS_PATH + "josixout.log"
-ERROR_FILE = LOGS_PATH + "josixerr.log"
+LOGS_PATH = os.path.join(HOME_PATH, os.getenv("LOGS"))
+LOG_FILE = os.path.join(LOGS_PATH, "josixout.log")
+ERROR_FILE = os.path.join(LOGS_PATH, "josixerr.log")
 
 LOG_COLOR = '\033[94m'
 ERROR_COLOR = '\033[91m'
