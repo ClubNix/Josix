@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Member, Interaction, option
 
-import numpy as np
-
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
@@ -110,7 +108,7 @@ class TTTView(BaseView):
         self.xPlayer, self.oPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.xPlayer
 
-        self.grid = np.zeros((3,3), dtype=int)
+        self.grid = [[0 for x in range(3)] for y in range(3)]
         for x in range(3):
             for y in range(3):
                 self.add_item(TTTBtn(x, y))
@@ -126,20 +124,24 @@ class TTTView(BaseView):
                 return True
 
         for i in range(3):
-            col = self.grid[:,i]
+            col = [row[i] for row in self.grid]
             if player == col[0] == col[1] == col[2]:
                 return True
         
-        if player == self.grid[0,0] == self.grid[1,1] == self.grid[2,2]:
+        if player == self.grid[0][0] == self.grid[1][1] == self.grid[2][2]:
             return True
 
-        if player == self.grid[0,2] == self.grid[1,1] == self.grid[2,0]:
+        if player == self.grid[0][2] == self.grid[1][1] == self.grid[2][0]:
             return True
 
         return False
 
     def isFull(self) -> bool:
-        return self.grid.all()
+        for i in self.grid:
+            for j in i:
+                if j == 0:
+                    return False
+        return True
         
 
 class TicTacToe(BaseGame):

@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Interaction, SelectOption, option
 
-import numpy as np
-
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
@@ -129,7 +127,7 @@ class OthelloView(BaseView):
 
         self.whitePlayer, self.blackPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.whitePlayer
-        self.grid = np.zeros((8, 8), dtype=int)
+        self.grid = [[0 for x in range(8)] for x in range(8)]
         self.xMove = -1
         self.yMove = -1
 
@@ -196,8 +194,15 @@ class OthelloView(BaseView):
         else:
             return False
 
+    def isFull(self) -> bool:
+        for i in self.grid:
+            for j in i:
+                if j == 0:
+                    return False
+        return True
+
     def isEnded(self) -> bool:
-        return self.grid.all() or not (self.canPlay(self.whitePlayer) or self.canPlay(self.blackPlayer))
+        return self.isFull() or not (self.canPlay(self.whitePlayer) or self.canPlay(self.blackPlayer))
 
     def canPlay(self, player: discord.Member) -> bool:
         value = 1 if self.currentPlayer.id == player.id else 2
@@ -240,7 +245,7 @@ class OthelloView(BaseView):
     def switchTokens(self, tokens: list[tuple[int, int]]) -> None:
         for coords in tokens:
             x,y = coords
-            self.grid[y, x] = 1 if self.grid[y, x] == 2 else 2
+            self.grid[y][x] = 1 if self.grid[y][x] == 2 else 2
 
 
     def __str__(self) -> str:

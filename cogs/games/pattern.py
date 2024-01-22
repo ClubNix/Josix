@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Member, Interaction
 
-import numpy as np
-
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
@@ -87,7 +85,7 @@ class PatternView(BaseView):
 
         self.player = player
         self.count = 0
-        self.grid = np.zeros((3,3), dtype=int)
+        self.grid = [[0 for x in range(3)] for y in range(3)]
 
         for x in range(3):
             for y in range(3):
@@ -116,7 +114,11 @@ class PatternView(BaseView):
 
 
     def checkWin(self) -> bool:
-        return not self.grid.any()
+        for i in self.grid:
+            for j in i:
+                if j == 1:
+                    return False
+        return True
         
     def __str__(self) -> str:
         res = ""
@@ -145,7 +147,7 @@ class Pattern(BaseGame):
         self.bot = bot
         self.description = "games : pattern"
 
-    @josix_slash(description="Launch a game of tic-tac-toe")
+    @josix_slash(description="Launch a pattern game")
     @commands.guild_only()
     async def pattern_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)

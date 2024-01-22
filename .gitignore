@@ -10,6 +10,7 @@ devdoc.md
 __pycache__/
 logs/
 data/
+pg_data/
 
 !config.json
 !table_order.sql
