@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from discord import ApplicationContext, Interaction, option
 
-import numpy as np
-
 from random import randint
 from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
@@ -102,7 +100,7 @@ class C4View(BaseView):
         self.redPlayer, self.yellowPlayer = (player1, player2) if first else (player2, player1)
         self.currentPlayer = self.redPlayer
 
-        self.grid = np.zeros((6, 7))
+        self.grid = [[0 for x in range(7)] for y in range(6)]
 
         for i in range(7):
             self.add_item(C4Button(i))
@@ -122,7 +120,11 @@ class C4View(BaseView):
         return self.grid[0][x] == 0
 
     def isFull(self) -> bool:
-        return self.grid.all()
+        for i in self.grid:
+            for j in i:
+                if j == 0:
+                    return False
+        return True
 
     def checkWin(self, x: int, y: int) -> bool:
         if x < 0 or 6 < x or y < 0 or 5 < y:

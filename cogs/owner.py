@@ -176,7 +176,6 @@ class Owner(JosixCog):
 
     @tasks.loop(hours=6.0)
     async def check_connection(self):
-        print("Hi")
         try:
             self.bot.db.getUser(0)
         except Exception as e:
