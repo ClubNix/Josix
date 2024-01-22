@@ -56,6 +56,9 @@ class ReactionRole(JosixCog):
             if not (member := guild.get_member(userId)) and not (member := await guild.fetch_member(userId)):
                 return
 
+            if member.bot:
+                return
+
             resRole = self.bot.db.getRoleFromReact(msgId, emojiName)
             if resRole is None:
                 return
