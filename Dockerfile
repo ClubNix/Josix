@@ -1,6 +1,7 @@
 FROM python:3.11-slim
 
-RUN apt-get update \
+RUN set -ex \
+    && apt-get update \
     && apt-get install -y libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
