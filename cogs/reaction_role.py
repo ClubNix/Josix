@@ -91,7 +91,7 @@ class ReactionRole(JosixCog):
         try:
             await self.updateRole(payload, False)
         except Exception as e:
-            log.writeLog(log.formatError(e))
+            log.writeError(log.formatError(e))
         
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
@@ -101,7 +101,7 @@ class ReactionRole(JosixCog):
 
             self.bot.db.delMessageReact(payload.message_id)
         except Exception as e:
-            log.writeLog(log.formatError(e))
+            log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload: RawBulkMessageDeleteEvent):
@@ -112,7 +112,7 @@ class ReactionRole(JosixCog):
 
                 self.bot.db.delMessageReact(msg_id)
         except Exception as e:
-            log.writeLog(log.formatError(e))
+            log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
@@ -124,7 +124,7 @@ class ReactionRole(JosixCog):
             for couple in couples:
                 self.bot.db.delReactCouple(couple.id)
         except Exception as e:
-            log.writeLog(log.formatError(e))
+            log.writeError(log.formatError(e))
 
 def setup(bot: commands.Bot):
     bot.add_cog(ReactionRole(bot, False))
