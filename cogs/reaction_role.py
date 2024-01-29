@@ -84,7 +84,7 @@ class ReactionRole(JosixCog):
         try:
             await self.updateRole(payload, True)
         except Exception as e:
-            log.writeLog(log.formatError(e))
+            log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
