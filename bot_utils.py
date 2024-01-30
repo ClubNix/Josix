@@ -31,12 +31,16 @@ class JosixSlash(SlashCommand):
     ----------
     give_xp : bool
         boolean representing if the command grants xp when executed by an user
+    hidden : bool
+        boolean representing if this commands should appear in the help command
     """
     def __init__(self, func: Callable, *args, **kwargs) -> None:
         super().__init__(func, *args, **kwargs)
 
         self.give_xp: bool = kwargs.get("give_xp", False)
+        self.hidden: bool = kwargs.get("hidden", False)
         if not isinstance(self.give_xp, bool): raise TypeError("give_xp must be a boolean")
+        if not isinstance(self.hidden, bool): raise TypeError("hidden must be a boolean")
 
 def josix_slash(**kwargs):
     """Decorator for josix's slash commands that invokes application_comand.

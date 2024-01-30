@@ -12,7 +12,7 @@ import json
 from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
-from bot_utils import JosixCog, josix_slash
+from bot_utils import JosixCog, josix_slash, JosixSlash
 from database.db_utils import BirthdayAuto
 from josix import Josix
 
@@ -77,6 +77,17 @@ class Usage(JosixCog):
         default=None,
     )
     async def help(self, ctx: ApplicationContext, command_name: str):
+        def clean_commands(raw_commands: list[JosixSlash | commands.Command]) -> list[JosixSlash | commands.Command]:
+            cleaned_commands: list[JosixSlash | commands.Command] = []
+            for command in raw_commands:
+                if isinstance(command, JosixSlash) and command.hidden:
+                    continue
+                elif isinstance(command, commands.Command) and command.hidden:
+                    continue
+                cleaned_commands.append(command)
+            return cleaned_commands
+
+
         if not command_name:
             helpEmbed = discord.Embed(title="Help embed",
                                       description=f"Use /help [command_name] to see more info for a command",
@@ -84,7 +95,7 @@ class Usage(JosixCog):
             helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
             helpEmbed.set_thumbnail(url=self.bot.user.display_avatar)
             
-            gamesCmd = []
+            gamesCmd: list[str] = []
             for cogName, cog in self.bot.cogs.items():
                 lstCmd = ""
 
@@ -99,15 +110,14 @@ class Usage(JosixCog):
                 ): continue
 
                 if cog.isGame:
-                    for cmd in cog.get_commands():
-                        gamesCmd.append(cmd.qualified_name)
+                    gamesCmd.extend(list(map(str, clean_commands(cog.get_commands()))))
                     continue
 
-                commands = cog.get_commands()
-                if len(commands) == 0:
+                cleaned_commands: list[JosixSlash | commands.Command] = clean_commands(cog.get_commands())
+                if len(cleaned_commands) == 0:
                     lstCmd = "No commands available"
                 else:
-                    for command in commands:
+                    for command in cleaned_commands:
                         lstCmd += "`" + command.qualified_name + "`, "
                     lstCmd = lstCmd[:len(lstCmd) - 2]
                 helpEmbed.add_field(name=cogName, value=lstCmd, inline=False)
