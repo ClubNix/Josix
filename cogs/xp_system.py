@@ -268,7 +268,7 @@ class XP(JosixCog):
         self.bot.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
 
     @josix_slash(description="Gives XP to a user")
-    @commands.has_permissions(moderate_members=True)
+    @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -301,7 +301,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
     @josix_slash(description="Removes XP to a user")
-    @commands.has_permissions(moderate_members=True)
+    @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -334,7 +334,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
     @josix_slash(description="Gives levels to a user")
-    @commands.has_permissions(moderate_members=True)
+    @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -367,7 +367,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
     @josix_slash(description="Removes levels to a user")
-    @commands.has_permissions(moderate_members=True)
+    @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -511,7 +511,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
     @josix_slash(description="Block or unblock xp progression for a member")
-    @commands.has_permissions(moderate_members=True)
+    @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
         input_type=discord.Member,
