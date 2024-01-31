@@ -43,6 +43,7 @@ class XP(JosixCog):
         """
         return 5 * (lvl**2) + (50 * lvl) + 100 - xp
 
+
     @staticmethod
     def totalLevelXP(lvl: int) -> int:
         """
@@ -67,6 +68,7 @@ class XP(JosixCog):
         for i in range(0, lvl):
             res += XP.nextLevelXP(i, 0)
         return res
+
 
     async def _updateUser(self, idTarget: int, idGuild: int, xp: int, idCat: int = 0) -> None:
         """
@@ -127,6 +129,7 @@ class XP(JosixCog):
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
 
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         await self.bot.process_commands(message)
@@ -174,6 +177,7 @@ class XP(JosixCog):
         except Exception as e:
             log.writeError(log.formatError(e))
 
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if not (channel := self.bot.get_channel(payload.channel_id)) and not (channel := await self.bot.fetch_channel(payload.channel_id)):
@@ -202,6 +206,7 @@ class XP(JosixCog):
 # Commands 
 # 
 ####################
+
 
     @staticmethod
     def checkUpdateXP(currentXP: int, amount: int) -> tuple[int, int]:
@@ -241,6 +246,7 @@ class XP(JosixCog):
         newXP, level = self.checkUpdateXP(currentXP, amount)
         self.bot.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
 
+
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
@@ -266,6 +272,7 @@ class XP(JosixCog):
 
         xp = self.totalLevelXP(newLvl)
         self.bot.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
+
 
     @josix_slash(description="Gives XP to a user")
     @discord.default_permissions(moderate_members=True)
@@ -300,6 +307,7 @@ class XP(JosixCog):
 
         await ctx.respond("Done !")
 
+
     @josix_slash(description="Removes XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
@@ -333,6 +341,7 @@ class XP(JosixCog):
 
         await ctx.respond("Done !")
 
+
     @josix_slash(description="Gives levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
@@ -365,6 +374,7 @@ class XP(JosixCog):
             log.writeError(log.formatError(e))
 
         await ctx.respond("Done !")
+
 
     @josix_slash(description="Removes levels to a user")
     @discord.default_permissions(moderate_members=True)
@@ -462,6 +472,7 @@ class XP(JosixCog):
             )
         await ctx.respond(embed=embed)
 
+
     @josix_slash(description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
@@ -509,6 +520,7 @@ class XP(JosixCog):
             f"`Leaderboard` : **{'?' if pos is None else pos}**"
         )))
         await ctx.respond(embed=embed)
+
 
     @josix_slash(description="Block or unblock xp progression for a member")
     @discord.default_permissions(moderate_members=True)

@@ -26,6 +26,7 @@ class Admin(JosixCog):
         super().__init__(showHelp=showHelp)
         self.bot = bot
 
+
     @josix_slash(description="Clear messages from the channel")
     @discord.default_permissions(manage_messages=True)
     @commands.guild_only()
@@ -40,6 +41,7 @@ class Admin(JosixCog):
     async def clear(self, ctx: ApplicationContext, limit: int):
         await ctx.channel.purge(limit=limit)
         await ctx.delete()
+
 
     @josix_slash(description="Add a couple of reaction-role to the message")
     @discord.default_permissions(manage_messages=True)
@@ -128,6 +130,7 @@ class Admin(JosixCog):
         self.bot.db.addCouple((emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
 
+
     @josix_slash(description="Delete a couple in a reaction-role message")
     @discord.default_permissions(manage_messages=True)
     @commands.guild_only()
@@ -202,6 +205,7 @@ class Admin(JosixCog):
         else:
             await og.edit(content="❌ Unknow couple")
 
+
     @josix_slash(description="Set this channel as an announcement channel for the bot")
     @discord.default_permissions(manage_channels=True)
     @commands.guild_only()
@@ -254,6 +258,49 @@ class Admin(JosixCog):
         enabled = xpState.enableXp
         self.bot.db.updateGuildXpEnabled(idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
+
+
+    @josix_slash(description="Create a new XP season in the server (store rankings and reset everyone)")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        name="label",
+        description="Label of the new season (default : current index)",
+        input_type=str,
+        default=None
+    )
+    async def create_new_season(self, ctx: ApplicationContext, label: str | None):
+        await ctx.send("WIP")
+
+
+    @josix_slash(description="Delete a season from history")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        name="label",
+        description="label of targeted season",
+        input_type=str
+    )
+    async def delete_season(self, ctx: ApplicationContext, label: str):
+        await ctx.send("WIP")
+
+
+    @josix_slash(description="Update season name")
+    @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        name="old_label",
+        description="Old label of the targeted season",
+        input_type=str
+    )
+    @option(
+        name="new_label",
+        description="New label of the season",
+        input_type=str
+    )
+    async def update_season(self, ctx: ApplicationContext, old_label: str, new_label: str):
+        await ctx.send("WIP")
+
 
     @josix_slash(description="Set up the custom welcome system for your server")
     @discord.default_permissions(manage_guild=True)
@@ -330,6 +377,7 @@ class Admin(JosixCog):
         self.bot.db.updateGuildWelcomeEnabled(idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
+
     @josix_slash(description="Choose which logs to register")
     @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
@@ -340,6 +388,7 @@ class Admin(JosixCog):
     )
     async def set_logger(self, ctx: ApplicationContext, keep: bool):
         await ctx.respond("Choose your logs :", view=LoggerView(self.bot.db, keep))
+
 
     @josix_slash(description="Choose where to send the logs")
     @discord.default_permissions(manage_guild=True)
@@ -358,6 +407,7 @@ class Admin(JosixCog):
         else:
             self.bot.db.updateLogChannel(ctx.guild.id, None)
             await ctx.respond("Logs channel unset")
+
 
     @josix_slash(description="Block or unblock a category from xp leveling")
     @discord.default_permissions(manage_guild=True)
