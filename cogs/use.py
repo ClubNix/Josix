@@ -12,7 +12,7 @@ import json
 from json import JSONDecodeError
 from cogs.events import Events
 from math import ceil
-from bot_utils import JosixCog, josix_slash, JosixSlash
+from bot_utils import JosixCog, josix_slash, JosixSlash, get_permissions_str
 from database.db_utils import BirthdayAuto
 from josix import Josix
 
@@ -70,6 +70,7 @@ class Usage(JosixCog):
         self.checkBirthday.start()
 
     @josix_slash(description="Get the help menu")
+    @discord.default_permissions(manage_messages=True, ban_members=True)
     @option(
         input_type=str,
         name="command_name",
@@ -130,6 +131,9 @@ class Usage(JosixCog):
             command_name = command_name.lower()
             command: discord.SlashCommand = self.bot.get_application_command(name=command_name,
                                                                              type=discord.SlashCommand)
+            if not command and self.bot.get_command(command_name):
+                await ctx.respond(f"This option is only possible for slash commands")
+                return
 
             if not command:
                 await ctx.respond(f":x: Unknown command, see /help :x:")
@@ -149,6 +153,7 @@ class Usage(JosixCog):
             usage = f"/{command.name} "
             param = command.options
             options = ""
+            cmd_perms = get_permissions_str(command.default_member_permissions)
 
             for val in param:
                 default = val.default
@@ -173,6 +178,9 @@ class Usage(JosixCog):
             embed2.add_field(name="Description :", value=desc)
             embed2.add_field(name="Usage :", value=usage, inline=False)
             embed2.add_field(name="Options : ", value=options, inline=False)
+            embed2.add_field(
+                name="Permissions Required", value=", ".join(cmd_perms) if cmd_perms else "No permissions required"
+            )
             await ctx.respond(embed=embed2)
 
     @josix_slash(description="All the links related to the bot and club")

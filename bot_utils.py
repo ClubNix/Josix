@@ -1,4 +1,4 @@
-from discord import SlashCommand
+from discord import SlashCommand, Permissions
 from typing import Callable
 from discord.commands.core import application_command
 from discord.ext.commands import Cog
@@ -21,6 +21,7 @@ class JosixCog(Cog):
         self.isGame = isGame
         self.isOwner = isOwner
 
+
 class JosixSlash(SlashCommand):
     """
     A subclass of SlashCommand that implements Josix's slash commands
@@ -42,6 +43,7 @@ class JosixSlash(SlashCommand):
         if not isinstance(self.give_xp, bool): raise TypeError("give_xp must be a boolean")
         if not isinstance(self.hidden, bool): raise TypeError("hidden must be a boolean")
 
+
 def josix_slash(**kwargs):
     """Decorator for josix's slash commands that invokes application_comand.
 
@@ -51,3 +53,10 @@ def josix_slash(**kwargs):
         A decorator that converts the provided method into a JosixSlash.
     """
     return application_command(cls=JosixSlash, **kwargs)
+
+
+def get_permissions_str(perms: Permissions) -> list[str]:
+    if not perms:
+        return []
+
+    return [flag for flag, state in perms if state]
