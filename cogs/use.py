@@ -70,7 +70,6 @@ class Usage(JosixCog):
         self.checkBirthday.start()
 
     @josix_slash(description="Get the help menu")
-    @discord.default_permissions(manage_messages=True, ban_members=True)
     @option(
         input_type=str,
         name="command_name",
@@ -131,12 +130,11 @@ class Usage(JosixCog):
             command_name = command_name.lower()
             command: discord.SlashCommand = self.bot.get_application_command(name=command_name,
                                                                              type=discord.SlashCommand)
-            if not command and self.bot.get_command(command_name):
-                await ctx.respond(f"This option is only possible for slash commands")
-                return
-
             if not command:
-                await ctx.respond(f":x: Unknown command, see /help :x:")
+                await ctx.respond((
+                    "This option is only possible for slash commands" if self.bot.get_command(command_name)
+                    else ":x: Unknown command, see /help :x:"
+                ))
                 return
 
             if command.cog and command.cog.qualified_name.lower() == "owner" and not (
@@ -153,6 +151,7 @@ class Usage(JosixCog):
             usage = f"/{command.name} "
             param = command.options
             options = ""
+
             cmd_perms = get_permissions_str(command.default_member_permissions)
 
             for val in param:
@@ -179,7 +178,7 @@ class Usage(JosixCog):
             embed2.add_field(name="Usage :", value=usage, inline=False)
             embed2.add_field(name="Options : ", value=options, inline=False)
             embed2.add_field(
-                name="Permissions Required", value=", ".join(cmd_perms) if cmd_perms else "No permissions required"
+                name="Permissions Required", value=", ".join(cmd_perms)[:1023] if cmd_perms else "No permissions required"
             )
             await ctx.respond(embed=embed2)
 
@@ -315,7 +314,7 @@ class Usage(JosixCog):
 
     @josix_slash(description="Create a poll on this server")
     @commands.guild_only()
-    @commands.has_permissions(manage_messages=True)
+    @discord.default_permissions(manage_messages=True)
     async def create_poll(self, ctx: ApplicationContext):
         await ctx.send_modal(Poll())
 

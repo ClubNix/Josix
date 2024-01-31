@@ -27,7 +27,7 @@ class Admin(JosixCog):
         self.bot = bot
 
     @josix_slash(description="Clear messages from the channel")
-    @commands.has_permissions(manage_messages=True)
+    @discord.default_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
         input_type=int,
@@ -42,7 +42,7 @@ class Admin(JosixCog):
         await ctx.delete()
 
     @josix_slash(description="Add a couple of reaction-role to the message")
-    @commands.has_permissions(manage_messages=True)
+    @discord.default_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
         input_type=str,
@@ -129,7 +129,7 @@ class Admin(JosixCog):
         await ctx.respond("Done !", delete_after=5.0)
 
     @josix_slash(description="Delete a couple in a reaction-role message")
-    @commands.has_permissions(manage_messages=True)
+    @discord.default_permissions(manage_messages=True)
     @commands.guild_only()
     @option(
         input_type=str,
@@ -203,7 +203,7 @@ class Admin(JosixCog):
             await og.edit(content="❌ Unknow couple")
 
     @josix_slash(description="Set this channel as an announcement channel for the bot")
-    @commands.has_permissions(manage_channels=True)
+    @discord.default_permissions(manage_channels=True)
     @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -220,7 +220,7 @@ class Admin(JosixCog):
         await ctx.respond("this channel will now host my news !")
 
     @josix_slash(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
-    @commands.has_permissions(manage_channels=True)
+    @discord.default_permissions(manage_channels=True)
     @commands.guild_only()
     async def set_xp_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -238,7 +238,7 @@ class Admin(JosixCog):
 
 
     @josix_slash(description="Enable or disable the xp system on the server")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     async def enable_xp_system(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -256,7 +256,7 @@ class Admin(JosixCog):
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
     @josix_slash(description="Set up the custom welcome system for your server")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
         input_type=discord.TextChannel,
@@ -315,7 +315,7 @@ class Admin(JosixCog):
 
 
     @josix_slash(description="Enable or disable the welcome system")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     async def enable_welcome(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
@@ -331,7 +331,7 @@ class Admin(JosixCog):
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
     @josix_slash(description="Choose which logs to register")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
         input_type=bool,
@@ -342,7 +342,7 @@ class Admin(JosixCog):
         await ctx.respond("Choose your logs :", view=LoggerView(self.bot.db, keep))
 
     @josix_slash(description="Choose where to send the logs")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
         input_type=discord.TextChannel,
@@ -360,7 +360,7 @@ class Admin(JosixCog):
             await ctx.respond("Logs channel unset")
 
     @josix_slash(description="Block or unblock a category from xp leveling")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
         input_type=discord.CategoryChannel,

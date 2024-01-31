@@ -66,7 +66,7 @@ class Fun(JosixCog):
             required=True
         )]
     )
-    @commands.has_permissions(manage_messages=True)
+    @discord.default_permissions(manage_messages=True)
     async def say(self, ctx: ApplicationContext, text: str):
         await ctx.send(text)
         await ctx.delete()
