@@ -87,3 +87,20 @@ class Season:
     idSeason: int
     idGuild: int
     label: str
+
+@dataclass()
+class UserScore:
+    """Dataclass that represents a score obtained for a user in a season"""
+    idUser: int
+    idSeason: int
+    score: int
+    ranking: int
+    label: str
+
+@dataclass()
+class Score:
+    """Dataclass that represents a simple score"""
+    idUser: int
+    idSeason: int
+    score: int
+    ranking: int

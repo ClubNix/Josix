@@ -401,6 +401,29 @@ class DatabaseHandler():
                 seasons.append(Season(*season))
             return seasons
 
+
+    def getUserHistory(self, guildId: int, userId: int) -> list[UserScore] | None:
+        query = """
+                SELECT sc.idUser, sc.idSeason, sc.score, sc.ranking, se.label
+                FROM josix.Score sc INNER JOIN josix.Season se ON sc.idSeason = se.idSeason
+                WHERE sc.idUser = %s AND se.idGuild = %s ORDER BY sc.idSeason DESC;
+                """
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchall()
+
+        if res:
+            return [UserScore(*score) for score in res]
+
+
+    def getScores(self, seasonId: int) -> list[Score] | None:
+        query = """SELECT * FROM josix.Score WHERE idSeason = %s ORDER BY ranking;"""
+        self.cursor.execute(query, (seasonId,))
+        res = self.cursor.fetchall()
+        
+        if res:
+            return [Score(*score) for score in res]
+
     ###
     ###
 

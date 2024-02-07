@@ -609,5 +609,106 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
+    @josix_slash(description="See user history in all the seasons")
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the member you want to see the history",
+        required=False
+    )
+    async def user_history(self, ctx: ApplicationContext, member: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not member:
+            member = ctx.author
+
+        if member.bot:
+            await ctx.respond("This action can't be done on a bot user")
+            return
+
+        scores = self.bot.db.getUserHistory(guild.id, member.id)
+        embed = discord.Embed(
+            title="Scores",
+            description=f"Scores history from {member.name}",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=member.display_avatar)
+
+        content = ""
+        newLine = ""
+        lineLength = 0
+        currentLength = 0
+        nbField = 0
+        for score in scores:
+            newLine = f"- **{score.label}** : {score.score} ({score.ranking})\n"
+            lineLength = len(newLine)
+            if currentLength + lineLength >= 1024:
+                embed.add_field(name="", value=content, inline=False)
+                nbField += 1
+                content = newLine
+                currentLength = lineLength
+
+                if nbField >= 25:
+                    break
+            
+            else:
+                content += newLine
+                currentLength += lineLength
+        
+        if nbField < 25:
+            embed.add_field(name="", value=content, inline=False)
+        await ctx.respond(embed=embed)
+
+
+    @josix_slash(description="Display all the informations of a season")
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="label",
+        description="Label of the targeted season",
+        required=True
+    )
+    async def info_season(self, ctx: ApplicationContext, label: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        scores = self.bot.db.getScores(season.idSeason)
+        embed = discord.Embed(
+            title="Season information",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=guild.icon)
+        embed.add_field(name="Label", value=season.label)
+
+        res = ""
+        if scores:
+            medals = ["🥇", "🥈", ":third_place:"]
+            for i, score in enumerate(scores):
+                try:
+                    if not (member := guild.get_member(score.idUser)) and not (member := await guild.fetch_member(score.idUser)):
+                        continue
+                except discord.HTTPException:
+                    continue
+                res += f"{medals[i]} {member.name} (**{score.score}**)\n"
+        
+        else:
+            res = "No data available for the ranking of this season"
+        embed.add_field(name="Ranking", value=res)
+        await ctx.respond(embed=embed)
+
 def setup(bot: commands.Bot):
     bot.add_cog(XP(bot, True))
