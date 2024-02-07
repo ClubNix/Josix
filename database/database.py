@@ -389,6 +389,18 @@ class DatabaseHandler():
         return Season(*res)
 
 
+    def getSeasons(self, guildId: int, limit: int) -> list[Season] | None:
+        query = "SELECT * FROM josix.Season WHERE idGuild = %s ORDER BY idSeason DESC LIMIT %s;"
+        params = (guildId, limit)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchall()
+
+        if res:
+            seasons = []
+            for season in res:
+                seasons.append(Season(*season))
+            return seasons
+
     ###
     ###
 

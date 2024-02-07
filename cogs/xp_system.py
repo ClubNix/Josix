@@ -554,6 +554,60 @@ class XP(JosixCog):
         self.bot.db.updateUserBlock(idTarget, idGuild)
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
 
+    
+    @josix_slash(description="See all past seasons in this server")
+    @commands.guild_only()
+    @option(
+        input_type=int,
+        name="limit",
+        description="Limit number of seasons to display (default : 10) between [1, 25]",
+        default=10,
+        min_value=1,
+        max_value=25
+    )
+    async def show_seasons(self, ctx: ApplicationContext, limit: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        seasons = self.bot.db.getSeasons(guild.id, limit)
+        if not seasons: seasons = []
+
+        embed = discord.Embed(
+            title="Seasons",
+            description=f"List of all seasons for server {guild.name}",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=ctx.author.display_avatar)
+        
+        content = ""
+        newLine = ""
+        lineLength = 0
+        currentLength = 0
+        nbField = 0
+        for i, season in enumerate(seasons):
+            newLine = f"- **{i+1}** : {season.label}\n"
+            lineLength = len(newLine)
+            if currentLength + lineLength >= 1024:
+                embed.add_field(name="", value=content, inline=False)
+                nbField += 1
+                content = newLine
+                currentLength = lineLength
+
+                if nbField >= 25:
+                    break
+            
+            else:
+                content += newLine
+                currentLength += lineLength
+        
+        if nbField < 25:
+            embed.add_field(name="", value=content, inline=False)
+        await ctx.respond(embed=embed)
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(XP(bot, True))
