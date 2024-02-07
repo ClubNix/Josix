@@ -261,42 +261,59 @@ class Admin(JosixCog):
 
 
     @josix_slash(description="Create a new XP season in the server (store rankings and reset everyone)")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
-        name="label",
-        description="Label of the new season (default : current index)",
         input_type=str,
+        name="label",
+        description="Label of the ended season (default : current index)",
         default=None
     )
-    async def create_new_season(self, ctx: ApplicationContext, label: str | None):
-        await ctx.send("WIP")
+    async def create_new_season(self, ctx: ApplicationContext, label: str):
+        if label is None:
+            label = ""
+
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        id_season = -1
+        try:
+            id_season = self.bot.db.storeSeason(guild.id, label)
+        except ValueError as e:
+            await ctx.respond(e)
+            return
+
+        self.bot.db.storeScores(guild.id, id_season)
+        self.bot.db.cleanXPGuild(guild.id)
+        await ctx.respond("A new season has been started !")
 
 
     @josix_slash(description="Delete a season from history")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
+        input_type=str,
         name="label",
-        description="label of targeted season",
-        input_type=str
+        description="label of targeted season"
     )
     async def delete_season(self, ctx: ApplicationContext, label: str):
         await ctx.send("WIP")
 
 
     @josix_slash(description="Update season name")
-    @commands.has_permissions(manage_guild=True)
+    @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @option(
+        input_type=str,
         name="old_label",
-        description="Old label of the targeted season",
-        input_type=str
+        description="Old label of the targeted season"
     )
     @option(
+        input_type=str,
         name="new_label",
-        description="New label of the season",
-        input_type=str
+        description="New label of the season"
     )
     async def update_season(self, ctx: ApplicationContext, old_label: str, new_label: str):
         await ctx.send("WIP")

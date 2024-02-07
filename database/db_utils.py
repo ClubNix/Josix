@@ -80,3 +80,10 @@ class Birthday:
     idUser: int
     day: int
     month: int
+
+@dataclass()
+class Season:
+    """Dataclass that represents a XP season"""
+    idSeason: int
+    idGuild: int
+    label: str
