@@ -693,6 +693,7 @@ class XP(JosixCog):
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.set_thumbnail(url=guild.icon)
         embed.add_field(name="Label", value=season.label)
+        embed.add_field(name="Ended at", value=season.ended_at.strftime("%d/%m/%Y %H:%M:%S"))
 
         res = ""
         if scores:
@@ -707,7 +708,7 @@ class XP(JosixCog):
         
         else:
             res = "No data available for the ranking of this season"
-        embed.add_field(name="Ranking", value=res)
+        embed.add_field(name="Ranking", value=res, inline=False)
         await ctx.respond(embed=embed)
 
     

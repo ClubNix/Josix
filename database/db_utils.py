@@ -87,6 +87,7 @@ class Season:
     idSeason: int
     idGuild: int
     label: str
+    ended_at: datetime
 
 @dataclass()
 class UserScore:
