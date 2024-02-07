@@ -239,7 +239,7 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getXpLeaderboard(self, guildId: int, limit: int) -> list[LinkUserGuild] | None:
+    def getXpLeaderboard(self, guildId: int, limit: int | None) -> list[LinkUserGuild] | None:
         query = """SELECT * FROM josix.UserGuild
                    WHERE idGuild = %s
                    ORDER BY xp DESC
@@ -360,6 +360,79 @@ class DatabaseHandler():
             return LogSelection(guildId, logs)
         
 
+    def getNewSeasonId(self, guildId: int) -> int:
+        query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
+        self.cursor.execute(query, (guildId,))
+        res = self.cursor.fetchone()
+        newLabelID = 1 if not res else res[0]+1
+
+        if self.getSeasonByLabel(guildId, str(newLabelID)):
+            raise ValueError(f"The label '{newLabelID}' is already used in a season for this server")
+        return newLabelID
+
+    def getSeason(self, seasonId: int) -> Season | None:
+        query = "SELECT * FROM josix.Season WHERE idSeason = %s;"
+        self.cursor.execute(query, (seasonId,))
+        res = self.cursor.fetchone()
+        if not res:
+            return None
+        return Season(*res)
+
+
+    def getSeasonByLabel(self, guildId: int, label: str) -> Season | None:
+        query = "SELECT * FROM josix.Season WHERE idGuild = %s AND LOWER(label) = LOWER(%s);"
+        params = (guildId, label)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchone()
+        if not res:
+            return None
+        return Season(*res)
+
+
+    def getSeasons(self, guildId: int, limit: int) -> list[Season] | None:
+        query = "SELECT * FROM josix.Season WHERE idGuild = %s ORDER BY idSeason DESC LIMIT %s;"
+        params = (guildId, limit)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchall()
+
+        if res:
+            seasons = []
+            for season in res:
+                seasons.append(Season(*season))
+            return seasons
+
+
+    def getUserHistory(self, guildId: int, userId: int) -> list[UserScore] | None:
+        query = """
+                SELECT sc.idUser, sc.idSeason, sc.score, sc.ranking, se.label
+                FROM josix.Score sc INNER JOIN josix.Season se ON sc.idSeason = se.idSeason
+                WHERE sc.idUser = %s AND se.idGuild = %s ORDER BY sc.idSeason DESC;
+                """
+        params = (userId, guildId)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchall()
+
+        if res:
+            return [UserScore(*score) for score in res]
+
+
+    def getScores(self, seasonId: int) -> list[Score] | None:
+        query = """SELECT * FROM josix.Score WHERE idSeason = %s ORDER BY ranking;"""
+        self.cursor.execute(query, (seasonId,))
+        res = self.cursor.fetchall()
+        
+        if res:
+            return [Score(*score) for score in res]
+
+
+    def getUserScore(self, seasonId: int, userId: int) -> Score | None:
+        query = "SELECT * FROM josix.Score WHERE idSeason = %s AND idUser = %s;"
+        params = (seasonId, userId)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchone()
+
+        if res:
+            return Score(*res)
 
     ###
     ###
@@ -374,6 +447,7 @@ class DatabaseHandler():
     ###############
     # Adders
     ###############
+
 
     @_error_handler
     def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0) -> None:
@@ -456,7 +530,41 @@ class DatabaseHandler():
         res = self.cursor.fetchone()
         if res:
             return res[0]
+
+
+    @_error_handler
+    def storeSeason(self, guildId: int, label: str) -> int:
+        if label == "":
+            label = str(self.getNewSeasonId(guildId))
+        else:
+            if self.getSeasonByLabel(guildId, str(label)):
+                raise ValueError(f"The label '{label}' is already used in a season for this server")
+
+        query = "INSERT INTO josix.Season(idGuild, label) VALUES(%s, LOWER(%s)) RETURNING idSeason;"
+        params = (guildId, label)
+        self.cursor.execute(query, params)
+        self.conn.commit()
         
+        res = self.cursor.fetchone()
+        if res:
+            return res[0]
+
+
+    @_error_handler
+    def storeScores(self, guildId: int, seasonId: int):
+        scores = self.getXpLeaderboard(guildId, None)
+        if not scores:
+            return
+        
+        season = self.getSeason(seasonId)
+        if not season:
+            return
+
+        for i, score in enumerate(scores):
+            query = "INSERT INTO josix.Score VALUES(%s, %s, %s, %s);"
+            params = (score.idUser, season.idSeason, score.xp, i+1)
+            self.cursor.execute(query, params)
+        self.conn.commit()
 
 
     ###############
@@ -614,9 +722,19 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
+
+    @_error_handler
+    def updateSeasonLabel(self, season: Season, new_label: str) -> None:
+        query = "UPDATE josix.Season SET label = %s WHERE idSeason = %s;"
+        params = (new_label, season.idSeason)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+
     ###############
     # Deleters
     ###############
+
 
     @_error_handler
     def delMessageReact(self, msgId: int) -> None:
@@ -657,4 +775,20 @@ class DatabaseHandler():
     def deleteGames(self) -> None:
         query = "DELETE FROM josix.Games;"
         self.cursor.execute(query)
+        self.conn.commit()
+
+
+    @_error_handler
+    def cleanXPGuild(self, guildId: int) -> None:
+        query = "DELETE FROM josix.UserGuild WHERE idGuild = %s;"
+        self.cursor.execute(query, (guildId,))
+        self.conn.commit()
+
+
+    @_error_handler
+    def deleteSeason(self, season: Season) -> None:
+        query = "DELETE FROM josix.Score WHERE idSeason = %s;"
+        query2 = "DELETE FROM josix.Season WHERE idSeason = %s;"
+        self.cursor.execute(query, (season.idSeason,))
+        self.cursor.execute(query2, (season.idSeason,))
         self.conn.commit()

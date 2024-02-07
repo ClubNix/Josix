@@ -81,6 +81,14 @@ CREATE TABLE IF NOT EXISTS josix.Games (
     CONSTRAINT fk_user_games_id FOREIGN KEY(idUser) REFERENCES josix.User(idUser)
 );
 
+CREATE TABLE IF NOT EXISTS josix.Season (
+    idSeason SERIAL,
+    idGuild BIGINT NOT NULL,
+    label VARCHAR(32) DEFAULT '',
+    ended_at DATETIME DEFAULT NOW(),
+    PRIMARY KEY(idSeason),
+    CONSTRAINT fk_guild_season_id FOREIGN KEY(idGuild) REFERENCES josix.Guild(idGuild)
+);
 
 --
 --  
@@ -113,4 +121,14 @@ CREATE TABLE IF NOT EXISTS josix.LogSelector (
     PRIMARY KEY(idGuild, idLog),
     CONSTRAINT fk_guild_ls_id FOREIGN KEY(idGuild) REFERENCES josix.Guild(idGuild),
     CONSTRAINT fk_log_ls_id FOREIGN KEY(idLog) REFERENCES josix.Logs(idLog)
+);
+
+CREATE TABLE IF NOT EXISTS josix.Score (
+    idUser BIGINT NOT NULL,
+    idSeason BIGINT NOT NULL,
+    score INT DEFAULT 0,
+    ranking INT,
+    PRIMARY KEY(idUser, idSeason),
+    CONSTRAINT fk_user_score_id FOREIGN KEY(idUser) REFERENCES josix.User(idUser),
+    CONSTRAINT fk_season_score_id FOREIGN KEY(idSeason) REFERENCES josix.Season(idSeason)
 );

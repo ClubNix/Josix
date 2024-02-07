@@ -43,6 +43,7 @@ class XP(JosixCog):
         """
         return 5 * (lvl**2) + (50 * lvl) + 100 - xp
 
+
     @staticmethod
     def totalLevelXP(lvl: int) -> int:
         """
@@ -67,6 +68,7 @@ class XP(JosixCog):
         for i in range(0, lvl):
             res += XP.nextLevelXP(i, 0)
         return res
+
 
     async def _updateUser(self, idTarget: int, idGuild: int, xp: int, idCat: int = 0) -> None:
         """
@@ -127,6 +129,7 @@ class XP(JosixCog):
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
 
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         await self.bot.process_commands(message)
@@ -174,6 +177,7 @@ class XP(JosixCog):
         except Exception as e:
             log.writeError(log.formatError(e))
 
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if not (channel := self.bot.get_channel(payload.channel_id)) and not (channel := await self.bot.fetch_channel(payload.channel_id)):
@@ -202,6 +206,7 @@ class XP(JosixCog):
 # Commands 
 # 
 ####################
+
 
     @staticmethod
     def checkUpdateXP(currentXP: int, amount: int) -> tuple[int, int]:
@@ -241,6 +246,7 @@ class XP(JosixCog):
         newXP, level = self.checkUpdateXP(currentXP, amount)
         self.bot.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
 
+
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
@@ -266,6 +272,7 @@ class XP(JosixCog):
 
         xp = self.totalLevelXP(newLvl)
         self.bot.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
+
 
     @josix_slash(description="Gives XP to a user")
     @discord.default_permissions(moderate_members=True)
@@ -300,6 +307,7 @@ class XP(JosixCog):
 
         await ctx.respond("Done !")
 
+
     @josix_slash(description="Removes XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
@@ -333,6 +341,7 @@ class XP(JosixCog):
 
         await ctx.respond("Done !")
 
+
     @josix_slash(description="Gives levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
@@ -365,6 +374,7 @@ class XP(JosixCog):
             log.writeError(log.formatError(e))
 
         await ctx.respond("Done !")
+
 
     @josix_slash(description="Removes levels to a user")
     @discord.default_permissions(moderate_members=True)
@@ -462,6 +472,7 @@ class XP(JosixCog):
             )
         await ctx.respond(embed=embed)
 
+
     @josix_slash(description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
@@ -510,6 +521,7 @@ class XP(JosixCog):
         )))
         await ctx.respond(embed=embed)
 
+
     @josix_slash(description="Block or unblock xp progression for a member")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
@@ -541,6 +553,205 @@ class XP(JosixCog):
         blocked = userGuildDB.isUserBlocked
         self.bot.db.updateUserBlock(idTarget, idGuild)
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
+
+    
+    @josix_slash(description="See all past seasons in this server")
+    @commands.guild_only()
+    @option(
+        input_type=int,
+        name="limit",
+        description="Limit number of seasons to display (default : 10) between [1, 25]",
+        default=10,
+        min_value=1,
+        max_value=25
+    )
+    async def show_seasons(self, ctx: ApplicationContext, limit: int):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        seasons = self.bot.db.getSeasons(guild.id, limit)
+        if not seasons: seasons = []
+
+        embed = discord.Embed(
+            title="Seasons",
+            description=f"List of all seasons for server {guild.name}",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=ctx.author.display_avatar)
+        
+        content = ""
+        newLine = ""
+        lineLength = 0
+        currentLength = 0
+        nbField = 0
+        for i, season in enumerate(seasons):
+            newLine = f"- **{i+1}** : {season.label}\n"
+            lineLength = len(newLine)
+            if currentLength + lineLength >= 1024:
+                embed.add_field(name="", value=content, inline=False)
+                nbField += 1
+                content = newLine
+                currentLength = lineLength
+
+                if nbField >= 25:
+                    break
+            
+            else:
+                content += newLine
+                currentLength += lineLength
+        
+        if nbField < 25:
+            embed.add_field(name="", value=content, inline=False)
+        await ctx.respond(embed=embed)
+
+
+    @josix_slash(description="See user history in all the seasons")
+    @commands.guild_only()
+    @option(
+        input_type=discord.Member,
+        name="member",
+        description="Mention of the member you want to see the history",
+        required=False
+    )
+    async def user_history(self, ctx: ApplicationContext, member: discord.Member):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not member:
+            member = ctx.author
+
+        if member.bot:
+            await ctx.respond("This action can't be done on a bot user")
+            return
+
+        scores = self.bot.db.getUserHistory(guild.id, member.id)
+        embed = discord.Embed(
+            title="Scores",
+            description=f"Scores history from {member.name}",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=member.display_avatar)
+
+        content = ""
+        newLine = ""
+        lineLength = 0
+        currentLength = 0
+        nbField = 0
+        for score in scores:
+            newLine = f"- **{score.label}** : {score.score} ({score.ranking})\n"
+            lineLength = len(newLine)
+            if currentLength + lineLength >= 1024:
+                embed.add_field(name="", value=content, inline=False)
+                nbField += 1
+                content = newLine
+                currentLength = lineLength
+
+                if nbField >= 25:
+                    break
+            
+            else:
+                content += newLine
+                currentLength += lineLength
+        
+        if nbField < 25:
+            embed.add_field(name="", value=content, inline=False)
+        await ctx.respond(embed=embed)
+
+
+    @josix_slash(description="Display all the informations of a season")
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="label",
+        description="Label of the targeted season",
+        required=True
+    )
+    async def info_season(self, ctx: ApplicationContext, label: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        scores = self.bot.db.getScores(season.idSeason)
+        embed = discord.Embed(
+            title="Season information",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=guild.icon)
+        embed.add_field(name="Label", value=season.label)
+        embed.add_field(name="Ended at", value=season.ended_at.strftime("%d/%m/%Y %H:%M:%S"))
+
+        res = ""
+        if scores:
+            medals = ["🥇", "🥈", ":third_place:"]
+            for i, score in enumerate(scores):
+                try:
+                    if not (member := guild.get_member(score.idUser)) and not (member := await guild.fetch_member(score.idUser)):
+                        continue
+                except discord.HTTPException:
+                    continue
+                res += f"{medals[i]} {member.name} (**{score.score}**)\n"
+        
+        else:
+            res = "No data available for the ranking of this season"
+        embed.add_field(name="Ranking", value=res, inline=False)
+        await ctx.respond(embed=embed)
+
+    
+    @josix_slash(description="Show the profile of the user on a specific season")
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="label",
+        description="Label of the targeted season"
+    )
+    async def user_season_profile(self, ctx: ApplicationContext, label: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        score = self.bot.db.getUserScore(season.idSeason, ctx.author.id)
+        if not score:
+            await ctx.respond("No profile found in this season")
+            return
+
+        level = 0
+        totalXP = self.nextLevelXP(level, 0)
+        while totalXP < score.score:
+            level += 1
+            totalXP += self.nextLevelXP(level, 0)
+
+        embed = discord.Embed(
+            title=f"{ctx.author.name}'s Season Profile",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=guild.icon)
+        embed.add_field(name="Label", value=season.label)
+        embed.add_field(name="Score", value=score.score)
+        embed.add_field(name="Ranking", value=score.ranking)
+        embed.add_field(name="Level", value=level)
+        await ctx.respond(embed=embed)
 
 
 def setup(bot: commands.Bot):
