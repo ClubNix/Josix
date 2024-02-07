@@ -678,6 +678,14 @@ class DatabaseHandler():
         self.conn.commit()
 
 
+    @_error_handler
+    def updateSeasonLabel(self, season: Season, new_label: str) -> None:
+        query = "UPDATE josix.Season SET label = %s WHERE idSeason = %s;"
+        params = (new_label, season.idSeason)
+        self.cursor.execute(query, params)
+        self.conn.commit()
+
+
     ###############
     # Deleters
     ###############

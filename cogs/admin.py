@@ -330,7 +330,23 @@ class Admin(JosixCog):
         description="New label of the season"
     )
     async def update_season(self, ctx: ApplicationContext, old_label: str, new_label: str):
-        await ctx.send("WIP")
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, old_label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        if self.bot.db.getSeasonByLabel(guild.id, new_label):
+            await ctx.respond(f"The label '{new_label}' is already used in a season for this server")
+            return
+
+        self.bot.db.updateSeasonLabel(season, new_label)
+        await ctx.respond("Done !")
 
 
     @josix_slash(description="Set up the custom welcome system for your server")
