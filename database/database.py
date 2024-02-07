@@ -730,3 +730,12 @@ class DatabaseHandler():
         query = "DELETE FROM josix.UserGuild WHERE idGuild = %s;"
         self.cursor.execute(query, (guildId,))
         self.conn.commit()
+
+
+    @_error_handler
+    def deleteSeason(self, season: Season) -> None:
+        query = "DELETE FROM josix.Score WHERE idSeason = %s;"
+        query2 = "DELETE FROM josix.Season WHERE idSeason = %s;"
+        self.cursor.execute(query, (season.idSeason,))
+        self.cursor.execute(query2, (season.idSeason,))
+        self.conn.commit()

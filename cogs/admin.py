@@ -270,6 +270,8 @@ class Admin(JosixCog):
         default=None
     )
     async def create_new_season(self, ctx: ApplicationContext, label: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+
         if label is None:
             label = ""
 
@@ -299,7 +301,19 @@ class Admin(JosixCog):
         description="label of targeted season"
     )
     async def delete_season(self, ctx: ApplicationContext, label: str):
-        await ctx.send("WIP")
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        self.bot.db.deleteSeason(season)
+        await ctx.respond("Done !")
 
 
     @josix_slash(description="Update season name")
