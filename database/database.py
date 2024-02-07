@@ -424,6 +424,16 @@ class DatabaseHandler():
         if res:
             return [Score(*score) for score in res]
 
+
+    def getUserScore(self, seasonId: int, userId: int) -> Score | None:
+        query = "SELECT * FROM josix.Score WHERE idSeason = %s AND idUser = %s;"
+        params = (seasonId, userId)
+        self.cursor.execute(query, params)
+        res = self.cursor.fetchone()
+
+        if res:
+            return Score(*res)
+
     ###
     ###
 

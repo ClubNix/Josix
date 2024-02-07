@@ -710,5 +710,48 @@ class XP(JosixCog):
         embed.add_field(name="Ranking", value=res)
         await ctx.respond(embed=embed)
 
+    
+    @josix_slash(description="Show the profile of the user on a specific season")
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="label",
+        description="Label of the targeted season"
+    )
+    async def user_season_profile(self, ctx: ApplicationContext, label: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+        guild = ctx.guild
+        if not guild:
+            await ctx.respond("Data not found")
+            return
+
+        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+            await ctx.respond("Unknown season, make sure you entered the right label")
+            return
+
+        score = self.bot.db.getUserScore(season.idSeason, ctx.author.id)
+        if not score:
+            await ctx.respond("No profile found in this season")
+            return
+
+        level = 0
+        totalXP = self.nextLevelXP(level, 0)
+        while totalXP < score.score:
+            level += 1
+            totalXP += self.nextLevelXP(level, 0)
+
+        embed = discord.Embed(
+            title=f"{ctx.author.name}'s Season Profile",
+            color=0x0089FF
+        )
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+        embed.set_thumbnail(url=guild.icon)
+        embed.add_field(name="Label", value=season.label)
+        embed.add_field(name="Score", value=score.score)
+        embed.add_field(name="Ranking", value=score.ranking)
+        embed.add_field(name="Level", value=level)
+        await ctx.respond(embed=embed)
+
+
 def setup(bot: commands.Bot):
     bot.add_cog(XP(bot, True))
