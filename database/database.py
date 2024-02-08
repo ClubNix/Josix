@@ -50,17 +50,6 @@ class DatabaseHandler():
         return wrapper
 
 
-    def safeExecute(
-        self,
-        func: Callable[[Any], Any],
-        *args
-        ) -> Any:
-        try:
-            return func(*args)
-        except Exception as e:
-            log.writeError(log.formatError(e))
-            
-
     def execute(self, query: str, raiseError: bool = False) -> str:
         if query.startswith("--") or query.startswith("\n") or len(query) == 0:
             return "Empty query"
@@ -136,9 +125,9 @@ class DatabaseHandler():
     ###############
 
     @_error_handler
-    def getGuild(self, guildId: int) -> GuildDB | None:
+    def getGuild(self, id_guild: int) -> GuildDB | None:
         query = "SELECT * FROM josix.Guild WHERE idGuild = %s;"
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         res = self.cursor.fetchone()
 
         if res:
@@ -175,10 +164,10 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getUserInGuild(self, userId: int, guildId: int) -> LinkUserGuild | None:
+    def getUserInGuild(self, userId: int, id_guild: int) -> LinkUserGuild | None:
         query = """SELECT * FROM josix.UserGuild
                    WHERE idUser = %s AND idGuild  = %s;"""
-        params = (userId, guildId)
+        params = (userId, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
 
@@ -186,11 +175,11 @@ class DatabaseHandler():
             return LinkUserGuild(*res)
         
 
-    def getUserGuildLink(self, userId: int, guildId: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
+    def getUserGuildLink(self, userId: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
         return (
             self.getUser(userId),
-            self.getGuild(guildId),
-            self.getUserInGuild(userId, guildId)
+            self.getGuild(id_guild),
+            self.getUserInGuild(userId, id_guild)
         )
 
     @_error_handler
@@ -239,12 +228,12 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getXpLeaderboard(self, guildId: int, limit: int | None) -> list[LinkUserGuild] | None:
+    def getXpLeaderboard(self, id_guild: int, limit: int | None) -> list[LinkUserGuild] | None:
         query = """SELECT * FROM josix.UserGuild
                    WHERE idGuild = %s
                    ORDER BY xp DESC
                    LIMIT %s"""
-        params = (guildId, limit)
+        params = (id_guild, limit)
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
         if res:
@@ -255,12 +244,12 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getLeaderboardPos(self, userId: int, guildId: int) -> int | None:
+    def getLeaderboardPos(self, userId: int, id_guild: int) -> int | None:
         query = """SELECT COUNT(DISTINCT idUser) + 1
                    FROM josix.UserGuild
                    WHERE idGuild = %s AND
                          xp > (SELECT xp FROM josix.UserGuild WHERE idUser = %s AND idGuild = %s);"""
-        params = (guildId, userId, guildId)
+        params = (id_guild, userId, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
         if res:
@@ -301,12 +290,12 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getBDMonth(self, guildId: int, month: int) -> list[Birthday] | None:
+    def getBDMonth(self, id_guild: int, month: int) -> list[Birthday] | None:
         query = """SELECT u.idUser, EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
                    WHERE ug.idGuild = %s AND EXTRACT(MONTH FROM u.hbDate) = %s
                    ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
-        self.cursor.execute(query, (guildId, month))
+        self.cursor.execute(query, (id_guild, month))
         res = self.cursor.fetchall()
         if res:
             birthdays = []
@@ -348,25 +337,25 @@ class DatabaseHandler():
             return Game(*res)
         
 
-    def getSelectLogs(self, guildId: int) -> LogSelection | None:
+    def getSelectLogs(self, id_guild: int) -> LogSelection | None:
         query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         res = self.cursor.fetchall()
 
         if res:
             logs = []
             for row in res:
                 logs.append(row[1])
-            return LogSelection(guildId, logs)
+            return LogSelection(id_guild, logs)
         
 
-    def getNewSeasonId(self, guildId: int) -> int:
+    def getNewSeasonId(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         res = self.cursor.fetchone()
         newLabelID = 1 if not res else res[0]+1
 
-        if self.getSeasonByLabel(guildId, str(newLabelID)):
+        if self.getSeasonByLabel(id_guild, str(newLabelID)):
             raise ValueError(f"The label '{newLabelID}' is already used in a season for this server")
         return newLabelID
 
@@ -379,9 +368,9 @@ class DatabaseHandler():
         return Season(*res)
 
 
-    def getSeasonByLabel(self, guildId: int, label: str) -> Season | None:
+    def getSeasonByLabel(self, id_guild: int, label: str) -> Season | None:
         query = "SELECT * FROM josix.Season WHERE idGuild = %s AND LOWER(label) = LOWER(%s);"
-        params = (guildId, label)
+        params = (id_guild, label)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
         if not res:
@@ -389,9 +378,9 @@ class DatabaseHandler():
         return Season(*res)
 
 
-    def getSeasons(self, guildId: int, limit: int) -> list[Season] | None:
+    def getSeasons(self, id_guild: int, limit: int) -> list[Season] | None:
         query = "SELECT * FROM josix.Season WHERE idGuild = %s ORDER BY idSeason DESC LIMIT %s;"
-        params = (guildId, limit)
+        params = (id_guild, limit)
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
 
@@ -402,13 +391,13 @@ class DatabaseHandler():
             return seasons
 
 
-    def getUserHistory(self, guildId: int, userId: int) -> list[UserScore] | None:
+    def getUserHistory(self, id_guild: int, userId: int) -> list[UserScore] | None:
         query = """
                 SELECT sc.idUser, sc.idSeason, sc.score, sc.ranking, se.label
                 FROM josix.Score sc INNER JOIN josix.Season se ON sc.idSeason = se.idSeason
                 WHERE sc.idUser = %s AND se.idGuild = %s ORDER BY sc.idSeason DESC;
                 """
-        params = (userId, guildId)
+        params = (userId, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
 
@@ -450,17 +439,17 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def addGuild(self, guildId: int, chanStat: int = 0, chanXP: int = 0) -> None:
+    def addGuild(self, id_guild: int, chanStat: int = 0, chanXP: int = 0) -> None:
         query = """INSERT INTO josix.Guild(idGuild, chanNews, xpNews)
                    VALUES (%s, %s, %s)"""
-        params = (guildId, chanStat, chanXP)
+        params = (id_guild, chanStat, chanXP)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def addMsg(self, guildId: int, msgId: int) -> None:
+    def addMsg(self, id_guild: int, msgId: int) -> None:
         query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
-        params = (msgId, guildId)
+        params = (msgId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -487,14 +476,14 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def addUserGuild(self, userId: int, guildId: int) -> None:
+    def addUserGuild(self, userId: int, id_guild: int) -> None:
         query = "INSERT INTO josix.UserGuild(idUser, idGuild) VALUES (%s, %s);"
-        params = (userId, guildId)
+        params = (userId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def addDartLog(self, guildId: int, winner: discord.User, foes: tuple[discord.User]) -> None:
+    def addDartLog(self, id_guild: int, winner: discord.User, foes: tuple[discord.User]) -> None:
         text = ""
         for foe in foes:
             text += foe.name + "', '"
@@ -502,7 +491,7 @@ class DatabaseHandler():
 
         query = """INSERT INTO josix.DartLog (idGuild, winnerName, losersName)
                    VALUES (%s, %s, ARRAY[%s])"""
-        params = (guildId, winner.name, text)
+        params = (id_guild, winner.name, text)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -533,15 +522,15 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def storeSeason(self, guildId: int, label: str) -> int:
+    def storeSeason(self, id_guild: int, label: str) -> int:
         if label == "":
-            label = str(self.getNewSeasonId(guildId))
+            label = str(self.getNewSeasonId(id_guild))
         else:
-            if self.getSeasonByLabel(guildId, str(label)):
+            if self.getSeasonByLabel(id_guild, str(label)):
                 raise ValueError(f"The label '{label}' is already used in a season for this server")
 
         query = "INSERT INTO josix.Season(idGuild, label) VALUES(%s, LOWER(%s)) RETURNING idSeason;"
-        params = (guildId, label)
+        params = (id_guild, label)
         self.cursor.execute(query, params)
         self.conn.commit()
         
@@ -551,8 +540,8 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def storeScores(self, guildId: int, seasonId: int):
-        scores = self.getXpLeaderboard(guildId, None)
+    def storeScores(self, id_guild: int, seasonId: int):
+        scores = self.getXpLeaderboard(id_guild, None)
         if not scores:
             return
         
@@ -581,11 +570,11 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def changeNewsChan(self, guildId: int, chanId: int) -> None:
+    def changeNewsChan(self, id_guild: int, chanId: int) -> None:
         query = """UPDATE josix.Guild
                    SET chanNews = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, guildId)
+        params = (chanId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -616,62 +605,62 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def updateUserXP(self, userId: int, guildId: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
+    def updateUserXP(self, userId: int, id_guild: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
         query = """UPDATE josix.UserGuild
                    SET lvl = %s,
                        xp = %s,
                        lastMessage = %s
                     WHERE idUser = %s AND idGuild = %s;"""
-        params = (lvl, xp, lastSend, userId, guildId)
+        params = (lvl, xp, lastSend, userId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def changeXPChan(self, guildId: int, chanId: int) -> None:
+    def changeXPChan(self, id_guild: int, chanId: int) -> None:
         query = """UPDATE josix.Guild
                    SET xpNews = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, guildId)
+        params = (chanId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def updateGuildXpEnabled(self, guildId: int) -> None:
+    def updateGuildXpEnabled(self, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET enableXP = NOT enableXP
                    WHERE idGuild = %s"""
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         self.conn.commit()
 
     @_error_handler
-    def updateUserBlock(self, userId: int, guildId: int) -> None:
+    def updateUserBlock(self, userId: int, id_guild: int) -> None:
         query = """UPDATE josix.UserGuild
                    SET xpBlocked = NOT xpBlocked
                    WHERE idUser = %s AND idGuild = %s;"""
-        params = (userId, guildId)
+        params = (userId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def blockCategory(self, catId: int, guildId: int) -> None:
+    def blockCategory(self, catId: int, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET blockedCategories = ARRAY_APPEND(blockedCategories, %s)
                    WHERE idGuild = %s;"""
-        params = (catId, guildId)
+        params = (catId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def unblockCategory(self, catId: int, guildId: int) -> None:
+    def unblockCategory(self, catId: int, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET blockedCategories = ARRAY_REMOVE(blockedCategories, %s)
                    WHERE idGuild = %s;"""
-        params = (catId, guildId)
+        params = (catId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def updateWelcomeGuild(self, guildId: int, chanId: int | None, roleId: int | None, message: str) -> None:
+    def updateWelcomeGuild(self, id_guild: int, chanId: int | None, roleId: int | None, message: str) -> None:
         if not chanId:
             chanId = 0
         if not roleId:
@@ -683,22 +672,22 @@ class DatabaseHandler():
                        welcomeRole = %s,
                        welcomeText = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, roleId, message, guildId)
+        params = (chanId, roleId, message, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def updateGuildWelcomeEnabled(self, guildId: int) -> None:
+    def updateGuildWelcomeEnabled(self, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET enableWelcome = NOT enableWelcome
                    WHERE idGuild = %s"""
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         self.conn.commit()
 
     @_error_handler
-    def updateLogSelects(self, guildId: int, logs: list[int]) -> None:
+    def updateLogSelects(self, id_guild: int, logs: list[int]) -> None:
         for i in range(1, 13):
-            params = (guildId, i)
+            params = (id_guild, i)
 
             if i in logs:
                 query = "INSERT INTO josix.LogSelector VALUES(%s, %s) ON CONFLICT DO NOTHING;"
@@ -716,9 +705,9 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def updateLogChannel(self, guildId: int, channelId: int | None) -> None:
+    def updateLogChannel(self, id_guild: int, channelId: int | None) -> None:
         query = "UPDATE josix.Guild SET logNews = %s WHERE idGuild = %s;"
-        params = (channelId, guildId)
+        params = (channelId, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -779,9 +768,9 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def cleanXPGuild(self, guildId: int) -> None:
+    def cleanXPGuild(self, id_guild: int) -> None:
         query = "DELETE FROM josix.UserGuild WHERE idGuild = %s;"
-        self.cursor.execute(query, (guildId,))
+        self.cursor.execute(query, (id_guild,))
         self.conn.commit()
 
 
