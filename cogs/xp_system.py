@@ -699,6 +699,9 @@ class XP(JosixCog):
         if scores:
             medals = ["🥇", "🥈", ":third_place:"]
             for i, score in enumerate(scores):
+                if i >= 3:
+                    break
+
                 try:
                     if not (member := guild.get_member(score.idUser)) and not (member := await guild.fetch_member(score.idUser)):
                         continue
