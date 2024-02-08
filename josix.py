@@ -65,6 +65,9 @@ class Josix(commands.Bot):
         except Exception as error:
             log.writeError(log.formatError(error))
 
+    def get_handler(self) -> DatabaseHandler:
+        return self.db
+
     def run(self) -> None:
         super().run(Josix._TOKEN)
 
