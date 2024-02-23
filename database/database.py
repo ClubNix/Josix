@@ -219,11 +219,8 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
         if res:
-            couples = []
-            for row in res:
-                couples.append(ReactCouple(*row))
-            return couples
-        
+            return [ReactCouple(*row) for row in res]
+
 
     @_error_handler
     def getCoupleFromRole(self, id_role: int) -> list[ReactCouple] | None:
@@ -231,11 +228,8 @@ class DatabaseHandler():
         self.cursor.execute(query, (id_role,))
         res = self.cursor.fetchone()
         if res:
-            couples = []
-            for row in res:
-                couples.append(ReactCouple(*row))
-            return couples
-        
+            return [ReactCouple(*row) for row in res]
+
 
     @_error_handler
     def getXpLeaderboard(self, id_guild: int, limit: int | None) -> list[LinkUserGuild] | None:
@@ -247,11 +241,8 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
         if res:
-            leaderboard = []
-            for row in res:
-                leaderboard.append(LinkUserGuild(*row))
-            return leaderboard
-        
+            return [LinkUserGuild(*row) for row in res]
+
 
     @_error_handler
     def getLeaderboardPos(self, id_user: int, id_guild: int) -> int | None:
@@ -264,7 +255,7 @@ class DatabaseHandler():
         res = self.cursor.fetchone()
         if res:
             return res[0]
-        
+
 
     @_error_handler
     def getNewsChanFromUser(self, id_user: int) -> list[int] | None:
@@ -274,11 +265,8 @@ class DatabaseHandler():
         self.cursor.execute(query, (id_user,))
         res = self.cursor.fetchall()
         if res:
-            ids = []
-            for row in res:
-                ids.append(row[0])
-            return ids
-        
+            return [row[0] for row in res]
+
 
     @_error_handler
     def checkBD(self, day: int, month: int) -> list[BirthdayAuto] | None:
@@ -293,11 +281,8 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
         if res:
-            lstBD = []
-            for row in res:
-                lstBD.append(BirthdayAuto(*row))
-            return lstBD
-        
+            return [BirthdayAuto(*row) for row in res]
+
 
     @_error_handler
     def getBDMonth(self, id_guild: int, month: int) -> list[Birthday] | None:
@@ -308,11 +293,7 @@ class DatabaseHandler():
         self.cursor.execute(query, (id_guild, month))
         res = self.cursor.fetchall()
         if res:
-            birthdays = []
-            for row in res:
-                birthdays.append(Birthday(*row))
-            return birthdays
-        
+            return [Birthday(*row) for row in res]
 
 
     @_error_handler
@@ -323,7 +304,7 @@ class DatabaseHandler():
 
         if res:
             return Game(*res)
-        
+
 
     @_error_handler
     def getGameType(self, game_name: str) -> GameType | None:
@@ -333,7 +314,7 @@ class DatabaseHandler():
 
         if res:
             return GameType(*res)
-        
+
 
     @_error_handler
     def getExistingGame(self, id_game: int, id_user: int) -> Game | None:
@@ -345,7 +326,7 @@ class DatabaseHandler():
 
         if res:
             return Game(*res)
-        
+
 
     def getSelectLogs(self, id_guild: int) -> LogSelection | None:
         query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
@@ -357,7 +338,7 @@ class DatabaseHandler():
             for row in res:
                 logs.append(row[1])
             return LogSelection(id_guild, logs)
-        
+
 
     def getNewSeasonID(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
@@ -369,13 +350,13 @@ class DatabaseHandler():
             raise ValueError(f"The label '{newLabelID}' is already used in a season for this server")
         return newLabelID
 
+
     def getSeason(self, id_season: int) -> Season | None:
         query = "SELECT * FROM josix.Season WHERE idSeason = %s;"
         self.cursor.execute(query, (id_season,))
         res = self.cursor.fetchone()
-        if not res:
-            return None
-        return Season(*res)
+        if res:
+            return Season(*res)
 
 
     def getSeasonByLabel(self, id_guild: int, label: str) -> Season | None:
@@ -383,9 +364,8 @@ class DatabaseHandler():
         params = (id_guild, label)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
-        if not res:
-            return None
-        return Season(*res)
+        if res:
+            return Season(*res)
 
 
     def getSeasons(self, id_guild: int, limit: int) -> list[Season] | None:
@@ -395,10 +375,7 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
 
         if res:
-            seasons = []
-            for season in res:
-                seasons.append(Season(*season))
-            return seasons
+            return [Season(*row) for row in res]
 
 
     def getUserHistory(self, id_guild: int, id_user: int) -> list[UserScore] | None:
