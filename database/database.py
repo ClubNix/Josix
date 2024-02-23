@@ -36,6 +36,16 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
+    def safeExecute(
+        self,
+        func: Callable[[Any], Any],
+        *args
+        ) -> Any:
+        try:
+            return func(*args)
+        except Exception as e:
+            log.writeError(log.formatError(e))
+
 
     def _error_handler(func: Callable):
         def wrapper(ref, *args):
@@ -132,12 +142,12 @@ class DatabaseHandler():
 
         if res:
             return GuildDB(*res)
-        
+
 
     @_error_handler
-    def getUser(self, userId: int) -> UserDB | None:
+    def getUser(self, id_user: int) -> UserDB | None:
         query = "SELECT * FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         res = self.cursor.fetchone()
 
         if res:
@@ -154,9 +164,9 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getMsg(self, msgId: int) -> MsgReact | None:
+    def getMsg(self, id_msg: int) -> MsgReact | None:
         query = f"SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
-        self.cursor.execute(query, (msgId,))
+        self.cursor.execute(query, (id_msg,))
         res = self.cursor.fetchone()
 
         if res:
@@ -164,10 +174,10 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getUserInGuild(self, userId: int, id_guild: int) -> LinkUserGuild | None:
+    def getUserInGuild(self, id_user: int, id_guild: int) -> LinkUserGuild | None:
         query = """SELECT * FROM josix.UserGuild
                    WHERE idUser = %s AND idGuild  = %s;"""
-        params = (userId, id_guild)
+        params = (id_user, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
 
@@ -175,19 +185,19 @@ class DatabaseHandler():
             return LinkUserGuild(*res)
         
 
-    def getUserGuildLink(self, userId: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
+    def getUserGuildLink(self, id_user: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
         return (
-            self.getUser(userId),
+            self.getUser(id_user),
             self.getGuild(id_guild),
-            self.getUserInGuild(userId, id_guild)
+            self.getUserInGuild(id_user, id_guild)
         )
 
     @_error_handler
-    def getRoleFromReact(self, msgId: int, emojiName: str) -> int | None:
+    def getRoleFromReact(self, id_msg: int, emoji_name: str) -> int | None:
         query = """SELECT idRole FROM josix.ReactCouple rc
                    INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                   WHERE mc.idMsg = %s AND rc.nomEmoji = %s;"""
-        params = (msgId, emojiName)
+                   WHERE mc.idMsg = %s AND rc.emoji = %s;"""
+        params = (id_msg, emoji_name)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
         if res:
@@ -195,16 +205,16 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getCouples(self, msgId: int = None) -> list[ReactCouple] | None:
-        if not msgId:
-            query = """SELECT rc.idCouple, rc.nomEmoji, rc.idRole FROM josix.ReactCouple rc
+    def getCouples(self, id_msg: int = None) -> list[ReactCouple] | None:
+        if not id_msg:
+            query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
             params = ()
         else:
-            query = """SELECT rc.idCouple, rc.nomEmoji, rc.idRole FROM josix.ReactCouple rc
+            query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
                        INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
                        WHERE mc.idMsg = %s;"""
-            params = (msgId,)
+            params = (id_msg,)
         self.cursor.execute(query, params)
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
@@ -216,9 +226,9 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getCoupleFromRole(self, roleId: int) -> list[ReactCouple] | None:
+    def getCoupleFromRole(self, id_role: int) -> list[ReactCouple] | None:
         query = "SELECT * FROM josix.ReactCouple WHERE idRole = %s;"
-        self.cursor.execute(query, (roleId,))
+        self.cursor.execute(query, (id_role,))
         res = self.cursor.fetchone()
         if res:
             couples = []
@@ -244,12 +254,12 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getLeaderboardPos(self, userId: int, id_guild: int) -> int | None:
+    def getLeaderboardPos(self, id_user: int, id_guild: int) -> int | None:
         query = """SELECT COUNT(DISTINCT idUser) + 1
                    FROM josix.UserGuild
                    WHERE idGuild = %s AND
                          xp > (SELECT xp FROM josix.UserGuild WHERE idUser = %s AND idGuild = %s);"""
-        params = (id_guild, userId, id_guild)
+        params = (id_guild, id_user, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
         if res:
@@ -257,11 +267,11 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getNewsChanFromUser(self, userId: int) -> list[int] | None:
+    def getNewsChanFromUser(self, id_user: int) -> list[int] | None:
         query = """SELECT chanNews 
                    FROM josix.Guild g INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
                    WHERE idUser = %s AND chanNews IS NOT NULL;"""
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         res = self.cursor.fetchall()
         if res:
             ids = []
@@ -306,9 +316,9 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def getGameFromUser(self, userId: int) -> Game | None:
+    def getGameFromUser(self, id_user: int) -> Game | None:
         query = "SELECT * FROM josix.Games WHERE idUser = %s OR opponent = %s;"
-        self.cursor.execute(query, (userId, userId))
+        self.cursor.execute(query, (id_user, id_user))
         res = self.cursor.fetchone()
 
         if res:
@@ -316,9 +326,9 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getGameType(self, gameName: str) -> GameType | None:
+    def getGameType(self, game_name: str) -> GameType | None:
         query = "SELECT * FROM josix.GameType WHERE gameName = %s;"
-        self.cursor.execute(query, (gameName,))
+        self.cursor.execute(query, (game_name,))
         res = self.cursor.fetchone()
 
         if res:
@@ -326,10 +336,10 @@ class DatabaseHandler():
         
 
     @_error_handler
-    def getExistingGame(self, gameId: int, userId: int) -> Game | None:
+    def getExistingGame(self, id_game: int, id_user: int) -> Game | None:
         query = """SELECT * FROM josix.Games
                    WHERE idGame = %s AND (idUser = %s OR opponent = %s);"""
-        params = (gameId, userId, userId)
+        params = (id_game, id_user, id_user)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
 
@@ -349,7 +359,7 @@ class DatabaseHandler():
             return LogSelection(id_guild, logs)
         
 
-    def getNewSeasonId(self, id_guild: int) -> int:
+    def getNewSeasonID(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
         self.cursor.execute(query, (id_guild,))
         res = self.cursor.fetchone()
@@ -359,9 +369,9 @@ class DatabaseHandler():
             raise ValueError(f"The label '{newLabelID}' is already used in a season for this server")
         return newLabelID
 
-    def getSeason(self, seasonId: int) -> Season | None:
+    def getSeason(self, id_season: int) -> Season | None:
         query = "SELECT * FROM josix.Season WHERE idSeason = %s;"
-        self.cursor.execute(query, (seasonId,))
+        self.cursor.execute(query, (id_season,))
         res = self.cursor.fetchone()
         if not res:
             return None
@@ -391,13 +401,13 @@ class DatabaseHandler():
             return seasons
 
 
-    def getUserHistory(self, id_guild: int, userId: int) -> list[UserScore] | None:
+    def getUserHistory(self, id_guild: int, id_user: int) -> list[UserScore] | None:
         query = """
                 SELECT sc.idUser, sc.idSeason, sc.score, sc.ranking, se.label
                 FROM josix.Score sc INNER JOIN josix.Season se ON sc.idSeason = se.idSeason
                 WHERE sc.idUser = %s AND se.idGuild = %s ORDER BY sc.idSeason DESC;
                 """
-        params = (userId, id_guild)
+        params = (id_user, id_guild)
         self.cursor.execute(query, params)
         res = self.cursor.fetchall()
 
@@ -405,18 +415,18 @@ class DatabaseHandler():
             return [UserScore(*score) for score in res]
 
 
-    def getScores(self, seasonId: int) -> list[Score] | None:
+    def getScores(self, id_season: int) -> list[Score] | None:
         query = """SELECT * FROM josix.Score WHERE idSeason = %s ORDER BY ranking;"""
-        self.cursor.execute(query, (seasonId,))
+        self.cursor.execute(query, (id_season,))
         res = self.cursor.fetchall()
         
         if res:
             return [Score(*score) for score in res]
 
 
-    def getUserScore(self, seasonId: int, userId: int) -> Score | None:
+    def getUserScore(self, id_season: int, id_user: int) -> Score | None:
         query = "SELECT * FROM josix.Score WHERE idSeason = %s AND idUser = %s;"
-        params = (seasonId, userId)
+        params = (id_season, id_user)
         self.cursor.execute(query, params)
         res = self.cursor.fetchone()
 
@@ -427,9 +437,9 @@ class DatabaseHandler():
     ###
 
     @_error_handler
-    def getPlayerStat(self, userId: int) -> tuple[int, int] | None:
+    def getPlayerStat(self, id_user: int) -> tuple[int, int] | None:
         query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         return self.cursor.fetchone()
 
 
@@ -439,46 +449,46 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def addGuild(self, id_guild: int, chanStat: int = 0, chanXP: int = 0) -> None:
+    def addGuild(self, id_guild: int, id_chan_stat: int = 0, id_chan_xp: int = 0) -> None:
         query = """INSERT INTO josix.Guild(idGuild, chanNews, xpNews)
                    VALUES (%s, %s, %s)"""
-        params = (id_guild, chanStat, chanXP)
+        params = (id_guild, id_chan_stat, id_chan_xp)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def addMsg(self, id_guild: int, msgId: int) -> None:
+    def addMsg(self, id_guild: int, id_msg: int) -> None:
         query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
-        params = (msgId, id_guild)
+        params = (id_msg, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def addCouple(self, couple: tuple, msgId: int) -> None:
+    def addCouple(self, couple: tuple, id_msg: int) -> None:
         if len(couple) != 2:
             return
             
-        query1 = """INSERT INTO josix.ReactCouple (nomEmoji, idRole)
+        query1 = """INSERT INTO josix.ReactCouple (emoji, idRole)
                     VALUES (%s, %s) RETURNING idCouple;"""
         params = (couple[0], couple[1])
         self.cursor.execute(query1, params)
         idCouple = self.cursor.fetchone()[0]
 
         query2 = "INSERT INTO josix.MsgCouple VALUES (%s,%s);"
-        params = (msgId, idCouple)
+        params = (id_msg, idCouple)
         self.cursor.execute(query2, params)
         self.conn.commit()
 
     @_error_handler
-    def addUser(self, userId: int) -> None:
+    def addUser(self, id_user: int) -> None:
         query = "INSERT INTO josix.User (idUser) VALUES (%s);"
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         self.conn.commit()
 
     @_error_handler
-    def addUserGuild(self, userId: int, id_guild: int) -> None:
+    def addUserGuild(self, id_user: int, id_guild: int) -> None:
         query = "INSERT INTO josix.UserGuild(idUser, idGuild) VALUES (%s, %s);"
-        params = (userId, id_guild)
+        params = (id_user, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -496,23 +506,23 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def addGameType(self, gameName: str) -> None:
+    def addGameType(self, game_name: str) -> None:
         query = "INSERT INTO josix.GameType(gameName) VALUES(%s);"
-        self.cursor.execute(query, (gameName,))
+        self.cursor.execute(query, (game_name,))
         self.conn.commit()
 
     @_error_handler
-    def addGameFromId(self, typeId: int, userId:int, opponent: int = None) -> None:
+    def addGameFromId(self, typeId: int, id_user:int, opponent: int = None) -> None:
         query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
-        params = (typeId, userId, opponent)
+        params = (typeId, id_user, opponent)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def addGameFromName(self, gameName: str, userId:int, opponent: int = None) -> int | None:
-        typeId = self.getGameType(gameName).id
+    def addGameFromName(self, game_name: str, id_user: int, opponent: int = None) -> int | None:
+        typeId = self.getGameType(game_name).id # TODO : can be none
         query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
-        params = (typeId, userId, opponent)
+        params = (typeId, id_user, opponent)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -524,7 +534,7 @@ class DatabaseHandler():
     @_error_handler
     def storeSeason(self, id_guild: int, label: str) -> int:
         if label == "":
-            label = str(self.getNewSeasonId(id_guild))
+            label = str(self.getNewSeasonID(id_guild))
         else:
             if self.getSeasonByLabel(id_guild, str(label)):
                 raise ValueError(f"The label '{label}' is already used in a season for this server")
@@ -540,12 +550,12 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def storeScores(self, id_guild: int, seasonId: int):
+    def storeScores(self, id_guild: int, id_season: int):
         scores = self.getXpLeaderboard(id_guild, None)
         if not scores:
             return
         
-        season = self.getSeason(seasonId)
+        season = self.getSeason(id_season)
         if not season:
             return
 
@@ -561,66 +571,66 @@ class DatabaseHandler():
     ###############
 
     @_error_handler
-    def updatePlayerStat(self, userId: int, newElo: int) -> None:
+    def updatePlayerStat(self, id_user: int, new_elo: int) -> None:
         query = """UPDATE josix.User
                    SET elo = %s, nbGames = nbGames + 1
                    WHERE idUser = %s;"""
-        params = (newElo, userId)
+        params = (new_elo, id_user)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def changeNewsChan(self, id_guild: int, chanId: int) -> None:
+    def changeNewsChan(self, id_guild: int, id_chan: int) -> None:
         query = """UPDATE josix.Guild
                    SET chanNews = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, id_guild)
+        params = (id_chan, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def updateUserBD(self, userId: int, day: int, month: int, year: int) -> None:
+    def updateUserBD(self, id_user: int, day: int, month: int, year: int) -> None:
         newBd = f"'{year}-{month}-{day}'"
         query = """UPDATE josix.User
                    SET hbDate = %s
                    WHERE idUser = %s;"""
-        params = (newBd, userId)
+        params = (newBd, id_user)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def removeUserBD(self, userId: int) -> None:
+    def removeUserBD(self, id_user: int) -> None:
         query = """UPDATE josix.User
                    SET hbDate = NULL
                    WHERE idUser = %s;"""
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         self.conn.commit() 
 
     @_error_handler
-    def resetBd(self, userId: int) -> None:
+    def resetBd(self, id_user: int) -> None:
         query = """UPDATE josix.User
                    SET hbDate = hbDate - INTERVAL '1 year'
                    WHERE idUser = %s;"""
-        self.cursor.execute(query, (userId,))
+        self.cursor.execute(query, (id_user,))
         self.conn.commit()
 
     @_error_handler
-    def updateUserXP(self, userId: int, id_guild: int, lvl: int, xp: int, lastSend: dt.datetime) -> None:
+    def updateUserXP(self, id_user: int, id_guild: int, lvl: int, xp: int, last_send: dt.datetime) -> None:
         query = """UPDATE josix.UserGuild
                    SET lvl = %s,
                        xp = %s,
                        lastMessage = %s
                     WHERE idUser = %s AND idGuild = %s;"""
-        params = (lvl, xp, lastSend, userId, id_guild)
+        params = (lvl, xp, last_send, id_user, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def changeXPChan(self, id_guild: int, chanId: int) -> None:
+    def changeXPChan(self, id_guild: int, id_chan: int) -> None:
         query = """UPDATE josix.Guild
                    SET xpNews = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, id_guild)
+        params = (id_chan, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -633,38 +643,38 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def updateUserBlock(self, userId: int, id_guild: int) -> None:
+    def updateUserBlock(self, id_user: int, id_guild: int) -> None:
         query = """UPDATE josix.UserGuild
                    SET xpBlocked = NOT xpBlocked
                    WHERE idUser = %s AND idGuild = %s;"""
-        params = (userId, id_guild)
+        params = (id_user, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def blockCategory(self, catId: int, id_guild: int) -> None:
+    def blockCategory(self, id_category: int, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET blockedCategories = ARRAY_APPEND(blockedCategories, %s)
                    WHERE idGuild = %s;"""
-        params = (catId, id_guild)
+        params = (id_category, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def unblockCategory(self, catId: int, id_guild: int) -> None:
+    def unblockCategory(self, id_category: int, id_guild: int) -> None:
         query = """UPDATE josix.Guild
                    SET blockedCategories = ARRAY_REMOVE(blockedCategories, %s)
                    WHERE idGuild = %s;"""
-        params = (catId, id_guild)
+        params = (id_category, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def updateWelcomeGuild(self, id_guild: int, chanId: int | None, roleId: int | None, message: str) -> None:
-        if not chanId:
-            chanId = 0
-        if not roleId:
-            roleId = 0
+    def updateWelcomeGuild(self, id_guild: int, id_chan: int | None, id_role: int | None, message: str) -> None:
+        if not id_chan:
+            id_chan = 0
+        if not id_role:
+            id_role = 0
 
         query = """UPDATE josix.Guild
                    SET enableWelcome = TRUE,
@@ -672,7 +682,7 @@ class DatabaseHandler():
                        welcomeRole = %s,
                        welcomeText = %s
                    WHERE idGuild = %s;"""
-        params = (chanId, roleId, message, id_guild)
+        params = (id_chan, id_role, message, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -705,9 +715,9 @@ class DatabaseHandler():
         self.conn.commit()
 
     @_error_handler
-    def updateLogChannel(self, id_guild: int, channelId: int | None) -> None:
+    def updateLogChannel(self, id_guild: int, id_chan: int | None) -> None:
         query = "UPDATE josix.Guild SET logNews = %s WHERE idGuild = %s;"
-        params = (channelId, id_guild)
+        params = (id_chan, id_guild)
         self.cursor.execute(query, params)
         self.conn.commit()
 
@@ -726,32 +736,32 @@ class DatabaseHandler():
 
 
     @_error_handler
-    def delMessageReact(self, msgId: int) -> None:
+    def delMessageReact(self, id_msg: int) -> None:
         query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s;"
         query2 = "DELETE FROM josix.MsgReact WHERE idMsg = %s;"
-        self.cursor.execute(query, (msgId,))
-        self.cursor.execute(query2, (msgId,))
+        self.cursor.execute(query, (id_msg,))
+        self.cursor.execute(query2, (id_msg,))
         self.conn.commit()
 
     @_error_handler
-    def delReactCouple(self, coupleId: int) -> None:
+    def delReactCouple(self, id_couple: int) -> None:
         query = "DELETE FROM josix.MsgCouple WHERE idCouple = %s;"
         query2 = "DELETE FROM josix.ReactCouple WHERE idCouple = %s;"
-        self.cursor.execute(query, (coupleId,))
-        self.cursor.execute(query2, (coupleId,))
+        self.cursor.execute(query, (id_couple,))
+        self.cursor.execute(query2, (id_couple,))
         self.conn.commit()
 
     @_error_handler
-    def delMessageCouple(self, msgId: int, coupleId: int) -> None:
+    def delMessageCouple(self, id_msg: int, id_couple: int) -> None:
         query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s AND idCouple = %s;"
-        params = (msgId, coupleId)
+        params = (id_msg, id_couple)
         self.cursor.execute(query, params)
         self.conn.commit()
 
     @_error_handler
-    def quitGame(self, userId: int) -> None:
+    def quitGame(self, id_user: int) -> None:
         query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
-        self.cursor.execute(query, (userId, userId))
+        self.cursor.execute(query, (id_user, id_user))
         self.conn.commit()
 
     @_error_handler

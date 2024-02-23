@@ -87,7 +87,7 @@ class Admin(JosixCog):
             await ctx.respond("Incorrect value given for the message_id parameter")
             return
 
-        msg = await ctx.channel.fetch_message(idMsg)
+        msg = await ctx.channel.fetch_message(idMsg) # TODO : Catch Unknown message
         if not msg:
             await ctx.respond("Unknown message")
             return
