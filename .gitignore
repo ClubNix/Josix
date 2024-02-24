@@ -3,6 +3,7 @@
 *.DS_Store
 database/*.sql
 *.old
+.mypy_cache
 
 devdoc.md
 .vscode

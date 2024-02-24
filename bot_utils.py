@@ -1,7 +1,9 @@
-from discord import SlashCommand, Permissions
 from typing import Callable
+
+from discord import Permissions, SlashCommand
 from discord.commands.core import application_command
 from discord.ext.commands import Cog
+
 
 class JosixCog(Cog):
     """A class representing a Cog for Josix with a special attribute for the help command
@@ -40,8 +42,26 @@ class JosixSlash(SlashCommand):
 
         self.give_xp: bool = kwargs.get("give_xp", False)
         self.hidden: bool = kwargs.get("hidden", False)
-        if not isinstance(self.give_xp, bool): raise TypeError("give_xp must be a boolean")
-        if not isinstance(self.hidden, bool): raise TypeError("hidden must be a boolean")
+        if not isinstance(self.give_xp, bool):
+            raise TypeError("give_xp must be a boolean")
+        if not isinstance(self.hidden, bool):
+            raise TypeError("hidden must be a boolean")
+
+
+class JosixError(Exception):
+    """
+    Exception to wrap all the exceptions directly related to Josix
+    """
+
+
+class JosixDatabaseException(JosixError):
+    """
+    Subclass that represents the exceptions raised during database handling
+
+    Can be :
+        - Missing DatabaseHandler argument in services
+        - Bad argument
+    """
 
 
 def josix_slash(**kwargs):

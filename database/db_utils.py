@@ -1,5 +1,27 @@
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import date, datetime
+from typing import Callable
+
+import psycopg2
+
+from bot_utils import JosixDatabaseException
+from database.database import DatabaseHandler
+
+
+def error_handler(func: Callable):
+    def wrapper(*args):
+        if len(args) < 1 or not isinstance(args[0], DatabaseHandler):
+            raise JosixDatabaseException("The service must have at least one argument from the type DatabaseHandler")
+
+        try:
+            return func(*args)
+        except psycopg2.Error as dbError:
+            args[0].conn.rollback()
+            raise dbError
+        except Exception as commonError:
+            raise commonError
+    return wrapper
+
 
 @dataclass()
 class UserDB:

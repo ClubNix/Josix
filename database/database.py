@@ -1,14 +1,14 @@
-import psycopg2
-import discord
-import os
 import datetime as dt
-import logwrite as log
-
-from typing import Callable, Any
-from database.db_utils import *
+import os
 from shutil import copyfile
+from typing import Any, Callable
+
+import discord
+import psycopg2
 from dotenv import load_dotenv
 
+import logwrite as log
+from database.db_utils import *
 
 SCRIPT_DIR = os.path.dirname(__file__)
 BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
@@ -31,7 +31,7 @@ class DatabaseHandler():
             password=os.getenv("DB_PASSWORD")
         )
 
-        log.writeLog(f" - Connection on the database for Josix done")
+        log.writeLog(" - Connection on the database for Josix done")
 
         self.conn = conn
         self.cursor = conn.cursor()
@@ -165,7 +165,7 @@ class DatabaseHandler():
 
     @_error_handler
     def getMsg(self, id_msg: int) -> MsgReact | None:
-        query = f"SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
+        query = "SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
         self.cursor.execute(query, (id_msg,))
         res = self.cursor.fetchone()
 
@@ -685,9 +685,9 @@ class DatabaseHandler():
 
     @_error_handler
     def updateLogsEntries(self, logs: list[tuple[str, int]]) -> None:
-        for log in logs:
+        for log_var in logs:
             query = "INSERT INTO josix.Logs VALUES(%s, %s) ON CONFLICT DO NOTHING;"
-            params = (log[1], log[0])
+            params = (log_var[1], log_var[0])
             self.cursor.execute(query, params)
         self.conn.commit()
 
