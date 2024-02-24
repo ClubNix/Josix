@@ -14,6 +14,7 @@ from typing import Sequence
 from datetime import datetime as dt
 from bot_utils import JosixCog
 from josix import Josix
+from database.services import logger_service
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -122,7 +123,7 @@ class LoggerView(discord.ui.View):
             self.db.addGuild(idGuild)
         
         try:
-            old = self.db.getSelectLogs(idGuild)
+            old = logger_service.get_logs_selection(self.db, idGuild)
         except Exception as e:
             log.writeError(log.formatError(e))
             old = None
@@ -143,7 +144,7 @@ class LoggerView(discord.ui.View):
                 values.append(logValue)
 
         try:
-            self.db.updateLogSelects(idGuild, values)
+            logger_service.update_logs_selection(self.db, idGuild, values)
         except Exception as e:
             log.writeError(log.formatError(e))
             await interaction.response.edit_message(content="Unknown error occured")
@@ -181,7 +182,7 @@ class Logger(JosixCog):
 
     def _updateLogs(self):
         logs = [(i.lower(), v.value) for i, v in Logs._member_map_.items()]
-        self.bot.db.updateLogsEntries(logs)
+        logger_service.update_logs_entries(self.bot.get_handler(), logs)
 
     async def checkLogStatus(self, idGuild: int, idLog: int) -> discord.TextChannel | None:
         """
@@ -202,7 +203,7 @@ class Logger(JosixCog):
         TextChannel | None
             The text channel that displays the logs
         """
-        guildLogs = self.bot.db.getSelectLogs(idGuild)
+        guildLogs = logger_service.get_logs_selection(self.bot.get_handler(), idGuild)
         dbGuild = self.bot.db.getGuild(idGuild)
         
         if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):

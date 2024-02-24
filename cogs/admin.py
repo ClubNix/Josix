@@ -10,6 +10,7 @@ import logwrite as log
 from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
+from database.services import logger_service
 
 
 class Admin(JosixCog):
@@ -448,11 +449,12 @@ class Admin(JosixCog):
     )
     async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
         await ctx.defer(ephemeral=False, invisible=False)
-        if channel:     
-            self.bot.db.updateLogChannel(ctx.guild.id, channel.id)
+        handler = self.bot.get_handler()
+        if channel:
+            logger_service.update_log_channel(handler, ctx.guild.id, channel.id)
             await ctx.respond("Logs channel set")
         else:
-            self.bot.db.updateLogChannel(ctx.guild.id, None)
+            logger_service.update_log_channel(handler, ctx.guild.id, None)
             await ctx.respond("Logs channel unset")
 
 

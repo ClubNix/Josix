@@ -301,18 +301,6 @@ class DatabaseHandler():
             return Game(*res)
 
 
-    def getSelectLogs(self, id_guild: int) -> LogSelection | None:
-        query = "SELECT * FROM josix.LogSelector WHERE idGuild = %s ORDER BY idLog;"
-        self.cursor.execute(query, (id_guild,))
-        res = self.cursor.fetchall()
-
-        if res:
-            logs = []
-            for row in res:
-                logs.append(row[1])
-            return LogSelection(id_guild, logs)
-
-
     def getNewSeasonID(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
         self.cursor.execute(query, (id_guild,))
@@ -616,33 +604,6 @@ class DatabaseHandler():
                    SET enableWelcome = NOT enableWelcome
                    WHERE idGuild = %s"""
         self.cursor.execute(query, (id_guild,))
-        self.conn.commit()
-
-    @_error_handler
-    def updateLogSelects(self, id_guild: int, logs: list[int]) -> None:
-        for i in range(1, 13):
-            params = (id_guild, i)
-
-            if i in logs:
-                query = "INSERT INTO josix.LogSelector VALUES(%s, %s) ON CONFLICT DO NOTHING;"
-            else:
-                query = "DELETE FROM josix.LogSelector WHERE idGuild = %s AND idLog = %s;"
-            self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def updateLogsEntries(self, logs: list[tuple[str, int]]) -> None:
-        for log_var in logs:
-            query = "INSERT INTO josix.Logs VALUES(%s, %s) ON CONFLICT DO NOTHING;"
-            params = (log_var[1], log_var[0])
-            self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def updateLogChannel(self, id_guild: int, id_chan: int | None) -> None:
-        query = "UPDATE josix.Guild SET logNews = %s WHERE idGuild = %s;"
-        params = (id_chan, id_guild)
-        self.cursor.execute(query, params)
         self.conn.commit()
 
 
