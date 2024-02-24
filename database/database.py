@@ -94,7 +94,8 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
 
         file = DAILY_BACKUP_PATH if daily else BACKUP_PATH
-        if daily: copyfile(DAILY_BACKUP_PATH, OLD_PATH)
+        if daily:
+            copyfile(DAILY_BACKUP_PATH, OLD_PATH)
 
         with open(file, "w") as f:
             f.write("-- Last backup : " + str(dt.datetime.now()) + "\n")
@@ -266,34 +267,6 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
         if res:
             return [row[0] for row in res]
-
-
-    @_error_handler
-    def checkBD(self, day: int, month: int) -> list[BirthdayAuto] | None:
-        query = """SELECT u.idUser AS "user", ug.idGuild as "guild",
-                          EXTRACT(DAY FROM u.hbDate) AS "day",
-                          EXTRACT(MONTH FROM u.hbDate) AS "month"
-                    FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                    WHERE EXTRACT(YEAR FROM u.hbDate) < EXTRACT(YEAR FROM NOW()) AND
-                          EXTRACT(DAY FROM u.hbDate) = %s AND
-                          EXTRACT(MONTH FROM u.hbDate) = %s;"""
-        params = (day, month)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchall()
-        if res:
-            return [BirthdayAuto(*row) for row in res]
-
-
-    @_error_handler
-    def getBDMonth(self, id_guild: int, month: int) -> list[Birthday] | None:
-        query = """SELECT u.idUser, EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate)
-                   FROM josix.User u INNER JOIN josix.UserGuild ug ON u.idUser = ug.idUser
-                   WHERE ug.idGuild = %s AND EXTRACT(MONTH FROM u.hbDate) = %s
-                   ORDER BY EXTRACT(DAY FROM u.hbDate), EXTRACT(MONTH FROM u.hbDate);"""
-        self.cursor.execute(query, (id_guild, month))
-        res = self.cursor.fetchall()
-        if res:
-            return [Birthday(*row) for row in res]
 
 
     @_error_handler
@@ -563,32 +536,6 @@ class DatabaseHandler():
                    WHERE idGuild = %s;"""
         params = (id_chan, id_guild)
         self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def updateUserBD(self, id_user: int, day: int, month: int, year: int) -> None:
-        newBd = f"'{year}-{month}-{day}'"
-        query = """UPDATE josix.User
-                   SET hbDate = %s
-                   WHERE idUser = %s;"""
-        params = (newBd, id_user)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def removeUserBD(self, id_user: int) -> None:
-        query = """UPDATE josix.User
-                   SET hbDate = NULL
-                   WHERE idUser = %s;"""
-        self.cursor.execute(query, (id_user,))
-        self.conn.commit() 
-
-    @_error_handler
-    def resetBd(self, id_user: int) -> None:
-        query = """UPDATE josix.User
-                   SET hbDate = hbDate - INTERVAL '1 year'
-                   WHERE idUser = %s;"""
-        self.cursor.execute(query, (id_user,))
         self.conn.commit()
 
     @_error_handler

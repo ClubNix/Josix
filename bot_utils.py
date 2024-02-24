@@ -4,6 +4,9 @@ from discord import Permissions, SlashCommand
 from discord.commands.core import application_command
 from discord.ext.commands import Cog
 
+import psycopg2
+from database.database import DatabaseHandler
+
 
 class JosixCog(Cog):
     """A class representing a Cog for Josix with a special attribute for the help command
@@ -80,3 +83,18 @@ def get_permissions_str(perms: Permissions) -> list[str]:
         return []
 
     return [flag for flag, state in perms if state]
+
+
+def error_handler(func: Callable):
+    def wrapper(*args):
+        if not args or not isinstance(args[0], DatabaseHandler):
+            raise JosixDatabaseException("The service must have at least one argument from the type DatabaseHandler")
+
+        try:
+            return func(*args)
+        except psycopg2.Error as dbError:
+            args[0].conn.rollback()
+            raise dbError
+        except Exception as commonError:
+            raise commonError
+    return wrapper

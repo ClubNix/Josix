@@ -1,13 +1,12 @@
+from os import getenv
+
 import discord
 from discord.ext import commands
-
-import logwrite as log
-
 from dotenv import load_dotenv
-from os import getenv
-from database.database import DatabaseHandler
 from psycopg2 import Error
 
+import logwrite as log
+from database.database import DatabaseHandler
 
 EXIT = True
 
