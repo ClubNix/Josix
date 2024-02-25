@@ -7,6 +7,8 @@ import logwrite as log
 
 from josix import Josix
 from bot_utils import JosixSlash, JosixCog, josix_slash
+from database.services import discord_service
+
 
 class XP(JosixCog):
     """
@@ -86,17 +88,18 @@ class XP(JosixCog):
         xp : int
             The XP the user will obtain
         """
-        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idTarget, idGuild)
+        handler = self.bot.get_handler()
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
 
         if not userDB:
-            self.bot.db.addUser(idTarget)
+            discord_service.add_user(handler, idTarget)
         if not guildDB:
-            self.bot.db.addGuild(idGuild)
-            guildDB = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            guildDB = discord_service.get_guild(handler, idGuild)
         if not userGuildDB:
-            self.bot.db.addUserGuild(idTarget, idGuild)
-            userGuildDB = self.bot.db.getUserInGuild(idTarget, idGuild)
-    
+            discord_service.add_user_in_guild(handler, idTarget, idGuild)
+            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+
         xpChanId = guildDB.xpNews
         xpEnabled = guildDB.enableXp
 
@@ -228,16 +231,17 @@ class XP(JosixCog):
 
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
+        handler = self.bot.get_handler()
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
 
         if not userDB:
-            self.bot.db.addUser(member.id)
+            discord_service.add_user(handler, member.id)
         if not guildDB:
-            self.bot.db.addGuild(guild.id)
-            guildDB = self.bot.db.getGuild(guild.id)
+            discord_service.add_guild(handler, guild.id)
+            guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
-            self.bot.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.bot.db.getUserInGuild(member.id, guild.id)
+            discord_service.add_user_in_guild(handler, member.id, guild.id)
+            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
@@ -249,16 +253,17 @@ class XP(JosixCog):
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
-        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(member.id, guild.id)
+        handler = self.bot.get_handler()
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
 
         if not userDB:
-            self.bot.db.addUser(member.id)
+            discord_service.add_user(handler, member.id)
         if not guildDB:
-            self.bot.db.addGuild(guild.id)
-            guildDB = self.bot.db.getGuild(guild.id)
+            discord_service.add_guild(handler, guild.id)
+            guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
-            self.bot.db.addUserGuild(member.id, guild.id)
-            userGuildDB = self.bot.db.getUserInGuild(member.id, guild.id)
+            discord_service.add_user_in_guild(handler, member.id, guild.id)
+            userGuildDB = discord_service.get_user_in_guild(member.id, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
@@ -297,7 +302,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
+            if not discord_service.get_user_in_guild(self.bot.get_handler(), member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -331,7 +336,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
+            if not discord_service.get_user_in_guild(self.bot.get_handler(), member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -365,7 +370,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
+            if not discord_service.get_user_in_guild(self.bot.get_handler(), member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -399,7 +404,7 @@ class XP(JosixCog):
             return
 
         try:
-            if not self.bot.db.getUserInGuild(member.id, ctx.guild.id):
+            if not discord_service.get_user_in_guild(self.bot.get_handler(), member.id, ctx.guild.id):
                 await ctx.respond("User not registered.")
                 return
 
@@ -423,11 +428,12 @@ class XP(JosixCog):
     async def leaderboard(self, ctx: ApplicationContext, limit: int):
         await ctx.defer(ephemeral=False, invisible=False)
         idGuild = ctx.guild.id
+        handler = self.bot.get_handler()
 
         try:
-            guildDB = self.bot.db.getGuild(idGuild)
+            guildDB = discord_service.get_guild(handler, idGuild)
             if not guildDB:
-                self.bot.db.addGuild(idGuild)
+                discord_service.add_guild(handler, idGuild)
                 await ctx.respond("Server registered now. Try this command later")
                 return
             elif not guildDB.enableXp:
@@ -491,7 +497,7 @@ class XP(JosixCog):
             return
 
         idGuild = ctx.guild.id
-        stats = self.bot.db.getUserInGuild(member.id, idGuild)
+        stats = discord_service.get_user_in_guild(self.bot.get_handler(), member.id, idGuild)
         if not stats:
             await ctx.respond("This user is not registered")
             return
@@ -539,16 +545,17 @@ class XP(JosixCog):
 
         idTarget = member.id
         idGuild = ctx.guild_id
+        handler = self.bot.get_handler()
         
-        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idTarget, idGuild)
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
 
         if not userDB:
-            self.bot.db.addUser(idTarget)
+            discord_service.add_user(handler, idTarget)
         if not guildDB:
-            self.bot.db.addGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
         if not userGuildDB:
-            self.bot.db.addUserGuild(idTarget, idGuild)
-            userGuildDB = self.bot.db.getUserInGuild(idTarget, idGuild)
+            discord_service.add_user_in_guild(handler, idTarget, idGuild)
+            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
 
         blocked = userGuildDB.isUserBlocked
         self.bot.db.updateUserBlock(idTarget, idGuild)

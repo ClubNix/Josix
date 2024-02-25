@@ -12,9 +12,11 @@ from discord.ext import commands, tasks
 import logwrite as log
 from bot_utils import JosixCog, JosixSlash, get_permissions_str, josix_slash
 from cogs.events import Events
-from database.services import birthday_service
+from database.services import (
+    birthday_service,
+    discord_service,
+)
 from josix import Josix
-from database.services import birthday_service
 
 
 class Poll(discord.ui.Modal):
@@ -350,6 +352,7 @@ class Usage(JosixCog):
         testBoth = None
         bdYear = 0
         stringRes = ""
+        handler = self.bot.get_handler()
 
         if testReject:
             await ctx.respond("Invalid date !")
@@ -365,17 +368,17 @@ class Usage(JosixCog):
         else:
             stringRes = "Your birthday has been added !"
 
-        testUser = self.bot.db.getUser(userId)
+        testUser = discord_service.get_user(handler, userId)
         if not testUser:
-            self.bot.db.addUser(userId)
+            discord_service.add_user(handler, userId)
 
-        testGuild = self.bot.db.getGuild(ctx.guild_id)
+        testGuild = discord_service.get_guild(handler, ctx.guild_id)
         if not testGuild:
-            self.bot.db.addGuild(ctx.guild_id)
+            discord_service.add_guild(handler, ctx.guild_id)
 
-        testBoth = self.bot.db.getUserInGuild(userId, ctx.guild_id)
+        testBoth = discord_service.get_user_in_guild(handler, userId, ctx.guild_id)
         if not testBoth:
-            self.bot.db.addUserGuild(userId, ctx.guild_id)
+            discord_service.add_user_in_guild(handler, userId, ctx.guild_id)
 
         today = datetime.date.today()
         if today.month < month or (today.month == month and today.day < day):
@@ -454,7 +457,7 @@ class Usage(JosixCog):
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = self.bot.db.getUser(user.id)
+        res = discord_service.get_user(self.bot.get_handler(), user.id)
         if not res:
             await ctx.respond("User not registered")
             return

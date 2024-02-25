@@ -10,7 +10,11 @@ import logwrite as log
 from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
-from database.services import logger_service, reactrole_service
+from database.services import (
+    logger_service,
+    reactrole_service,
+    discord_service,
+)
 
 
 class Admin(JosixCog):
@@ -101,9 +105,9 @@ class Admin(JosixCog):
             return
 
         try:
-            testGuild = self.bot.db.getGuild(ctx.guild_id)
+            testGuild = discord_service.get_guild(handler, ctx.guild_id)
             if not testGuild:
-                self.bot.db.addGuild(ctx.guild_id, ctx.channel_id)
+                discord_service.add_guild(handler, ctx.guild_id, ctx.channel_id)
 
             testMsg = reactrole_service.get_reaction_message(handler, idMsg)
             if not testMsg:
@@ -188,7 +192,7 @@ class Admin(JosixCog):
             await og.edit(content="❌ Unknown error with the emoji")
             return
 
-        if not (self.bot.db.getGuild(ctx.guild_id) and reactrole_service.get_reaction_message(handler, idMsg)):
+        if not (discord_service.get_guild(handler, ctx.guild_id) and reactrole_service.get_reaction_message(handler, idMsg)):
             await og.edit(content="❌ This message is unregistered")
             return
 
@@ -214,14 +218,15 @@ class Admin(JosixCog):
     @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        
+
+        handler = self.bot.get_handler()
         testGuild = None
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.bot.db.getGuild(idGuild)
+        testGuild = discord_service.get_guild(handler, idGuild)
         if not testGuild:
-            self.bot.db.addGuild(idGuild, idChan)
+            discord_service.add_guild(handler, idGuild, idChan)
         else:
             self.bot.db.changeNewsChan(idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
@@ -232,13 +237,14 @@ class Admin(JosixCog):
     async def set_xp_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         testGuild = None
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.bot.db.getGuild(idGuild)
+        testGuild = discord_service.get_guild(handler, idGuild)
         if not testGuild:
-            self.bot.db.addGuild(idGuild, idChan)
+            discord_service.add_guild(handler, idGuild, idChan)
         else:
             self.bot.db.changeXPChan(idGuild, idChan)
         await ctx.respond("this channel will now the XP news !")
@@ -250,13 +256,14 @@ class Admin(JosixCog):
     async def enable_xp_system(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         xpState = None
         idGuild = ctx.guild_id
 
-        xpState = self.bot.db.getGuild(idGuild)
+        xpState = discord_service.get_guild(handler, idGuild)
         if not xpState:
-            self.bot.db.addGuild(idGuild)
-            xpState = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            xpState = discord_service.get_guild(handler, idGuild)
 
         enabled = xpState.enableXp
         self.bot.db.updateGuildXpEnabled(idGuild)
@@ -371,7 +378,7 @@ class Admin(JosixCog):
         input_type=str,
         name="message",
         description="Custom welcoming message",
-        default=""
+        default="Welcome {user}"
     )
     @option(
         input_type=bool,
@@ -390,11 +397,12 @@ class Admin(JosixCog):
             return
 
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        handler = self.bot.get_handler()
+        dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not channel:
             idChan = dbGuild.wChan if keep else 0
@@ -418,10 +426,12 @@ class Admin(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
 
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        handler = self.bot.get_handler()
+        dbGuild = discord_service.get_guild(handler, idGuild)
+
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(idGuild)
 
         enabled = dbGuild.enableWelcome
         self.bot.db.updateGuildWelcomeEnabled(idGuild)
@@ -471,13 +481,15 @@ class Admin(JosixCog):
     )
     async def block_category(self, ctx: ApplicationContext, category: discord.CategoryChannel):
         await ctx.defer(ephemeral=False, invisible=False)
+
+        handler = self.bot.get_handler()
         idCat = category.id
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(idGuild)
 
         if idCat in dbGuild.blockedCat:
             self.bot.db.unblockCategory(idCat, idGuild)

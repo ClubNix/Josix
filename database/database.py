@@ -131,57 +131,10 @@ class DatabaseHandler():
                             row_data.append(repr(rd))
                     f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
 
+
     ###############
     # Getters
     ###############
-
-    @_error_handler
-    def getGuild(self, id_guild: int) -> GuildDB | None:
-        query = "SELECT * FROM josix.Guild WHERE idGuild = %s;"
-        self.cursor.execute(query, (id_guild,))
-        res = self.cursor.fetchone()
-
-        if res:
-            return GuildDB(*res)
-
-
-    @_error_handler
-    def getUser(self, id_user: int) -> UserDB | None:
-        query = "SELECT * FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (id_user,))
-        res = self.cursor.fetchone()
-
-        if res:
-            return UserDB(*res)
-        
-
-    @_error_handler
-    def getUsers(self, limit: int = 10) -> list[UserDB] | None:
-        query = "SELECT * FROM josix.User LIMIT %s;"
-        self.cursor.execute(query, (limit,))
-        res = self.cursor.fetchall()
-        if res:
-            return [UserDB(row) for row in res]
-
-
-    @_error_handler
-    def getUserInGuild(self, id_user: int, id_guild: int) -> LinkUserGuild | None:
-        query = """SELECT * FROM josix.UserGuild
-                   WHERE idUser = %s AND idGuild  = %s;"""
-        params = (id_user, id_guild)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchone()
-
-        if res:
-            return LinkUserGuild(*res)
-
-
-    def getUserGuildLink(self, id_user: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
-        return (
-            self.getUser(id_user),
-            self.getGuild(id_guild),
-            self.getUserInGuild(id_user, id_guild)
-        )
 
 
     @_error_handler
@@ -337,28 +290,6 @@ class DatabaseHandler():
     # Adders
     ###############
 
-
-    @_error_handler
-    def addGuild(self, id_guild: int, id_chan_stat: int = 0, id_chan_xp: int = 0) -> None:
-        query = """INSERT INTO josix.Guild(idGuild, chanNews, xpNews)
-                   VALUES (%s, %s, %s)"""
-        params = (id_guild, id_chan_stat, id_chan_xp)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-
-    @_error_handler
-    def addUser(self, id_user: int) -> None:
-        query = "INSERT INTO josix.User (idUser) VALUES (%s);"
-        self.cursor.execute(query, (id_user,))
-        self.conn.commit()
-
-    @_error_handler
-    def addUserGuild(self, id_user: int, id_guild: int) -> None:
-        query = "INSERT INTO josix.UserGuild(idUser, idGuild) VALUES (%s, %s);"
-        params = (id_user, id_guild)
-        self.cursor.execute(query, params)
-        self.conn.commit()
 
     @_error_handler
     def addDartLog(self, id_guild: int, winner: discord.User, foes: tuple[discord.User]) -> None:

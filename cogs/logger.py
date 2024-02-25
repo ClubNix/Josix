@@ -14,7 +14,7 @@ from typing import Sequence
 from datetime import datetime as dt
 from bot_utils import JosixCog
 from josix import Josix
-from database.services import logger_service
+from database.services import logger_service, discord_service
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -119,8 +119,8 @@ class LoggerView(discord.ui.View):
             return
 
         idGuild = interaction.guild_id
-        if not self.db.getGuild(idGuild):
-            self.db.addGuild(idGuild)
+        if not discord_service.get_guild(self.db, idGuild):
+            discord_service.add_guild(self.db, idGuild)
         
         try:
             old = logger_service.get_logs_selection(self.db, idGuild)
@@ -203,8 +203,9 @@ class Logger(JosixCog):
         TextChannel | None
             The text channel that displays the logs
         """
-        guildLogs = logger_service.get_logs_selection(self.bot.get_handler(), idGuild)
-        dbGuild = self.bot.db.getGuild(idGuild)
+        handler = self.bot.get_handler()
+        guildLogs = logger_service.get_logs_selection(handler, idGuild)
+        dbGuild = discord_service.get_guild(handler, idGuild)
         
         if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):
             return None

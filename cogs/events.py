@@ -12,6 +12,7 @@ import json
 from json import JSONDecodeError
 from josix import Josix
 from bot_utils import JosixCog
+from database.services import discord_service
 
 class Events(JosixCog):
     """
@@ -152,7 +153,8 @@ class Events(JosixCog):
         if member.bot:
             return
 
-        dbGuild = self.bot.db.getGuild(member.guild.id)
+        handler = self.bot.get_handler()
+        dbGuild = discord_service.get_guild(handler, member.guild.id)
         if not dbGuild:
             return
 

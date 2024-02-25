@@ -9,6 +9,7 @@ from josix import Josix
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
+from database.services import discord_service
 
 class Games(JosixCog):
     """
@@ -61,16 +62,16 @@ class BaseGame(JosixCog):
 
     def grantsXP(self, member: Member, guild: discord.Guild, amount: int):
         idMember = member.id
-        userDB, guildDB, userGuildDB = self._db.getUserGuildLink(idMember, guild.id)
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(self._db, idMember, guild.id)
 
         if not userDB:
-            self._db.addUser(idMember)
+            discord_service.add_user(self._db, idMember)
         if not guildDB:
-            self._db.addGuild(guild.id)
-            guildDB = self._db.getGuild(guild.id)
+            discord_service.add_guild(self._db, guild.id)
+            guildDB = discord_service.get_guild(self._db, guild.id)
         if not userGuildDB:
-            self._db.addUserGuild(idMember, guild.id)
-            userGuildDB = self._db.getUserInGuild(idMember, guild.id)
+            discord_service.add_user_in_guild(self._db, idMember, guild.id)
+            userGuildDB = discord_service.get_user_in_guild(self._db, idMember, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
@@ -93,13 +94,13 @@ class BaseGame(JosixCog):
         return user or oppo
 
     def initGame(self, playerId: int, oppoId: int = None) -> int:
-        testP1 = bool(self._db.getUser(playerId))
-        testP2 = bool(self._db.getUser(oppoId)) if oppoId else True
+        testP1 = bool(discord_service(self._db, playerId))
+        testP2 = bool(discord_service.get_user(self._db, oppoId)) if oppoId else True
 
         if not testP1:
-            self._db.addUser(playerId)
+            discord_service.add_user(self._db, playerId)
         if not testP2:
-            self._db.addUser(oppoId)
+            discord_service.add_user(self._db, oppoId)
             
         res = self._db.addGameFromName(self.name, playerId, oppoId)
         if res is None:
