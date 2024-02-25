@@ -10,7 +10,7 @@ import logwrite as log
 from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
-from database.services import logger_service
+from database.services import logger_service, reactrole_service
 
 
 class Admin(JosixCog):
@@ -76,6 +76,7 @@ class Admin(JosixCog):
         testGuild = None
         duos = None
         msg: discord.Message = None
+        handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
         if testEmj.match(emoji):
@@ -104,7 +105,7 @@ class Admin(JosixCog):
             if not testGuild:
                 self.bot.db.addGuild(ctx.guild_id, ctx.channel_id)
 
-            testMsg = self.bot.db.getMsg(idMsg)
+            testMsg = reactrole_service.get_reaction_message(handler, idMsg)
             if not testMsg:
                 self.bot.db.addMsg(ctx.guild_id, idMsg)
                 new = True
@@ -112,23 +113,23 @@ class Admin(JosixCog):
             await msg.clear_reaction(emoji)
             log.writeError(str(e))
 
-        duos = self.bot.db.getCouples(idMsg)
+        duos = reactrole_service.get_couples(handler, idMsg)
         if duos:
             for duo in duos:
                 if emoji == duo.emoji:
                     await ctx.respond("The emoji is already used in the message")
                     if new:
-                        self.bot.db.delMessageReact(idMsg)
+                        reactrole_service.delete_message_react(handler, idMsg)
                     return
 
                 elif idRole == duo.idRole:
                     await ctx.respond("The role is already used in the message")
                     await msg.clear_reaction(emoji)
                     if new:
-                        self.bot.db.delMessageReact(idMsg)
+                        reactrole_service.delete_message_react(handler, idMsg)
                     return
 
-        self.bot.db.addCouple((emoji, idRole), idMsg)
+        reactrole_service.add_couple(handler, (emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
 
 
@@ -163,6 +164,7 @@ class Admin(JosixCog):
         duos = None
         msg: discord.Message = None
         idCouple = 0
+        handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
         if testEmj.match(emoji):
@@ -186,11 +188,11 @@ class Admin(JosixCog):
             await og.edit(content="❌ Unknown error with the emoji")
             return
 
-        if not (self.bot.db.getGuild(ctx.guild_id) and self.bot.db.getMsg(idMsg)):
+        if not (self.bot.db.getGuild(ctx.guild_id) and reactrole_service.get_reaction_message(handler, idMsg)):
             await og.edit(content="❌ This message is unregistered")
             return
 
-        duos = self.bot.db.getCouples(idMsg)
+        duos = reactrole_service.get_couples(handler, idMsg)
         test = False
         for duo in duos:
             if duo.emoji == emoji and duo.idRole == idRole:
@@ -199,7 +201,7 @@ class Admin(JosixCog):
                 break
         
         if test:
-            self.bot.db.delMessageCouple(idMsg, idCouple)
+            reactrole_service.delete_message_couple(handler, idMsg, idCouple)
             await og.edit(content="✅ Done !")
             await msg.clear_reaction(emoji)
             await testMsg.delete_original_response()

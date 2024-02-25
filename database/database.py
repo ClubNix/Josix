@@ -162,17 +162,7 @@ class DatabaseHandler():
         res = self.cursor.fetchall()
         if res:
             return [UserDB(row) for row in res]
-        
 
-    @_error_handler
-    def getMsg(self, id_msg: int) -> MsgReact | None:
-        query = "SELECT * FROM josix.Msgreact WHERE idMsg = %s;"
-        self.cursor.execute(query, (id_msg,))
-        res = self.cursor.fetchone()
-
-        if res:
-            return MsgReact(*res)
-        
 
     @_error_handler
     def getUserInGuild(self, id_user: int, id_guild: int) -> LinkUserGuild | None:
@@ -184,7 +174,7 @@ class DatabaseHandler():
 
         if res:
             return LinkUserGuild(*res)
-        
+
 
     def getUserGuildLink(self, id_user: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
         return (
@@ -192,44 +182,6 @@ class DatabaseHandler():
             self.getGuild(id_guild),
             self.getUserInGuild(id_user, id_guild)
         )
-
-    @_error_handler
-    def getRoleFromReact(self, id_msg: int, emoji_name: str) -> int | None:
-        query = """SELECT idRole FROM josix.ReactCouple rc
-                   INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                   WHERE mc.idMsg = %s AND rc.emoji = %s;"""
-        params = (id_msg, emoji_name)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchone()
-        if res:
-            return res[0]
-        
-
-    @_error_handler
-    def getCouples(self, id_msg: int = None) -> list[ReactCouple] | None:
-        if not id_msg:
-            query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
-                       INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
-            params = ()
-        else:
-            query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
-                       INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                       WHERE mc.idMsg = %s;"""
-            params = (id_msg,)
-        self.cursor.execute(query, params)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchall()
-        if res:
-            return [ReactCouple(*row) for row in res]
-
-
-    @_error_handler
-    def getCoupleFromRole(self, id_role: int) -> list[ReactCouple] | None:
-        query = "SELECT * FROM josix.ReactCouple WHERE idRole = %s;"
-        self.cursor.execute(query, (id_role,))
-        res = self.cursor.fetchone()
-        if res:
-            return [ReactCouple(*row) for row in res]
 
 
     @_error_handler
@@ -401,21 +353,6 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
-    @_error_handler
-    def addCouple(self, couple: tuple, id_msg: int) -> None:
-        if len(couple) != 2:
-            return
-            
-        query1 = """INSERT INTO josix.ReactCouple (emoji, idRole)
-                    VALUES (%s, %s) RETURNING idCouple;"""
-        params = (couple[0], couple[1])
-        self.cursor.execute(query1, params)
-        idCouple = self.cursor.fetchone()[0]
-
-        query2 = "INSERT INTO josix.MsgCouple VALUES (%s,%s);"
-        params = (id_msg, idCouple)
-        self.cursor.execute(query2, params)
-        self.conn.commit()
 
     @_error_handler
     def addUser(self, id_user: int) -> None:
@@ -619,29 +556,6 @@ class DatabaseHandler():
     # Deleters
     ###############
 
-
-    @_error_handler
-    def delMessageReact(self, id_msg: int) -> None:
-        query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s;"
-        query2 = "DELETE FROM josix.MsgReact WHERE idMsg = %s;"
-        self.cursor.execute(query, (id_msg,))
-        self.cursor.execute(query2, (id_msg,))
-        self.conn.commit()
-
-    @_error_handler
-    def delReactCouple(self, id_couple: int) -> None:
-        query = "DELETE FROM josix.MsgCouple WHERE idCouple = %s;"
-        query2 = "DELETE FROM josix.ReactCouple WHERE idCouple = %s;"
-        self.cursor.execute(query, (id_couple,))
-        self.cursor.execute(query2, (id_couple,))
-        self.conn.commit()
-
-    @_error_handler
-    def delMessageCouple(self, id_msg: int, id_couple: int) -> None:
-        query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s AND idCouple = %s;"
-        params = (id_msg, id_couple)
-        self.cursor.execute(query, params)
-        self.conn.commit()
 
     @_error_handler
     def quitGame(self, id_user: int) -> None:

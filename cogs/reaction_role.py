@@ -6,6 +6,7 @@ import logwrite as log
 
 from bot_utils import JosixCog
 from josix import Josix
+from database.services import reactrole_service
 
 class ReactionRole(JosixCog):
     """
@@ -36,12 +37,13 @@ class ReactionRole(JosixCog):
         add : bool
             Boolean that indicates if the user added or removed a reaction
         """
+        handler = self.bot.get_handler()
         emoji = payload.emoji
         if emoji.is_custom_emoji():
             return
 
         msgId = payload.message_id
-        resMsg = self.bot.db.getMsg(msgId)
+        resMsg = reactrole_service.get_reaction_message(handler, msgId)
         if not resMsg:
             return
 
@@ -59,7 +61,7 @@ class ReactionRole(JosixCog):
             if member.bot:
                 return
 
-            resRole = self.bot.db.getRoleFromReact(msgId, emojiName)
+            resRole = reactrole_service.get_role_from_reaction(handler, msgId, emojiName)
             if resRole is None:
                 return
 
@@ -95,34 +97,37 @@ class ReactionRole(JosixCog):
         
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
+        handler = self.bot.get_handler()
         try:
-            if not self.bot.db.getMsg(payload.message_id):
+            if not reactrole_service.get_reaction_message(handler, payload.message_id):
                 return
 
-            self.bot.db.delMessageReact(payload.message_id)
+            reactrole_service.delete_message_react(handler, payload.message_id)
         except Exception as e:
             log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload: RawBulkMessageDeleteEvent):
+        handler = self.bot.get_handler()
         try:
             for msg_id in payload.message_ids:
-                if not self.bot.db.getMsg(msg_id):
+                if not reactrole_service.get_reaction_message(handler, msg_id):
                     continue
 
-                self.bot.db.delMessageReact(msg_id)
+                reactrole_service.delete_message_react(handler, msg_id)
         except Exception as e:
             log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
+        handler = self.bot.get_handler()
         try:
-            couples = self.bot.db.getCoupleFromRole(role.id)
+            couples = reactrole_service.get_couple_from_role(handler, role.id)
             if not couples:
                 return
 
             for couple in couples:
-                self.bot.db.delReactCouple(couple.id)
+                reactrole_service.delete_reaction_couple(handler, couple.id)
         except Exception as e:
             log.writeError(log.formatError(e))
 
