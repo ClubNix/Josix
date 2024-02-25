@@ -16,6 +16,7 @@ from json import JSONDecodeError
 from bot_utils import JosixCog, josix_slash
 from josix import Josix
 from cogs.xp_system import XP
+from database.services import discord_service, xp_service
 
 
 class Fun(JosixCog):
@@ -323,6 +324,7 @@ class Fun(JosixCog):
         username = username.lower()
         askip_name = askip_name.lower()
         credentials = {}
+        handler = self.bot.get_handler()
     
         try:
             with open("askip.json", 'r') as askipfile:
@@ -356,23 +358,23 @@ class Fun(JosixCog):
         guild = ctx.guild
         idAuth = ctx.author.id
         amount = 100
-        userDB, guildDB, userGuildDB = self.bot.db.getUserGuildLink(idAuth, guild.id)
+        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idAuth, guild.id)
 
         if not userDB:
-            self.bot.db.addUser(idAuth)
+            discord_service.add_user(handler, idAuth)
         if not guildDB:
-            self.bot.db.addGuild(guild.id)
-            guildDB = self.bot.db.getGuild(guild.id)
+            discord_service.add_guild(handler, guild.id)
+            guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
-            self.bot.db.addUserGuild(idAuth, guild.id)
-            userGuildDB = self.bot.db.getUserInGuild(idAuth, guild.id)
+            discord_service.add_user_in_guild(handler, idAuth, guild.id)
+            userGuildDB = discord_service.get_user_in_guild(handler, idAuth, guild.id)
 
         if userGuildDB.isUserBlocked:
             return
 
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
-        self.bot.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())
+        xp_service.update_user_xp(handler, idAuth, guild.id, level, newXP, dt.datetime.now())
 
 
     @josix_slash(description="Get the avatar of someone")

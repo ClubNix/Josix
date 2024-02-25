@@ -10,6 +10,14 @@ import logwrite as log
 from josix import Josix
 from cogs.logger import LoggerView
 from bot_utils import JosixCog, josix_slash
+from database.services import (
+    logger_service,
+    reactrole_service,
+    discord_service,
+    guild_service,
+    xp_service,
+    season_service
+)
 
 
 class Admin(JosixCog):
@@ -75,6 +83,7 @@ class Admin(JosixCog):
         testGuild = None
         duos = None
         msg: discord.Message = None
+        handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
         if testEmj.match(emoji):
@@ -87,7 +96,7 @@ class Admin(JosixCog):
             await ctx.respond("Incorrect value given for the message_id parameter")
             return
 
-        msg = await ctx.channel.fetch_message(idMsg)
+        msg = await ctx.channel.fetch_message(idMsg) # TODO : Catch Unknown message
         if not msg:
             await ctx.respond("Unknown message")
             return
@@ -99,35 +108,35 @@ class Admin(JosixCog):
             return
 
         try:
-            testGuild = self.bot.db.getGuild(ctx.guild_id)
+            testGuild = discord_service.get_guild(handler, ctx.guild_id)
             if not testGuild:
-                self.bot.db.addGuild(ctx.guild_id, ctx.channel_id)
+                discord_service.add_guild(handler, ctx.guild_id, ctx.channel_id)
 
-            testMsg = self.bot.db.getMsg(idMsg)
+            testMsg = reactrole_service.get_reaction_message(handler, idMsg)
             if not testMsg:
-                self.bot.db.addMsg(ctx.guild_id, idMsg)
+                reactrole_service.add_message_react(handler, ctx.guild_id, idMsg)
                 new = True
         except Exception as e:
             await msg.clear_reaction(emoji)
             log.writeError(str(e))
 
-        duos = self.bot.db.getCouples(idMsg)
+        duos = reactrole_service.get_couples(handler, idMsg)
         if duos:
             for duo in duos:
                 if emoji == duo.emoji:
                     await ctx.respond("The emoji is already used in the message")
                     if new:
-                        self.bot.db.delMessageReact(idMsg)
+                        reactrole_service.delete_message_react(handler, idMsg)
                     return
 
                 elif idRole == duo.idRole:
                     await ctx.respond("The role is already used in the message")
                     await msg.clear_reaction(emoji)
                     if new:
-                        self.bot.db.delMessageReact(idMsg)
+                        reactrole_service.delete_message_react(handler, idMsg)
                     return
 
-        self.bot.db.addCouple((emoji, idRole), idMsg)
+        reactrole_service.add_couple(handler, (emoji, idRole), idMsg)
         await ctx.respond("Done !", delete_after=5.0)
 
 
@@ -162,6 +171,7 @@ class Admin(JosixCog):
         duos = None
         msg: discord.Message = None
         idCouple = 0
+        handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
         if testEmj.match(emoji):
@@ -185,11 +195,11 @@ class Admin(JosixCog):
             await og.edit(content="❌ Unknown error with the emoji")
             return
 
-        if not (self.bot.db.getGuild(ctx.guild_id) and self.bot.db.getMsg(idMsg)):
+        if not (discord_service.get_guild(handler, ctx.guild_id) and reactrole_service.get_reaction_message(handler, idMsg)):
             await og.edit(content="❌ This message is unregistered")
             return
 
-        duos = self.bot.db.getCouples(idMsg)
+        duos = reactrole_service.get_couples(handler, idMsg)
         test = False
         for duo in duos:
             if duo.emoji == emoji and duo.idRole == idRole:
@@ -198,7 +208,7 @@ class Admin(JosixCog):
                 break
         
         if test:
-            self.bot.db.delMessageCouple(idMsg, idCouple)
+            reactrole_service.delete_message_couple(handler, idMsg, idCouple)
             await og.edit(content="✅ Done !")
             await msg.clear_reaction(emoji)
             await testMsg.delete_original_response()
@@ -211,16 +221,17 @@ class Admin(JosixCog):
     @commands.guild_only()
     async def set_news_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        
+
+        handler = self.bot.get_handler()
         testGuild = None
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.bot.db.getGuild(idGuild)
+        testGuild = discord_service.get_guild(handler, idGuild)
         if not testGuild:
-            self.bot.db.addGuild(idGuild, idChan)
+            discord_service.add_guild(handler, idGuild, idChan)
         else:
-            self.bot.db.changeNewsChan(idGuild, idChan)
+            guild_service.update_news_channel(handler, idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
 
     @josix_slash(description="Set current channel as the XP annouce channel (can be the same as the news channel)")
@@ -229,15 +240,16 @@ class Admin(JosixCog):
     async def set_xp_channel(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         testGuild = None
         idGuild = ctx.guild_id
         idChan = ctx.channel_id
 
-        testGuild = self.bot.db.getGuild(idGuild)
+        testGuild = discord_service.get_guild(handler, idGuild)
         if not testGuild:
-            self.bot.db.addGuild(idGuild, idChan)
+            discord_service.add_guild(handler, idGuild, idChan)
         else:
-            self.bot.db.changeXPChan(idGuild, idChan)
+            xp_service.change_channel_xp(handler, idGuild, idChan)
         await ctx.respond("this channel will now the XP news !")
 
 
@@ -247,16 +259,17 @@ class Admin(JosixCog):
     async def enable_xp_system(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         xpState = None
         idGuild = ctx.guild_id
 
-        xpState = self.bot.db.getGuild(idGuild)
+        xpState = discord_service.get_guild(handler, idGuild)
         if not xpState:
-            self.bot.db.addGuild(idGuild)
-            xpState = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            xpState = discord_service.get_guild(handler, idGuild)
 
         enabled = xpState.enableXp
-        self.bot.db.updateGuildXpEnabled(idGuild)
+        xp_service.switch_xp_enabling(handler, idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
 
@@ -272,6 +285,7 @@ class Admin(JosixCog):
     async def create_new_season(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         if label is None:
             label = ""
 
@@ -282,13 +296,13 @@ class Admin(JosixCog):
 
         id_season = -1
         try:
-            id_season = self.bot.db.storeSeason(guild.id, label)
+            id_season = season_service.store_season(handler, guild.id, label)
         except ValueError as e:
             await ctx.respond(e)
             return
 
-        self.bot.db.storeScores(guild.id, id_season)
-        self.bot.db.cleanXPGuild(guild.id)
+        season_service.store_scores(handler, guild.id, id_season)
+        xp_service.clean_xp_guild(handler, guild.id)
         await ctx.respond("A new season has been started !")
 
 
@@ -303,16 +317,17 @@ class Admin(JosixCog):
     async def delete_season(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        self.bot.db.deleteSeason(season)
+        season_service.delete_season(handler, season)
         await ctx.respond("Done !")
 
 
@@ -332,20 +347,21 @@ class Admin(JosixCog):
     async def update_season(self, ctx: ApplicationContext, old_label: str, new_label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, old_label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, old_label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        if self.bot.db.getSeasonByLabel(guild.id, new_label):
+        if season_service.get_season_by_label(handler, guild.id, new_label):
             await ctx.respond(f"The label '{new_label}' is already used in a season for this server")
             return
 
-        self.bot.db.updateSeasonLabel(season, new_label)
+        season_service.update_season_label(handler, season, new_label)
         await ctx.respond("Done !")
 
 
@@ -368,7 +384,7 @@ class Admin(JosixCog):
         input_type=str,
         name="message",
         description="Custom welcoming message",
-        default=""
+        default="Welcome {user}"
     )
     @option(
         input_type=bool,
@@ -387,11 +403,12 @@ class Admin(JosixCog):
             return
 
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        handler = self.bot.get_handler()
+        dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not channel:
             idChan = dbGuild.wChan if keep else 0
@@ -404,7 +421,7 @@ class Admin(JosixCog):
         if not message:
             message = dbGuild.wText if keep else ""
 
-        self.bot.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
+        guild_service.update_welcome(handler, idGuild, idChan, idRole, message)
         await ctx.respond("Your custome welcome message has been set")
 
 
@@ -415,13 +432,15 @@ class Admin(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
 
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        handler = self.bot.get_handler()
+        dbGuild = discord_service.get_guild(handler, idGuild)
+
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         enabled = dbGuild.enableWelcome
-        self.bot.db.updateGuildWelcomeEnabled(idGuild)
+        guild_service.switch_welcome_enabling(handler, idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
 
@@ -448,11 +467,12 @@ class Admin(JosixCog):
     )
     async def set_log_channel(self, ctx: ApplicationContext, channel: discord.TextChannel):
         await ctx.defer(ephemeral=False, invisible=False)
-        if channel:     
-            self.bot.db.updateLogChannel(ctx.guild.id, channel.id)
+        handler = self.bot.get_handler()
+        if channel:
+            logger_service.update_log_channel(handler, ctx.guild.id, channel.id)
             await ctx.respond("Logs channel set")
         else:
-            self.bot.db.updateLogChannel(ctx.guild.id, None)
+            logger_service.update_log_channel(handler, ctx.guild.id, None)
             await ctx.respond("Logs channel unset")
 
 
@@ -467,19 +487,21 @@ class Admin(JosixCog):
     )
     async def block_category(self, ctx: ApplicationContext, category: discord.CategoryChannel):
         await ctx.defer(ephemeral=False, invisible=False)
+
+        handler = self.bot.get_handler()
         idCat = category.id
         idGuild = ctx.guild_id
-        dbGuild = self.bot.db.getGuild(idGuild)
+        dbGuild = discord_service.get_guild(handler, idGuild)
 
         if not dbGuild:
-            self.bot.db.addGuild(idGuild)
-            dbGuild = self.bot.db.getGuild(idGuild)
+            discord_service.add_guild(handler, idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         if idCat in dbGuild.blockedCat:
-            self.bot.db.unblockCategory(idCat, idGuild)
+            xp_service.unblock_category_xp(handler, idCat, idGuild)
             text = "unblocked"
         else:
-            self.bot.db.blockCategory(idCat, idGuild)
+            xp_service.block_category_xp(handler, idCat, idGuild)
             text = "blocked"
         await ctx.respond(f"The category **{category.name}** is now **{text}**")
 

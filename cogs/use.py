@@ -1,19 +1,22 @@
-import discord
-from discord.ext import commands, tasks
-from discord import ApplicationContext
-from discord import option
-
-import random
 import datetime
-import os
-import logwrite as log
 import json
-
+import os
+import random
 from json import JSONDecodeError
-from cogs.events import Events
 from math import ceil
-from bot_utils import JosixCog, josix_slash, JosixSlash, get_permissions_str
-from database.db_utils import BirthdayAuto
+
+import discord
+from discord import ApplicationContext, option
+from discord.ext import commands, tasks
+
+import logwrite as log
+from bot_utils import JosixCog, JosixSlash, get_permissions_str, josix_slash
+from cogs.events import Events
+from database.services import (
+    birthday_service,
+    discord_service,
+    guild_service,
+)
 from josix import Josix
 
 
@@ -90,7 +93,7 @@ class Usage(JosixCog):
 
         if not command_name:
             helpEmbed = discord.Embed(title="Help embed",
-                                      description=f"Use /help [command_name] to see more info for a command",
+                                      description="Use /help [command_name] to see more info for a command",
                                       color=0x0089FF)
             helpEmbed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
             helpEmbed.set_thumbnail(url=self.bot.user.display_avatar)
@@ -107,7 +110,8 @@ class Usage(JosixCog):
                     not cog or
                     not cog.showHelp or
                     (cog.isOwner and not (await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator))
-                ): continue
+                ):
+                    continue
 
                 if cog.isGame:
                     gamesCmd.extend(list(map(str, clean_commands(cog.get_commands()))))
@@ -140,7 +144,7 @@ class Usage(JosixCog):
             if command.cog and command.cog.qualified_name.lower() == "owner" and not (
                 await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator
             ):
-                await ctx.respond(f":x: Unknown command, see /help :x:")
+                await ctx.respond(":x: Unknown command, see /help :x:")
                 return
 
             if command.description == "":
@@ -261,7 +265,7 @@ class Usage(JosixCog):
                 cTag, oTag = await Events.getTags(thread, closeName, openName)
 
                 tags = thread.applied_tags.copy()
-                if cTag and not cTag in tags:
+                if cTag and cTag not in tags:
                     tags.append(cTag)
 
                 try:
@@ -349,6 +353,7 @@ class Usage(JosixCog):
         testBoth = None
         bdYear = 0
         stringRes = ""
+        handler = self.bot.get_handler()
 
         if testReject:
             await ctx.respond("Invalid date !")
@@ -364,17 +369,17 @@ class Usage(JosixCog):
         else:
             stringRes = "Your birthday has been added !"
 
-        testUser = self.bot.db.getUser(userId)
+        testUser = discord_service.get_user(handler, userId)
         if not testUser:
-            self.bot.db.addUser(userId)
+            discord_service.add_user(handler, userId)
 
-        testGuild = self.bot.db.getGuild(ctx.guild_id)
+        testGuild = discord_service.get_guild(handler, ctx.guild_id)
         if not testGuild:
-            self.bot.db.addGuild(ctx.guild_id)
+            discord_service.add_guild(handler, ctx.guild_id)
 
-        testBoth = self.bot.db.getUserInGuild(userId, ctx.guild_id)
+        testBoth = discord_service.get_user_in_guild(handler, userId, ctx.guild_id)
         if not testBoth:
-            self.bot.db.addUserGuild(userId, ctx.guild_id)
+            discord_service.add_user_in_guild(handler, userId, ctx.guild_id)
 
         today = datetime.date.today()
         if today.month < month or (today.month == month and today.day < day):
@@ -382,7 +387,7 @@ class Usage(JosixCog):
         else:
             bdYear = today.year
 
-        self.bot.db.updateUserBD(userId, day, month, bdYear)
+        birthday_service.update_user_birthday(handler, userId, day, month, bdYear)
         await ctx.respond(stringRes)
 
     @josix_slash(description="Remove a birthday date")
@@ -400,7 +405,7 @@ class Usage(JosixCog):
             await ctx.respond("You don't have the required permissions to remove another user birthday")
             return
 
-        self.bot.db.removeUserBD(member.id)
+        birthday_service.remove_user_birthday(self.bot.get_handler(), member.id)
         await ctx.respond("Birthday successfully removed !")
 
     def getMonthField(self, embed: discord.Embed, idGuild: int, monthInt: int):
@@ -408,7 +413,7 @@ class Usage(JosixCog):
                   "November", "December"]
         res = []
 
-        values = self.bot.db.getBDMonth(idGuild, monthInt)
+        values = birthday_service.get_birthday_month(self.bot.get_handler(), idGuild, monthInt)
         if not values:
             return embed
 
@@ -453,7 +458,7 @@ class Usage(JosixCog):
     )
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
         await ctx.defer(ephemeral=False, invisible=False)
-        res = self.bot.db.getUser(user.id)
+        res = discord_service.get_user(self.bot.get_handler(), user.id)
         if not res:
             await ctx.respond("User not registered")
             return
@@ -467,13 +472,15 @@ class Usage(JosixCog):
     @tasks.loop(hours=6.0)
     async def checkBirthday(self):
         today = datetime.date.today()
-        bd: list[BirthdayAuto] | None = self.bot.db.safeExecute(self.bot.db.checkBD, today.day, today.month)
+        handler = self.bot.get_handler()
+
+        bd = birthday_service.check_birthday(handler, today.day, today.month)
         if not bd:
             return
 
         for value in bd:
             idUser = value.idUser
-            results: list[int] | None = self.bot.db.safeExecute(self.bot.db.getNewsChanFromUser, idUser)
+            results = guild_service.get_news_chan_from_user(handler, idUser)
             if not results:
                 continue
 
@@ -484,9 +491,10 @@ class Usage(JosixCog):
 
                 today = datetime.date.today()
                 await chan.send(f"Happy birthday to <@{idUser}> :tada: !")
-                self.bot.db.safeExecute(
-                    self.bot.db.updateUserBD,
-                    idUser, today.day, today.month, today.year
+                birthday_service.update_user_birthday(
+                    handler,
+                    idUser,
+                    today.day, today.month, today.year
                 )
 
 

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 from asyncio import TimeoutError
-
+from database.services import discord_service
 
 
 class GamesBase(commands.Cog):
@@ -71,14 +71,14 @@ class GamesBase(commands.Cog):
             playerStat = self.bot.db.getPlayerStat(foe.id)
             if not playerStat:
                 eloList.append(1000)
-                self.bot.db.addUser(foe.id)
+                discord_service.add_user(foe.id)
             else:
                 eloList.append(playerStat[0])
         foesElo = sum((eloList)) / len(eloList)
 
         player1 = self.bot.db.getPlayerStat(winner.id)
         if not player1:
-            self.bot.db.addUser(winner.id)
+            discord_service.add_user(winner.id)
             elo1 = 1000
         else:
             elo1 = player1[0]

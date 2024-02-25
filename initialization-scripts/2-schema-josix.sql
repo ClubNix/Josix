@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS josix.MsgReact (
 
 CREATE TABLE IF NOT EXISTS josix.ReactCouple (
     idCouple SERIAL,
-    nomEmoji VARCHAR(64) NOT NULL,
+    emoji VARCHAR(64) NOT NULL,
     idRole BIGINT NOT NULL,
     PRIMARY KEY(idCouple)
 );

@@ -11,6 +11,7 @@ from logwrite import LOG_FILE, ERROR_FILE
 from psycopg2 import Error as DBError
 from bot_utils import JosixCog, josix_slash
 from json import JSONDecodeError
+from database.services import discord_service
 
 class Owner(JosixCog):
     """
@@ -177,7 +178,7 @@ class Owner(JosixCog):
     @tasks.loop(hours=6.0)
     async def check_connection(self):
         try:
-            self.bot.db.getUser(0)
+            discord_service.get_user(self.bot.get_handler(), 0)
         except Exception as e:
             if self.report and ((reportChan := self.bot.get_channel(self.report)) or (reportChan := await self.bot.fetch_channel(self.report))):
                 await reportChan.send("Connection to database lost !\n" + str(e))
