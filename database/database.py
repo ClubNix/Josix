@@ -174,38 +174,6 @@ class DatabaseHandler():
             return [row[0] for row in res]
 
 
-    @_error_handler
-    def getGameFromUser(self, id_user: int) -> Game | None:
-        query = "SELECT * FROM josix.Games WHERE idUser = %s OR opponent = %s;"
-        self.cursor.execute(query, (id_user, id_user))
-        res = self.cursor.fetchone()
-
-        if res:
-            return Game(*res)
-
-
-    @_error_handler
-    def getGameType(self, game_name: str) -> GameType | None:
-        query = "SELECT * FROM josix.GameType WHERE gameName = %s;"
-        self.cursor.execute(query, (game_name,))
-        res = self.cursor.fetchone()
-
-        if res:
-            return GameType(*res)
-
-
-    @_error_handler
-    def getExistingGame(self, id_game: int, id_user: int) -> Game | None:
-        query = """SELECT * FROM josix.Games
-                   WHERE idGame = %s AND (idUser = %s OR opponent = %s);"""
-        params = (id_game, id_user, id_user)
-        self.cursor.execute(query, params)
-        res = self.cursor.fetchone()
-
-        if res:
-            return Game(*res)
-
-
     def getNewSeasonID(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
         self.cursor.execute(query, (id_guild,))
@@ -276,58 +244,10 @@ class DatabaseHandler():
         if res:
             return Score(*res)
 
-    ###
-    ###
-
-    @_error_handler
-    def getPlayerStat(self, id_user: int) -> tuple[int, int] | None:
-        query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
-        self.cursor.execute(query, (id_user,))
-        return self.cursor.fetchone()
-
 
     ###############
     # Adders
     ###############
-
-
-    @_error_handler
-    def addDartLog(self, id_guild: int, winner: discord.User, foes: tuple[discord.User]) -> None:
-        text = ""
-        for foe in foes:
-            text += foe.name + "', '"
-        text = text[0:len(text)-3]
-
-        query = """INSERT INTO josix.DartLog (idGuild, winnerName, losersName)
-                   VALUES (%s, %s, ARRAY[%s])"""
-        params = (id_guild, winner.name, text)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def addGameType(self, game_name: str) -> None:
-        query = "INSERT INTO josix.GameType(gameName) VALUES(%s);"
-        self.cursor.execute(query, (game_name,))
-        self.conn.commit()
-
-    @_error_handler
-    def addGameFromId(self, typeId: int, id_user:int, opponent: int = None) -> None:
-        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s);"
-        params = (typeId, id_user, opponent)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def addGameFromName(self, game_name: str, id_user: int, opponent: int = None) -> int | None:
-        typeId = self.getGameType(game_name).id # TODO : can be none
-        query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
-        params = (typeId, id_user, opponent)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-        res = self.cursor.fetchone()
-        if res:
-            return res[0]
 
 
     @_error_handler
@@ -369,14 +289,6 @@ class DatabaseHandler():
     # Modifiers
     ###############
 
-    @_error_handler
-    def updatePlayerStat(self, id_user: int, new_elo: int) -> None:
-        query = """UPDATE josix.User
-                   SET elo = %s, nbGames = nbGames + 1
-                   WHERE idUser = %s;"""
-        params = (new_elo, id_user)
-        self.cursor.execute(query, params)
-        self.conn.commit()
 
     @_error_handler
     def changeNewsChan(self, id_guild: int, id_chan: int) -> None:
@@ -479,25 +391,6 @@ class DatabaseHandler():
     ###############
     # Deleters
     ###############
-
-
-    @_error_handler
-    def quitGame(self, id_user: int) -> None:
-        query = "DELETE FROM josix.Games WHERE idUser = %s OR opponent = %s;"
-        self.cursor.execute(query, (id_user, id_user))
-        self.conn.commit()
-
-    @_error_handler
-    def deleteGame(self, gameId: int) -> None:
-        query = "DELETE FROM josix.Games WHERE idGame = %s;"
-        self.cursor.execute(query, (gameId,))
-        self.conn.commit()
-
-    @_error_handler
-    def deleteGames(self) -> None:
-        query = "DELETE FROM josix.Games;"
-        self.cursor.execute(query)
-        self.conn.commit()
 
 
     @_error_handler

@@ -9,7 +9,7 @@ from josix import Josix
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
-from database.services import discord_service
+from database.services import discord_service, games_service
 
 class Games(JosixCog):
     """
@@ -28,12 +28,12 @@ class Games(JosixCog):
         self._cleanGames()
 
     def _cleanGames(self):
-        self.bot.db.deleteGames()
+        games_service.delete_games(self.bot.get_handler())
 
     @josix_slash(description="Quit your current game")
     async def quit_game(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
-        self.bot.db.quitGame(ctx.author.id)
+        games_service.quit_game(self.bot.get_handler(), ctx.author.id)
         await ctx.respond("You just left your game")
 
 
@@ -58,7 +58,7 @@ class BaseGame(JosixCog):
         self._db = db
 
         if not self.checkGame():
-            self._db.addGameType(self.name)
+            games_service.add_game_type(self._db, self.name)
 
     def grantsXP(self, member: Member, guild: discord.Guild, amount: int):
         idMember = member.id
@@ -82,19 +82,19 @@ class BaseGame(JosixCog):
 
 
     def checkGame(self) -> bool:
-        return bool(self._db.getGameType(self.name))
+        return bool(games_service.get_game_type(self._db, self.name))
 
     def checkGameState(self, idGame: int, idUser: int) -> bool:
-        return bool(self._db.getExistingGame(idGame, idUser))
+        return bool(games_service.get_existing_game(self._db, idGame, idUser))
 
     def checkPlayers(self, idUser, idOpponent: int = None) -> bool:
         """Check if one of the two players are already in a game"""
-        user = bool(self._db.getGameFromUser(idUser))
-        oppo = bool(self._db.getGameFromUser(idOpponent)) if idOpponent else False
+        user = bool(games_service.get_game_from_user(self._db, idUser))
+        oppo = bool(games_service.get_game_from_user(self._db, idOpponent)) if idOpponent else False
         return user or oppo
 
     def initGame(self, playerId: int, oppoId: int = None) -> int:
-        testP1 = bool(discord_service(self._db, playerId))
+        testP1 = bool(discord_service.get_user(self._db, playerId))
         testP2 = bool(discord_service.get_user(self._db, oppoId)) if oppoId else True
 
         if not testP1:
@@ -102,13 +102,13 @@ class BaseGame(JosixCog):
         if not testP2:
             discord_service.add_user(self._db, oppoId)
             
-        res = self._db.addGameFromName(self.name, playerId, oppoId)
+        res = games_service.add_game(self._db, self.name, playerId, oppoId)
         if res is None:
             raise Exception("The game could not be loaded")
         return res
 
     def stopGame(self, idGame: int) -> None:
-        self._db.deleteGame(idGame)
+        games_service.delete_single_game(self._db, idGame)
 
 
 class BaseView(View):
