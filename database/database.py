@@ -36,6 +36,7 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
+    # TODO : Use it in another way
     def safeExecute(
         self,
         func: Callable[[Any], Any],
@@ -163,17 +164,6 @@ class DatabaseHandler():
             return res[0]
 
 
-    @_error_handler
-    def getNewsChanFromUser(self, id_user: int) -> list[int] | None:
-        query = """SELECT chanNews 
-                   FROM josix.Guild g INNER JOIN josix.UserGuild ug ON g.idGuild = ug.idGuild
-                   WHERE idUser = %s AND chanNews IS NOT NULL;"""
-        self.cursor.execute(query, (id_user,))
-        res = self.cursor.fetchall()
-        if res:
-            return [row[0] for row in res]
-
-
     def getNewSeasonID(self, id_guild: int) -> int:
         query = "SELECT COUNT(idSeason) FROM josix.Season WHERE idGuild = %s;"
         self.cursor.execute(query, (id_guild,))
@@ -289,15 +279,6 @@ class DatabaseHandler():
     # Modifiers
     ###############
 
-
-    @_error_handler
-    def changeNewsChan(self, id_guild: int, id_chan: int) -> None:
-        query = """UPDATE josix.Guild
-                   SET chanNews = %s
-                   WHERE idGuild = %s;"""
-        params = (id_chan, id_guild)
-        self.cursor.execute(query, params)
-        self.conn.commit()
 
     @_error_handler
     def updateUserXP(self, id_user: int, id_guild: int, lvl: int, xp: int, last_send: dt.datetime) -> None:

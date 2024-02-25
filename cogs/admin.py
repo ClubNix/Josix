@@ -14,6 +14,7 @@ from database.services import (
     logger_service,
     reactrole_service,
     discord_service,
+    guild_service,
 )
 
 
@@ -228,7 +229,7 @@ class Admin(JosixCog):
         if not testGuild:
             discord_service.add_guild(handler, idGuild, idChan)
         else:
-            self.bot.db.changeNewsChan(idGuild, idChan)
+            guild_service.update_news_channel(handler, idGuild, idChan)
         await ctx.respond("this channel will now host my news !")
 
     @josix_slash(description="Set current channel as the XP annouce channel (can be the same as the news channel)")

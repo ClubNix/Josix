@@ -15,6 +15,7 @@ from cogs.events import Events
 from database.services import (
     birthday_service,
     discord_service,
+    guild_service,
 )
 from josix import Josix
 
@@ -479,7 +480,7 @@ class Usage(JosixCog):
 
         for value in bd:
             idUser = value.idUser
-            results: list[int] | None = self.bot.db.safeExecute(self.bot.db.getNewsChanFromUser, idUser)
+            results: list[int] | None = guild_service.get_news_chan_from_user(handler, idUser)
             if not results:
                 continue
 
