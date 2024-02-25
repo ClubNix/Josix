@@ -1,9 +1,9 @@
 from database.database import DatabaseHandler
 from database.db_utils import (
+    error_handler,
     Birthday,
     BirthdayAuto,
 )
-from bot_utils import error_handler
 
 
 @error_handler

@@ -3,12 +3,10 @@ import os
 from shutil import copyfile
 from typing import Any, Callable
 
-import discord
 import psycopg2
 from dotenv import load_dotenv
 
 import logwrite as log
-from database.db_utils import *
 
 SCRIPT_DIR = os.path.dirname(__file__)
 BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')
@@ -131,18 +129,3 @@ class DatabaseHandler():
                         else:
                             row_data.append(repr(rd))
                     f.write('%s (%s);\n' % (insert_prefix, ', '.join(row_data)))
-
-
-    ###############
-    # Getters
-    ###############
-
-
-    ###############
-    # Adders
-    ###############
-
-
-    ###############
-    # Modifiers
-    ###############

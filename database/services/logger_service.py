@@ -1,6 +1,5 @@
 from database.database import DatabaseHandler
-from database.db_utils import LogSelection
-from bot_utils import error_handler
+from database.db_utils import error_handler, LogSelection
 
 
 @error_handler

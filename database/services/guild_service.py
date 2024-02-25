@@ -1,5 +1,5 @@
 from database.database import DatabaseHandler
-from bot_utils import error_handler
+from database.db_utils import error_handler
 
 
 @error_handler

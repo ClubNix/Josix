@@ -2,10 +2,10 @@ import discord
 
 from database.database import DatabaseHandler
 from database.db_utils import (
+    error_handler,
     Game,
     GameType
 )
-from bot_utils import error_handler
 
 
 @error_handler

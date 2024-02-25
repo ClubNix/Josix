@@ -83,18 +83,3 @@ def get_permissions_str(perms: Permissions) -> list[str]:
         return []
 
     return [flag for flag, state in perms if state]
-
-
-def error_handler(func: Callable):
-    def wrapper(*args):
-        if not args or not isinstance(args[0], DatabaseHandler):
-            raise JosixDatabaseException("The service must have at least one argument from the type DatabaseHandler")
-
-        try:
-            return func(*args)
-        except psycopg2.Error as dbError:
-            args[0].conn.rollback()
-            raise dbError
-        except Exception as commonError:
-            raise commonError
-    return wrapper

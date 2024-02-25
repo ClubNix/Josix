@@ -1,6 +1,9 @@
 from database.database import DatabaseHandler
-from database.db_utils import MsgReact, ReactCouple
-from bot_utils import error_handler
+from database.db_utils import (
+    error_handler,
+    MsgReact,
+    ReactCouple,
+)
 
 
 @error_handler

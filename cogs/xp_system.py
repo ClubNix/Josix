@@ -267,7 +267,7 @@ class XP(JosixCog):
             guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
             discord_service.add_user_in_guild(handler, member.id, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(member.id, guild.id)
+            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
 
         if userGuildDB.isUserBlocked:
             return

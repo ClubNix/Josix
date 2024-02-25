@@ -387,7 +387,7 @@ class Usage(JosixCog):
         else:
             bdYear = today.year
 
-        birthday_service.update_user_birthday(self.bot.get_handler(), userId, day, month, bdYear)
+        birthday_service.update_user_birthday(handler, userId, day, month, bdYear)
         await ctx.respond(stringRes)
 
     @josix_slash(description="Remove a birthday date")
@@ -480,7 +480,7 @@ class Usage(JosixCog):
 
         for value in bd:
             idUser = value.idUser
-            results: list[int] | None = guild_service.get_news_chan_from_user(handler, idUser)
+            results = guild_service.get_news_chan_from_user(handler, idUser)
             if not results:
                 continue
 

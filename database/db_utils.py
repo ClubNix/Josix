@@ -2,10 +2,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Callable
 
+from bot_utils import JosixDatabaseException
+from database.database import DatabaseHandler
+
 import psycopg2
 
-# TODO : re implements new error handler + add dataclasses param checking on start (same name/order)
-"""
+# TODO : add dataclasses param checking on start (same name/order)
+
 def error_handler(func: Callable):
     def wrapper(*args):
         if not args or not isinstance(args[0], DatabaseHandler):
@@ -19,7 +22,6 @@ def error_handler(func: Callable):
         except Exception as commonError:
             raise commonError
     return wrapper
-"""
 
 
 @dataclass()
