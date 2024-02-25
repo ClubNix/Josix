@@ -4,6 +4,7 @@ from typing import Callable
 
 import psycopg2
 
+# TODO : re implements new error handler + add dataclasses param checking on start (same name/order)
 """
 def error_handler(func: Callable):
     def wrapper(*args):

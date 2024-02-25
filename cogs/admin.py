@@ -15,6 +15,8 @@ from database.services import (
     reactrole_service,
     discord_service,
     guild_service,
+    xp_service,
+    season_service
 )
 
 
@@ -247,7 +249,7 @@ class Admin(JosixCog):
         if not testGuild:
             discord_service.add_guild(handler, idGuild, idChan)
         else:
-            self.bot.db.changeXPChan(idGuild, idChan)
+            xp_service.change_channel_xp(handler, idGuild, idChan)
         await ctx.respond("this channel will now the XP news !")
 
 
@@ -267,7 +269,7 @@ class Admin(JosixCog):
             xpState = discord_service.get_guild(handler, idGuild)
 
         enabled = xpState.enableXp
-        self.bot.db.updateGuildXpEnabled(idGuild)
+        xp_service.switch_xp_enabling(handler, idGuild)
         await ctx.respond(f"The system XP for this server has been set to **{not enabled}**")
 
 
@@ -283,6 +285,7 @@ class Admin(JosixCog):
     async def create_new_season(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         if label is None:
             label = ""
 
@@ -293,13 +296,13 @@ class Admin(JosixCog):
 
         id_season = -1
         try:
-            id_season = self.bot.db.storeSeason(guild.id, label)
+            id_season = season_service.store_season(handler, guild.id, label)
         except ValueError as e:
             await ctx.respond(e)
             return
 
-        self.bot.db.storeScores(guild.id, id_season)
-        self.bot.db.cleanXPGuild(guild.id)
+        season_service.store_scores(handler, guild.id, id_season)
+        xp_service.clean_xp_guild(handler, guild.id)
         await ctx.respond("A new season has been started !")
 
 
@@ -314,16 +317,17 @@ class Admin(JosixCog):
     async def delete_season(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        self.bot.db.deleteSeason(season)
+        season_service.delete_season(handler, season)
         await ctx.respond("Done !")
 
 
@@ -343,20 +347,21 @@ class Admin(JosixCog):
     async def update_season(self, ctx: ApplicationContext, old_label: str, new_label: str):
         await ctx.defer(ephemeral=False, invisible=False)
 
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, old_label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, old_label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        if self.bot.db.getSeasonByLabel(guild.id, new_label):
+        if season_service.get_season_by_label(handler, guild.id, new_label):
             await ctx.respond(f"The label '{new_label}' is already used in a season for this server")
             return
 
-        self.bot.db.updateSeasonLabel(season, new_label)
+        season_service.update_season_label(handler, season, new_label)
         await ctx.respond("Done !")
 
 
@@ -490,13 +495,13 @@ class Admin(JosixCog):
 
         if not dbGuild:
             discord_service.add_guild(handler, idGuild)
-            dbGuild = discord_service.get_guild(idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         if idCat in dbGuild.blockedCat:
-            self.bot.db.unblockCategory(idCat, idGuild)
+            xp_service.unblock_category_xp(handler, idCat, idGuild)
             text = "unblocked"
         else:
-            self.bot.db.blockCategory(idCat, idGuild)
+            xp_service.block_category_xp(handler, idCat, idGuild)
             text = "blocked"
         await ctx.respond(f"The category **{category.name}** is now **{text}**")
 

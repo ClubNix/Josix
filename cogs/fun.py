@@ -16,7 +16,7 @@ from json import JSONDecodeError
 from bot_utils import JosixCog, josix_slash
 from josix import Josix
 from cogs.xp_system import XP
-from database.services import discord_service
+from database.services import discord_service, xp_service
 
 
 class Fun(JosixCog):
@@ -374,7 +374,7 @@ class Fun(JosixCog):
 
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
-        self.bot.db.updateUserXP(idAuth, guild.id, level, newXP, dt.datetime.now())
+        xp_service.update_user_xp(handler, idAuth, guild.id, level, newXP, dt.datetime.now())
 
 
     @josix_slash(description="Get the avatar of someone")

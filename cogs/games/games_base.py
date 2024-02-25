@@ -9,7 +9,11 @@ from josix import Josix
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
-from database.services import discord_service, games_service
+from database.services import (
+    discord_service,
+    games_service,
+    xp_service,
+)
 
 class Games(JosixCog):
     """
@@ -78,7 +82,7 @@ class BaseGame(JosixCog):
 
         currentXP = userGuildDB.xp
         newXP, level = XP.checkUpdateXP(currentXP, amount)
-        self._db.updateUserXP(idMember, guild.id, level, newXP, dt.datetime.now())
+        xp_service.update_user_xp(self._db, idMember, guild.id, level, newXP, dt.datetime.now())
 
 
     def checkGame(self) -> bool:

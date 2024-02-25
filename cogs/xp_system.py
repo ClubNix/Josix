@@ -7,7 +7,11 @@ import logwrite as log
 
 from josix import Josix
 from bot_utils import JosixSlash, JosixCog, josix_slash
-from database.services import discord_service
+from database.services import (
+    discord_service,
+    xp_service,
+    season_service,
+)
 
 
 class XP(JosixCog):
@@ -124,7 +128,7 @@ class XP(JosixCog):
         currentLvl = currentLvl + 1 if newLvl else currentLvl
         currentXP = min(1_899_250, currentXP+xp)
 
-        self.bot.db.updateUserXP(idTarget, idGuild, currentLvl, currentXP, nowTime)
+        xp_service.update_user_xp(handler, idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
             if (xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId)):
@@ -248,7 +252,7 @@ class XP(JosixCog):
 
         currentXP = userGuildDB.xp
         newXP, level = self.checkUpdateXP(currentXP, amount)
-        self.bot.db.updateUserXP(member.id, guild.id, level, newXP, dt.datetime.now())
+        xp_service.update_user_xp(handler, member.id, guild.id, level, newXP, dt.datetime.now())
 
 
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
@@ -276,10 +280,10 @@ class XP(JosixCog):
             newLvl = 100
 
         xp = self.totalLevelXP(newLvl)
-        self.bot.db.updateUserXP(member.id, guild.id, newLvl, xp, dt.datetime.now())
+        xp_service.update_user_xp(handler, member.id, guild.id, newLvl, xp, dt.datetime.now())
 
 
-    @josix_slash(description="Gives XP to a user")
+    @josix_slash(guild_ids=[933118079028826142], description="Gives XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -313,7 +317,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(description="Removes XP to a user")
+    @josix_slash(guild_ids=[933118079028826142], description="Removes XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -347,7 +351,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(description="Gives levels to a user")
+    @josix_slash(guild_ids=[933118079028826142], description="Gives levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -381,7 +385,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(description="Removes levels to a user")
+    @josix_slash(guild_ids=[933118079028826142], description="Removes levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -415,7 +419,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(description="Leaderboard of users based on their xp points in the server")
+    @josix_slash(guild_ids=[933118079028826142], description="Leaderboard of users based on their xp points in the server")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=int,
@@ -439,7 +443,7 @@ class XP(JosixCog):
             elif not guildDB.enableXp:
                 await ctx.respond("The xp system is not enabled in this server.")
                 return
-            lb = self.bot.db.getXpLeaderboard(idGuild, limit)
+            lb = xp_service.get_leaderboard(handler, idGuild, limit)
         except Exception as e:
             log.writeError(log.formatError(e))
 
@@ -479,7 +483,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(description="Show the XP card of the user")
+    @josix_slash(guild_ids=[933118079028826142], description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=discord.Member,
@@ -496,8 +500,9 @@ class XP(JosixCog):
             await ctx.respond("You can't use this command on a bot user.")
             return
 
+        handler = self.bot.get_handler()
         idGuild = ctx.guild.id
-        stats = discord_service.get_user_in_guild(self.bot.get_handler(), member.id, idGuild)
+        stats = discord_service.get_user_in_guild(handler, member.id, idGuild)
         if not stats:
             await ctx.respond("This user is not registered")
             return
@@ -507,7 +512,7 @@ class XP(JosixCog):
         xpNeed = lastNeed + self.nextLevelXP(lvl, 0)
         nextXp = self.nextLevelXP(lvl, xp-lastNeed)
         progress = round((xp / xpNeed) * 100, 2)
-        pos = self.bot.db.getLeaderboardPos(member.id, idGuild)
+        pos = xp_service.get_ranking(handler, member.id, idGuild)
 
         embed = discord.Embed(
             title=f"{member}'s card",
@@ -528,7 +533,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(description="Block or unblock xp progression for a member")
+    @josix_slash(guild_ids=[933118079028826142], description="Block or unblock xp progression for a member")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -558,11 +563,11 @@ class XP(JosixCog):
             userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
 
         blocked = userGuildDB.isUserBlocked
-        self.bot.db.updateUserBlock(idTarget, idGuild)
+        xp_service.switch_user_xp_blocking(handler, idTarget, idGuild)
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
 
     
-    @josix_slash(description="See all past seasons in this server")
+    @josix_slash(guild_ids=[933118079028826142], description="See all past seasons in this server")
     @commands.guild_only()
     @option(
         input_type=int,
@@ -579,7 +584,7 @@ class XP(JosixCog):
             await ctx.respond("Data not found")
             return
 
-        seasons = self.bot.db.getSeasons(guild.id, limit)
+        seasons = season_service.get_seasons(self.bot.get_handler(), guild.id, limit)
         if not seasons: seasons = []
 
         embed = discord.Embed(
@@ -616,7 +621,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(description="See user history in all the seasons")
+    @josix_slash(guild_ids=[933118079028826142], description="See user history in all the seasons")
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -638,7 +643,7 @@ class XP(JosixCog):
             await ctx.respond("This action can't be done on a bot user")
             return
 
-        scores = self.bot.db.getUserHistory(guild.id, member.id)
+        scores = season_service.get_user_history(self.bot.get_handler(), guild.id, member.id)
         embed = discord.Embed(
             title="Scores",
             description=f"Scores history from {member.name}",
@@ -673,7 +678,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(description="Display all the informations of a season")
+    @josix_slash(guild_ids=[933118079028826142], description="Display all the informations of a season")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -683,16 +688,18 @@ class XP(JosixCog):
     )
     async def info_season(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
+
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        scores = self.bot.db.getScores(season.idSeason)
+        scores = season_service.get_scores(handler, season.idSeason)
         embed = discord.Embed(
             title="Season information",
             color=0x0089FF
@@ -722,7 +729,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
     
-    @josix_slash(description="Show the profile of the user on a specific season")
+    @josix_slash(guild_ids=[933118079028826142], description="Show the profile of the user on a specific season")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -731,16 +738,18 @@ class XP(JosixCog):
     )
     async def user_season_profile(self, ctx: ApplicationContext, label: str):
         await ctx.defer(ephemeral=False, invisible=False)
+
+        handler = self.bot.get_handler()
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
             return
 
-        if not (season := self.bot.db.getSeasonByLabel(guild.id, label)):
+        if not (season := season_service.get_season_by_label(handler, guild.id, label)):
             await ctx.respond("Unknown season, make sure you entered the right label")
             return
 
-        score = self.bot.db.getUserScore(season.idSeason, ctx.author.id)
+        score = season_service.get_user_score(handler, season.idSeason, ctx.author.id)
         if not score:
             await ctx.respond("No profile found in this season")
             return
