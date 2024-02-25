@@ -346,13 +346,6 @@ class DatabaseHandler():
         self.cursor.execute(query, params)
         self.conn.commit()
 
-    @_error_handler
-    def addMsg(self, id_guild: int, id_msg: int) -> None:
-        query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
-        params = (id_msg, id_guild)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
 
     @_error_handler
     def addUser(self, id_user: int) -> None:

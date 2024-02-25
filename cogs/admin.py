@@ -107,7 +107,7 @@ class Admin(JosixCog):
 
             testMsg = reactrole_service.get_reaction_message(handler, idMsg)
             if not testMsg:
-                self.bot.db.addMsg(ctx.guild_id, idMsg)
+                reactrole_service.add_message_react(handler, ctx.guild_id, idMsg)
                 new = True
         except Exception as e:
             await msg.clear_reaction(emoji)

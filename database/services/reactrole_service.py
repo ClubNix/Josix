@@ -70,6 +70,14 @@ def add_couple(handler: DatabaseHandler, couple: tuple, id_msg: int) -> None:
 
 
 @error_handler
+def add_message_react(handler: DatabaseHandler, id_guild: int, id_msg: int) -> None:
+    query = "INSERT INTO josix.MsgReact VALUES(%s, %s);"
+    params = (id_msg, id_guild)
+    handler.cursor.execute(query, params)
+    handler.conn.commit()
+
+
+@error_handler
 def delete_message_react(handler: DatabaseHandler, id_msg: int) -> None:
     query = "DELETE FROM josix.MsgCouple WHERE idMsg = %s;"
     query2 = "DELETE FROM josix.MsgReact WHERE idMsg = %s;"
