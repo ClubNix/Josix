@@ -50,7 +50,11 @@ def add_game_type(handler: DatabaseHandler, game_name: str) -> None:
 
 @error_handler
 def add_game(handler: DatabaseHandler, game_name: str, id_user: int, opponent: int = None) -> int | None:
-    typeId = get_game_type(handler, game_name).id # TODO : can be none
+    game_type = get_game_type(handler, game_name).id
+    if not game_type:
+        return
+    
+    typeId = game_type
     query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
     params = (typeId, id_user, opponent)
     handler.cursor.execute(query, params)

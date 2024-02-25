@@ -34,17 +34,6 @@ class DatabaseHandler():
         self.conn = conn
         self.cursor = conn.cursor()
 
-    # TODO : Use it in another way
-    def safeExecute(
-        self,
-        func: Callable[[Any], Any],
-        *args
-        ) -> Any:
-        try:
-            return func(*args)
-        except Exception as e:
-            log.writeError(log.formatError(e))
-
 
     def _error_handler(func: Callable):
         def wrapper(ref, *args):
