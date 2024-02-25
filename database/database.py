@@ -146,28 +146,3 @@ class DatabaseHandler():
     ###############
     # Modifiers
     ###############
-
-    @_error_handler
-    def updateWelcomeGuild(self, id_guild: int, id_chan: int | None, id_role: int | None, message: str) -> None:
-        if not id_chan:
-            id_chan = 0
-        if not id_role:
-            id_role = 0
-
-        query = """UPDATE josix.Guild
-                   SET enableWelcome = TRUE,
-                       welcomeChan = %s,
-                       welcomeRole = %s,
-                       welcomeText = %s
-                   WHERE idGuild = %s;"""
-        params = (id_chan, id_role, message, id_guild)
-        self.cursor.execute(query, params)
-        self.conn.commit()
-
-    @_error_handler
-    def updateGuildWelcomeEnabled(self, id_guild: int) -> None:
-        query = """UPDATE josix.Guild
-                   SET enableWelcome = NOT enableWelcome
-                   WHERE idGuild = %s"""
-        self.cursor.execute(query, (id_guild,))
-        self.conn.commit()

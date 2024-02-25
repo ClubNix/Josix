@@ -421,7 +421,7 @@ class Admin(JosixCog):
         if not message:
             message = dbGuild.wText if keep else ""
 
-        self.bot.db.updateWelcomeGuild(idGuild, idChan, idRole, message)
+        guild_service.update_welcome(handler, idGuild, idChan, idRole, message)
         await ctx.respond("Your custome welcome message has been set")
 
 
@@ -437,10 +437,10 @@ class Admin(JosixCog):
 
         if not dbGuild:
             discord_service.add_guild(handler, idGuild)
-            dbGuild = discord_service.get_guild(idGuild)
+            dbGuild = discord_service.get_guild(handler, idGuild)
 
         enabled = dbGuild.enableWelcome
-        self.bot.db.updateGuildWelcomeEnabled(idGuild)
+        guild_service.switch_welcome_enabling(handler, idGuild)
         await ctx.respond(f"The custom welcome system for this server has been set to **{not enabled}**")
 
 
