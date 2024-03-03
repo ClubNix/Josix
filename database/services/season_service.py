@@ -1,9 +1,9 @@
 from database.database import DatabaseHandler
 from database.db_utils import (
-    error_handler,
     Score,
-    UserScore,
     Season,
+    UserScore,
+    error_handler,
 )
 from database.services.xp_service import get_leaderboard
 

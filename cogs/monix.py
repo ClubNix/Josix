@@ -1,18 +1,19 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, option
-
 import datetime
-
-from enum import Enum
-from dotenv import load_dotenv
-from os import getenv
-from urllib3 import disable_warnings
-from requests import Session
-from urllib3.exceptions import InsecureRequestWarning
 from dataclasses import dataclass
+from enum import Enum
+from os import getenv
+
+import discord
+from discord import ApplicationContext, option
+from discord.ext import commands
+from dotenv import load_dotenv
+from requests import Session
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
+
 from bot_utils import JosixCog, josix_slash
 from josix import Josix
+
 
 class HTTPMethod(Enum):
     """Enumerator that represents HTTP method used for the bot"""
@@ -161,7 +162,7 @@ class Monix(JosixCog):
             raise MonixAPIError(f"Unable to parse JSON response : {data.text}")
 
         # Raise an exception if an error occurred
-        if type(data) == dict and "error" in data:
+        if isinstance(data, dict) and "error" in data:
             raise MonixAPIError(data["error"])
 
         # Return the data
@@ -407,7 +408,7 @@ class Monix(JosixCog):
                     elements[idUser] = Monix.Element(nameUser, valTransac, isMember)
                 else:
                     elements[idUser].value += valTransac
-            except KeyError as e:
+            except KeyError:
                 continue
 
         return elements

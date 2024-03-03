@@ -1,18 +1,26 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, option, VoiceChannel, TextChannel, GroupChannel, DMChannel, PartialMessageable
-from discord.abc import GuildChannel, PrivateChannel
-
 import datetime as dt
-import logwrite as log
 
-from josix import Josix
-from bot_utils import JosixSlash, JosixCog, josix_slash
+import discord
+from discord import (
+    ApplicationContext,
+    DMChannel,
+    GroupChannel,
+    PartialMessageable,
+    TextChannel,
+    VoiceChannel,
+    option,
+)
+from discord.abc import PrivateChannel
+from discord.ext import commands
+
+import logwrite as log
+from bot_utils import JosixCog, JosixSlash, josix_slash
 from database.services import (
     discord_service,
-    xp_service,
     season_service,
+    xp_service,
 )
+from josix import Josix
 
 
 class XP(JosixCog):
@@ -149,7 +157,8 @@ class XP(JosixCog):
             message.author.bot or 
             isinstance(message.channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable)) or
             not message.guild
-        ): return
+        ):
+            return
 
         idCat = message.channel.category_id
         msgLen = len(message.content)
@@ -172,7 +181,8 @@ class XP(JosixCog):
             isinstance(ctx.channel, discord.DMChannel) or
             isinstance(ctx.channel, discord.GroupChannel) or
             not isinstance(ctx.command, JosixSlash)
-        ): return
+        ):
+            return
 
         idCat = ctx.channel.category_id
         cmd: JosixSlash = ctx.command
@@ -200,7 +210,8 @@ class XP(JosixCog):
             not payload.guild_id or
             payload.member.bot or
             isinstance(channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable, PrivateChannel))
-        ): return
+        ):
+            return
 
         idCat = channel.category_id
         try:
@@ -605,7 +616,8 @@ class XP(JosixCog):
             return
 
         seasons = season_service.get_seasons(self.bot.get_handler(), guild.id, limit)
-        if not seasons: seasons = []
+        if not seasons:
+            seasons = []
 
         embed = discord.Embed(
             title="Seasons",

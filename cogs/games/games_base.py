@@ -1,11 +1,9 @@
-import discord
-from discord.ui import View
-from discord.ext import commands
-from discord import ApplicationContext, Member
-
 import datetime as dt
 
-from josix import Josix
+import discord
+from discord import ApplicationContext, Member
+from discord.ui import View
+
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
@@ -14,6 +12,8 @@ from database.services import (
     games_service,
     xp_service,
 )
+from josix import Josix
+
 
 class Games(JosixCog):
     """

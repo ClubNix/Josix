@@ -1,23 +1,21 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext
-from discord import option
-from discord import NotFound, InvalidArgument, HTTPException
-
 import re
-import logwrite as log
 
-from josix import Josix
-from cogs.logger import LoggerView
+import discord
+from discord import ApplicationContext, HTTPException, InvalidArgument, NotFound, option
+from discord.ext import commands
+
+import logwrite as log
 from bot_utils import JosixCog, josix_slash
+from cogs.logger import LoggerView
 from database.services import (
-    logger_service,
-    reactrole_service,
     discord_service,
     guild_service,
+    logger_service,
+    reactrole_service,
+    season_service,
     xp_service,
-    season_service
 )
+from josix import Josix
 
 
 class Admin(JosixCog):
@@ -163,6 +161,10 @@ class Admin(JosixCog):
     )
     async def delete_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
         testMsg = await ctx.respond("Testing...")
+        if not isinstance(testMsg, discord.Interaction):
+            await ctx.send("Error")
+            return
+
         og: discord.InteractionMessage = await testMsg.original_response()
 
         idRole = role.id

@@ -1,12 +1,16 @@
 import discord
+from discord import (
+    RawBulkMessageDeleteEvent,
+    RawMessageDeleteEvent,
+    RawReactionActionEvent,
+)
 from discord.ext import commands
-from discord import RawReactionActionEvent, RawMessageDeleteEvent, RawBulkMessageDeleteEvent
 
 import logwrite as log
-
 from bot_utils import JosixCog
-from josix import Josix
 from database.services import reactrole_service
+from josix import Josix
+
 
 class ReactionRole(JosixCog):
     """

@@ -1,20 +1,32 @@
-import discord
-from discord.ext import commands
-from discord.ui.select import Select, string_select
-from discord import AutoModRule, AutoModActionExecutionEvent
-from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOverwrite
-from discord import User, Member, RawMemberRemoveEvent, Embed
-from discord.abc import GuildChannel
-
-import logwrite as log
-
-from database.database import DatabaseHandler
+from datetime import datetime as dt
 from enum import IntEnum
 from typing import Sequence
-from datetime import datetime as dt
+
+import discord
+from discord import (
+    AutoModActionExecutionEvent,
+    AutoModRule,
+    Embed,
+    Emoji,
+    Guild,
+    GuildSticker,
+    Member,
+    PermissionOverwrite,
+    RawMemberRemoveEvent,
+    Role,
+    TextChannel,
+    User,
+)
+from discord.abc import GuildChannel
+from discord.ext import commands
+from discord.ui.select import Select, string_select
+
+import logwrite as log
 from bot_utils import JosixCog
+from database.database import DatabaseHandler
+from database.services import discord_service, logger_service
 from josix import Josix
-from database.services import logger_service, discord_service
+
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -229,7 +241,9 @@ class Logger(JosixCog):
             description=rule.name,
             color=Logger.addColor if create else Logger.updColor
         )
-        if creator: embed.set_author(name=creator, icon_url=creator.display_avatar)
+        if creator:
+            embed.set_author(name=creator, icon_url=creator.display_avatar)
+
         embed.add_field(name="Trigger", value=rule.trigger_type.name)
         embed.add_field(name="Enabled", value=str(rule.enabled), inline=False)
         embed.add_field(name="Actions", value=", ".join([i.type.name for i in rule.actions]))
@@ -252,7 +266,8 @@ class Logger(JosixCog):
             description=rule.name,
             color=Logger.noColor
         )
-        if creator: embed.set_author(name=creator, icon_url=creator.display_avatar)
+        if creator:
+            embed.set_author(name=creator, icon_url=creator.display_avatar)
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
@@ -490,7 +505,9 @@ class Logger(JosixCog):
         embed.add_field(name="Emoji", value=str(emoji))
         embed.add_field(name="Name", value=emoji.name)
         embed.add_field(name= '\u200B', value= '\u200B')
-        if emoji.user: embed.add_field(name="Creator", value=emoji.user.mention)
+        if emoji.user:
+            embed.add_field(name="Creator", value=emoji.user.mention)
+
         embed.add_field(name="Animated", value=str(emoji.animated))
         embed.set_footer(text=f"ID : {emoji.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
@@ -505,9 +522,13 @@ class Logger(JosixCog):
             color=(Logger.addColor if create else Logger.noColor)
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        if sticker.url: embed.set_image(url=sticker.url)
+        if sticker.url:
+            embed.set_image(url=sticker.url)
+
         embed.add_field(name="Name", value=sticker.name)
-        if sticker.user: embed.add_field(name="Creator", value=sticker.user.mention)
+        if sticker.user:
+            embed.add_field(name="Creator", value=sticker.user.mention)
+
         embed.add_field(name="Format", value=sticker.format.name)
         embed.set_footer(text=f"ID : {sticker.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
@@ -524,7 +545,8 @@ class Logger(JosixCog):
             color=Logger.updColor
         )
         embed.set_footer(text=f"ID : {after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
-        if after.icon: embed.set_thumbnail(url=after.icon)
+        if after.icon:
+            embed.set_thumbnail(url=after.icon)
 
         if before.afk_channel != after.afk_channel:
             bf = before.afk_channel.mention if before.afk_channel else "None"

@@ -1,9 +1,9 @@
 from database.database import DatabaseHandler
 from database.db_utils import (
-    error_handler,
     GuildDB,
-    UserDB,
     LinkUserGuild,
+    UserDB,
+    error_handler,
 )
 
 

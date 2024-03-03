@@ -1,18 +1,32 @@
+import json
+import os
+from json import JSONDecodeError
+
 import discord
+from discord import (
+    ApplicationContext,
+    CheckFailure,
+    DiscordException,
+    Forbidden,
+    NotFound,
+    RawThreadUpdateEvent,
+)
 from discord.ext import commands
-from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
-    CommandOnCooldown, NotOwner
-from discord import RawThreadUpdateEvent, ApplicationContext, DiscordException, NotFound, Forbidden, CheckFailure
+from discord.ext.commands import (
+    BotMissingPermissions,
+    CommandOnCooldown,
+    MissingPermissions,
+    MissingRequiredArgument,
+    NoPrivateMessage,
+    NotOwner,
+)
 from discord.utils import get as discordGet
 
 import logwrite as log
-import os
-import json
-
-from json import JSONDecodeError
-from josix import Josix
 from bot_utils import JosixCog
 from database.services import discord_service
+from josix import Josix
+
 
 class Events(JosixCog):
     """
@@ -84,7 +98,8 @@ class Events(JosixCog):
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):
-        if not isinstance(thread.parent, discord.ForumChannel): return
+        if not isinstance(thread.parent, discord.ForumChannel):
+            return
 
         try:
             await thread.send("This thread is now open. You can close it automatically by using `/close`")
@@ -154,7 +169,7 @@ class Events(JosixCog):
                     except (ValueError, IndexError):
                         pass
 
-                if oTag and not oTag in tags:
+                if oTag and oTag not in tags:
                     tags.append(oTag)
                     await thread.edit(applied_tags=tags)
             except Exception as e:

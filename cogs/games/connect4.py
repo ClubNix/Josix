@@ -1,11 +1,12 @@
+from random import randint
+
 import discord
-from discord.ext import commands
 from discord import ApplicationContext, Interaction, option
 
-from random import randint
-from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class C4Button(discord.ui.Button["C4View"]):
     """
@@ -45,7 +46,8 @@ class C4Button(discord.ui.Button["C4View"]):
         if view.checkWin(self.x, y):
             view.stopGame()
             desc = f"{view.currentPlayer.name} won !"
-            if not interaction.guild: return
+            if not interaction.guild:
+                return
             view.game.grantsXP(view.currentPlayer, interaction.guild, 50)
 
         elif view.isFull():

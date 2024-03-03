@@ -1,5 +1,5 @@
 from database.database import DatabaseHandler
-from database.db_utils import error_handler, LogSelection
+from database.db_utils import LogSelection, error_handler
 
 
 @error_handler

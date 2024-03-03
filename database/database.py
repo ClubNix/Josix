@@ -1,7 +1,7 @@
 import datetime as dt
 import os
 from shutil import copyfile
-from typing import Any, Callable
+from typing import Callable
 
 import psycopg2
 from dotenv import load_dotenv

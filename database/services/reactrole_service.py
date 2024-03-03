@@ -1,9 +1,9 @@
-from database.database import DatabaseHandler
 from bot_utils import JosixDatabaseException
+from database.database import DatabaseHandler
 from database.db_utils import (
-    error_handler,
     MsgReact,
     ReactCouple,
+    error_handler,
 )
 
 

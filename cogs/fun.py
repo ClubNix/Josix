@@ -1,22 +1,21 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext
-from discord import option
-
-import os
-import json
-import random
 import datetime as dt
-
-from blagues_api import BlaguesAPI
-from aiohttp import ClientResponseError
+import json
+import os
+import random
 from asyncio import TimeoutError
-from dotenv import load_dotenv
 from json import JSONDecodeError
+
+import discord
+from aiohttp import ClientResponseError
+from blagues_api import BlaguesAPI
+from discord import ApplicationContext, Interaction, WebhookMessage, option
+from discord.ext import commands
+from dotenv import load_dotenv
+
 from bot_utils import JosixCog, josix_slash
-from josix import Josix
 from cogs.xp_system import XP
 from database.services import discord_service, xp_service
+from josix import Josix
 
 
 class Fun(JosixCog):
@@ -259,7 +258,11 @@ class Fun(JosixCog):
         noEmbed.colour = discord.Colour(noColor)
 
         reacts = []
-        msg: discord.Interaction = await ctx.respond(embed=askEmbed)
+        msg: Interaction | WebhookMessage = await ctx.respond(embed=askEmbed)
+        if isinstance(msg, WebhookMessage):
+            await ctx.send("Unexpected error during process")
+            return None
+
         og = await msg.original_response()
 
         # add reaction choices

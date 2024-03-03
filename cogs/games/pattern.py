@@ -1,11 +1,13 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, Member, Interaction
-
 from random import randint
-from cogs.games.games_base import BaseGame, BaseView
+
+import discord
+from discord import ApplicationContext, Interaction, Member
+from discord.ext import commands
+
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class PatternBtn(discord.ui.Button["PatternView"]):
     """
@@ -44,7 +46,7 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         view.chooseSquare(self.x, self.y)
         view.addMove()
         embed = discord.Embed(
-            title=f"Pattern game",
+            title="Pattern game",
             description="Turn all the squares into blue to win",
             color=0x0089FF
         )
@@ -161,7 +163,7 @@ class Pattern(BaseGame):
         idGame = self.initGame(ctx.author.id)
         view = PatternView(ctx.interaction, self, idGame, ctx.author)
         embed = discord.Embed(
-            title=f"Pattern game",
+            title="Pattern game",
             description="Turn all the squares into blue to win",
             color=0x0089FF
         )

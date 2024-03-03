@@ -1,11 +1,12 @@
+from random import randint
+
 import discord
-from discord.ext import commands
 from discord import ApplicationContext, Interaction, SelectOption, option
 
-from random import randint
-from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class OthelloInput(discord.ui.Select):
     """
@@ -75,7 +76,8 @@ class OthelloInput(discord.ui.Select):
                 desc = "It's a tie !"
             else:
                 desc = f"{winner.mention} won !"
-                if not interaction.guild: return
+                if not interaction.guild:
+                    return
                 view.game.grantsXP(winner, interaction.guild, 50)
 
         else:
