@@ -8,7 +8,7 @@ load_dotenv(".env.dev")
 
 # GLOBAL PATHS
 HOME_PATH = os.getenv("HOME")
-LOGS_PATH = os.path.join(HOME_PATH, os.getenv("LOGS"))
+LOGS_PATH = os.path.join(HOME_PATH, os.getenv("LOGS", "")) if HOME_PATH else ""
 LOG_FILE = os.path.join(LOGS_PATH, "josixout.log")
 ERROR_FILE = os.path.join(LOGS_PATH, "josixerr.log")
 
@@ -61,8 +61,12 @@ def formatError(e: Exception) -> str:
         Formated exception message
     """
     try:
-        file = str(sys.exc_info()[-1].tb_frame).rsplit("'")[1]
-        return f"{file} on l.{format(sys.exc_info()[-1].tb_lineno)} --> {type(e).__name__}, {e}".strip()
+        exception_info = sys.exc_info()[-1]
+        if exception_info is None:
+            return str(e)
+
+        file = str(exception_info.tb_frame).rsplit("'")[1]
+        return f"{file} on l.{format(exception_info.tb_lineno)} --> {type(e).__name__}, {e}".strip()
     except Exception:
         return str(e)
 

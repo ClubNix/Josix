@@ -82,7 +82,7 @@ class Admin(JosixCog):
         testMsg = None
         testGuild = None
         duos = None
-        msg: discord.Message = None
+        msg: discord.Message | None = None
         handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
@@ -169,7 +169,7 @@ class Admin(JosixCog):
         idMsg = 0
         testEmj = None
         duos = None
-        msg: discord.Message = None
+        msg: discord.Message | None = None
         idCouple = 0
         handler = self.bot.get_handler()
 
@@ -297,6 +297,10 @@ class Admin(JosixCog):
         id_season = -1
         try:
             id_season = season_service.store_season(handler, guild.id, label)
+            if id_season is None:
+                await ctx.respond("Could not register the season")
+                return
+
         except ValueError as e:
             await ctx.respond(e)
             return
@@ -506,5 +510,5 @@ class Admin(JosixCog):
         await ctx.respond(f"The category **{category.name}** is now **{text}**")
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Admin(bot, True))

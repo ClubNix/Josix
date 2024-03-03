@@ -54,6 +54,9 @@ class Josix(commands.Bot):
         """
         try:
             res = self.load_extension("cogs", recursive=True, store=True)
+            if res is None or isinstance(res, list):
+                return
+
             for cogName, cogRes in res.items():
                 if isinstance(cogRes, Exception):
                     log.writeError(log.formatError(cogRes))

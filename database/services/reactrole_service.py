@@ -1,4 +1,5 @@
 from database.database import DatabaseHandler
+from bot_utils import JosixDatabaseException
 from database.db_utils import (
     error_handler,
     MsgReact,
@@ -14,6 +15,7 @@ def get_reaction_message(handler: DatabaseHandler, id_msg: int) -> MsgReact | No
 
     if res:
         return MsgReact(*res)
+    return None
 
 
 @error_handler
@@ -26,24 +28,20 @@ def get_role_from_reaction(handler: DatabaseHandler, id_msg: int, emoji_name: st
     res = handler.cursor.fetchone()
     if res:
         return res[0]
+    return None
 
 
 @error_handler
-def get_couples(handler: DatabaseHandler, id_msg: int = None) -> list[ReactCouple] | None:
-    if not id_msg:
-        query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
-                    INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple;"""
-        params = ()
-    else:
-        query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
-                    INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
-                    WHERE mc.idMsg = %s;"""
-        params = (id_msg,)
-    handler.cursor.execute(query, params)
+def get_couples(handler: DatabaseHandler, id_msg: int | None = None) -> list[ReactCouple] | None:
+    query = """SELECT rc.idCouple, rc.emoji, rc.idRole FROM josix.ReactCouple rc
+                INNER JOIN josix.MsgCouple mc ON rc.idCouple = mc.idCouple
+                WHERE mc.idMsg = %s;"""
+    params = (id_msg,)
     handler.cursor.execute(query, params)
     res = handler.cursor.fetchall()
     if res:
         return [ReactCouple(*row) for row in res]
+    return None
 
 
 @error_handler
@@ -53,6 +51,7 @@ def get_couple_from_role(handler: DatabaseHandler, id_role: int) -> list[ReactCo
     res = handler.cursor.fetchone()
     if res:
         return [ReactCouple(*row) for row in res]
+    return None
 
 
 @error_handler
@@ -64,7 +63,11 @@ def add_couple(handler: DatabaseHandler, couple: tuple, id_msg: int) -> None:
                 VALUES (%s, %s) RETURNING idCouple;"""
     params = (couple[0], couple[1])
     handler.cursor.execute(query1, params)
-    idCouple = handler.cursor.fetchone()[0]
+    res = handler.cursor.fetchone()
+    if not res:
+        raise JosixDatabaseException("Could not fetch data")
+
+    idCouple = res[0]
 
     query2 = "INSERT INTO josix.MsgCouple VALUES (%s,%s);"
     params = (id_msg, idCouple)

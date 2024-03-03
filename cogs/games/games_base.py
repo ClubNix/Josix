@@ -77,6 +77,9 @@ class BaseGame(JosixCog):
             discord_service.add_user_in_guild(self._db, idMember, guild.id)
             userGuildDB = discord_service.get_user_in_guild(self._db, idMember, guild.id)
 
+        if not userGuildDB:
+            return
+
         if userGuildDB.isUserBlocked:
             return
 
@@ -91,13 +94,13 @@ class BaseGame(JosixCog):
     def checkGameState(self, idGame: int, idUser: int) -> bool:
         return bool(games_service.get_existing_game(self._db, idGame, idUser))
 
-    def checkPlayers(self, idUser, idOpponent: int = None) -> bool:
+    def checkPlayers(self, idUser, idOpponent: int | None = None) -> bool:
         """Check if one of the two players are already in a game"""
         user = bool(games_service.get_game_from_user(self._db, idUser))
         oppo = bool(games_service.get_game_from_user(self._db, idOpponent)) if idOpponent else False
         return user or oppo
 
-    def initGame(self, playerId: int, oppoId: int = None) -> int:
+    def initGame(self, playerId: int, oppoId: int | None = None) -> int:
         testP1 = bool(discord_service.get_user(self._db, playerId))
         testP2 = bool(discord_service.get_user(self._db, oppoId)) if oppoId else True
 
@@ -155,5 +158,5 @@ class BaseView(View):
         self.stop()
         self.game.stopGame(self.idGame)
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Games(bot))

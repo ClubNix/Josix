@@ -15,6 +15,7 @@ def get_guild(handler: DatabaseHandler, id_guild: int) -> GuildDB | None:
 
     if res:
         return GuildDB(*res)
+    return None
 
 
 @error_handler
@@ -25,6 +26,7 @@ def get_user(handler: DatabaseHandler, id_user: int) -> UserDB | None:
 
     if res:
         return UserDB(*res)
+    return None
 
 
 @error_handler
@@ -37,6 +39,7 @@ def get_user_in_guild(handler: DatabaseHandler, id_user: int, id_guild: int) -> 
 
     if res:
         return LinkUserGuild(*res)
+    return None
 
 
 def get_link_user_guild(handler: DatabaseHandler, id_user: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:

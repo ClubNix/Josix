@@ -42,7 +42,7 @@ class Fun(JosixCog):
         self.jokes = BlaguesAPI(Fun._KEY)
 
     def checkJson(self, file: dict) -> bool:
-        return (file.keys()) or (len(file.keys()) > 0)
+        return bool(file.keys()) or (len(file.keys()) > 0)
 
     @josix_slash(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
@@ -222,7 +222,7 @@ class Fun(JosixCog):
         except KeyError:
             await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     
-    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str) -> None:
+    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str) -> bool | None:
         """
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters
@@ -253,10 +253,10 @@ class Fun(JosixCog):
         yesEmbed = askEmbed.copy()
 
         yesEmbed.description = "Results gathered, askip added ! ✅"
-        yesEmbed.color = yesColor
+        yesEmbed.colour = discord.Colour(yesColor)
 
         noEmbed = askEmbed.copy()
-        noEmbed.color = noColor
+        noEmbed.colour = discord.Colour(noColor)
 
         reacts = []
         msg: discord.Interaction = await ctx.respond(embed=askEmbed)
@@ -369,6 +369,9 @@ class Fun(JosixCog):
             discord_service.add_user_in_guild(handler, idAuth, guild.id)
             userGuildDB = discord_service.get_user_in_guild(handler, idAuth, guild.id)
 
+        if userGuildDB is None:
+            await ctx.respond("Unexpected data error")
+            return
         if userGuildDB.isUserBlocked:
             return
 
@@ -393,5 +396,5 @@ class Fun(JosixCog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Fun(bot, True))

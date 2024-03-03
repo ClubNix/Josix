@@ -52,6 +52,9 @@ class ReactionRole(JosixCog):
             guildId = payload.guild_id
             emojiName = emoji.name
 
+            if not guildId:
+                return
+
             if not (guild := self.bot.get_guild(guildId)) and not (guild := await self.bot.fetch_guild(guildId)):
                 return
 
@@ -131,5 +134,5 @@ class ReactionRole(JosixCog):
         except Exception as e:
             log.writeError(log.formatError(e))
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(ReactionRole(bot, False))

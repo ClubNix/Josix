@@ -61,9 +61,9 @@ class Monix(JosixCog):
 
     disable_warnings(InsecureRequestWarning)
     load_dotenv(".env.dev")
-    _JOSIX_LOGIN = getenv("MONIX_LOG")
-    _JOSIX_PSSWD = getenv("MONIX_PASSWORD")
-    _LOG_STOCK = getenv("HOME") + getenv("LOGS") + "stocks.txt"
+    _JOSIX_LOGIN = getenv("MONIX_LOG", "")
+    _JOSIX_PSSWD = getenv("MONIX_PASSWORD", "")
+    _LOG_STOCK = getenv("HOME", "") + getenv("LOGS", "") + "stocks.txt"
 
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
@@ -88,10 +88,10 @@ class Monix(JosixCog):
         authentication = self.request(
             target="/auth/login",
             method=HTTPMethod.POST,
-            json={
+            json=str({
                 "username": Monix._JOSIX_LOGIN,
                 "password": Monix._JOSIX_PSSWD
-            }
+            })
         )
 
         try:
@@ -117,7 +117,7 @@ class Monix(JosixCog):
             self,
             target: str,
             method: HTTPMethod,
-            json: str = None,
+            json: str | None = None,
     ) -> dict:
         """
         Monix API function to create web requests originally created by Anemys.
@@ -256,6 +256,7 @@ class Monix(JosixCog):
                 if recordVal > elmt.value:
                     return index
             return len(top)
+        return -1
 
     def compareBottom(self, bottom: list[Element], recordVal: int) -> int:
         """
@@ -286,6 +287,7 @@ class Monix(JosixCog):
                 if recordVal < elmt.value:
                     return index
             return len(bottom)
+        return -1
 
     @josix_slash(description="Leaderboard of the most and least rich members in Monix")
     @commands.cooldown(1, 60, commands.BucketType.user)
@@ -489,5 +491,5 @@ class Monix(JosixCog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Monix(bot, True))

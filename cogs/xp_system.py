@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from discord import ApplicationContext, option
+from discord import ApplicationContext, option, VoiceChannel, TextChannel, GroupChannel, DMChannel, PartialMessageable
+from discord.abc import GuildChannel, PrivateChannel
 
 import datetime as dt
 import logwrite as log
@@ -104,6 +105,9 @@ class XP(JosixCog):
             discord_service.add_user_in_guild(handler, idTarget, idGuild)
             userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
 
+        if not (guildDB and userGuildDB):
+            return
+
         xpChanId = guildDB.xpNews
         xpEnabled = guildDB.enableXp
 
@@ -131,7 +135,8 @@ class XP(JosixCog):
         xp_service.update_user_xp(handler, idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
-            if (xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId)):
+            if ((xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId))) and isinstance(xpChan, TextChannel):
+
                 await xpChan.send(
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
@@ -142,8 +147,8 @@ class XP(JosixCog):
         await self.bot.process_commands(message)
         if (
             message.author.bot or 
-            isinstance(message.channel, discord.DMChannel) or
-            isinstance(message.channel, discord.GroupChannel)
+            isinstance(message.channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable)) or
+            not message.guild
         ): return
 
         idCat = message.channel.category_id
@@ -191,9 +196,10 @@ class XP(JosixCog):
             return
 
         if (
+            not payload.member or
+            not payload.guild_id or
             payload.member.bot or
-            isinstance(channel, discord.DMChannel) or
-            isinstance(channel, discord.GroupChannel)
+            isinstance(channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable, PrivateChannel))
         ): return
 
         idCat = channel.category_id
@@ -247,6 +253,9 @@ class XP(JosixCog):
             discord_service.add_user_in_guild(handler, member.id, guild.id)
             userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
 
+        if not userGuildDB:
+            return
+
         if userGuildDB.isUserBlocked:
             return
 
@@ -268,6 +277,9 @@ class XP(JosixCog):
         if not userGuildDB:
             discord_service.add_user_in_guild(handler, member.id, guild.id)
             userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
+
+        if not userGuildDB:
+            return
 
         if userGuildDB.isUserBlocked:
             return
@@ -434,6 +446,10 @@ class XP(JosixCog):
         idGuild = ctx.guild.id
         handler = self.bot.get_handler()
 
+        if not self.bot.user:
+            await ctx.respond("Unexpected error on data")
+            return
+
         try:
             guildDB = discord_service.get_guild(handler, idGuild)
             if not guildDB:
@@ -561,6 +577,10 @@ class XP(JosixCog):
         if not userGuildDB:
             discord_service.add_user_in_guild(handler, idTarget, idGuild)
             userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+
+        if not userGuildDB:
+            await ctx.respond("Could not fetch data")
+            return
 
         blocked = userGuildDB.isUserBlocked
         xp_service.switch_user_xp_blocking(handler, idTarget, idGuild)
@@ -769,9 +789,9 @@ class XP(JosixCog):
         embed.add_field(name="Label", value=season.label)
         embed.add_field(name="Score", value=score.score)
         embed.add_field(name="Ranking", value=score.ranking)
-        embed.add_field(name="Level", value=level)
+        embed.add_field(name="Level", value=str(level))
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(XP(bot, True))

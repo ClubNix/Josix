@@ -135,7 +135,7 @@ class Owner(JosixCog):
                 if lenLine + count > 2000:
                     await ctx.respond(f"```{msg}```")
                     count = lenLine
-                    msg = lenLine
+                    msg = str(lenLine)
                 else:
                     count += lenLine
                     msg += newLine
@@ -186,5 +186,5 @@ class Owner(JosixCog):
             log.writeLog("Database connection check passed !")
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Owner(bot, True))

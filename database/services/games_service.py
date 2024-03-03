@@ -16,6 +16,7 @@ def get_game_from_user(handler: DatabaseHandler, id_user: int) -> Game | None:
 
     if res:
         return Game(*res)
+    return None
 
 
 @error_handler
@@ -26,6 +27,7 @@ def get_game_type(handler: DatabaseHandler, game_name: str) -> GameType | None:
 
     if res:
         return GameType(*res)
+    return None
 
 
 @error_handler
@@ -39,6 +41,7 @@ def get_existing_game(handler: DatabaseHandler, id_game: int, id_user: int) -> G
 
     if res:
         return Game(*res)
+    return None
 
 
 @error_handler
@@ -49,10 +52,10 @@ def add_game_type(handler: DatabaseHandler, game_name: str) -> None:
 
 
 @error_handler
-def add_game(handler: DatabaseHandler, game_name: str, id_user: int, opponent: int = None) -> int | None:
+def add_game(handler: DatabaseHandler, game_name: str, id_user: int, opponent: int | None = None) -> int | None:
     game_type = get_game_type(handler, game_name).id
     if not game_type:
-        return
+        return None
     
     typeId = game_type
     query = "INSERT INTO josix.Games(idType, idUser, opponent) VALUES(%s, %s, %s) RETURNING idGame;"
@@ -63,6 +66,7 @@ def add_game(handler: DatabaseHandler, game_name: str, id_user: int, opponent: i
     res = handler.cursor.fetchone()
     if res:
         return res[0]
+    return None
 
 
 @error_handler
@@ -95,7 +99,10 @@ def delete_games(handler: DatabaseHandler) -> None:
 def getPlayerStat(handler: DatabaseHandler, id_user: int) -> tuple[int, int] | None:
     query = "SELECT elo, nbGames FROM josix.User WHERE idUser = %s;"
     handler.cursor.execute(query, (id_user,))
-    return handler.cursor.fetchone()
+    res = handler.cursor.fetchone()
+    if not res:
+        return None
+    return res
 
 
 @error_handler

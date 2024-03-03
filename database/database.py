@@ -35,12 +35,12 @@ class DatabaseHandler():
         self.cursor = conn.cursor()
 
 
+    @staticmethod
     def _error_handler(func: Callable):
-        def wrapper(ref, *args):
+        def wrapper(ref: DatabaseHandler, *args):
             try:
                 return func(ref, *args)
             except psycopg2.Error as dbError:
-                ref: DatabaseHandler = ref
                 ref.conn.rollback()
                 raise dbError
             except Exception as commonError:
@@ -96,6 +96,8 @@ class DatabaseHandler():
                 self.cursor.execute("SELECT * FROM josix.%s" % (table_name))
                 column_names = []
                 columns_descr = self.cursor.description
+                if not columns_descr:
+                    continue
 
                 for c in columns_descr:
                     column_names.append(c[0])

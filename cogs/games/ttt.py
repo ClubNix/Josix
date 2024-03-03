@@ -29,7 +29,10 @@ class TTTBtn(discord.ui.Button["TTTView"]):
         assert self.view is not None
         view: TTTView = self.view
 
-        if not await view.checkGameState():
+        if not (
+            await view.checkGameState() and
+            interaction.user 
+        ):
             return
 
         if view.grid[self.x][self.y]:
@@ -184,5 +187,5 @@ class TicTacToe(BaseGame):
             view=TTTView(ctx.interaction, self, idGame, ctx.author, opponent, first)
         )
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(TicTacToe(bot))

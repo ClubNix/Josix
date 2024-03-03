@@ -16,6 +16,7 @@ def get_season_by_label(handler: DatabaseHandler, id_guild: int, label: str) -> 
     res = handler.cursor.fetchone()
     if res:
         return Season(*res)
+    return None
 
 
 @error_handler
@@ -37,6 +38,7 @@ def get_season(handler: DatabaseHandler, id_season: int) -> Season | None:
     res = handler.cursor.fetchone()
     if res:
         return Season(*res)
+    return None
 
 
 @error_handler
@@ -48,6 +50,7 @@ def get_seasons(handler: DatabaseHandler, id_guild: int, limit: int) -> list[Sea
 
     if res:
         return [Season(*row) for row in res]
+    return None
 
 
 @error_handler
@@ -63,6 +66,7 @@ def get_user_history(handler: DatabaseHandler, id_guild: int, id_user: int) -> l
 
     if res:
         return [UserScore(*score) for score in res]
+    return None
 
 
 @error_handler
@@ -73,6 +77,7 @@ def get_scores(handler: DatabaseHandler, id_season: int) -> list[Score] | None:
     
     if res:
         return [Score(*score) for score in res]
+    return None
 
 
 @error_handler
@@ -84,10 +89,11 @@ def get_user_score(handler: DatabaseHandler, id_season: int, id_user: int) -> Sc
 
     if res:
         return Score(*res)
+    return None
 
 
 @error_handler
-def store_season(handler: DatabaseHandler, id_guild: int, label: str) -> int:
+def store_season(handler: DatabaseHandler, id_guild: int, label: str) -> int | None:
     if label == "":
         label = str(get_new_season_id(handler, id_guild))
     else:
@@ -102,6 +108,7 @@ def store_season(handler: DatabaseHandler, id_guild: int, label: str) -> int:
     res = handler.cursor.fetchone()
     if res:
         return res[0]
+    return None
 
 
 @error_handler

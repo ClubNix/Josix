@@ -15,6 +15,7 @@ def get_leaderboard(handler: DatabaseHandler, id_guild: int, limit: int | None) 
     res = handler.cursor.fetchall()
     if res:
         return [LinkUserGuild(*row) for row in res]
+    return None
 
 
 @error_handler
@@ -28,6 +29,7 @@ def get_ranking(handler: DatabaseHandler, id_user: int, id_guild: int) -> int | 
     res = handler.cursor.fetchone()
     if res:
         return res[0]
+    return None
 
 
 @error_handler

@@ -4,9 +4,6 @@ from discord import Permissions, SlashCommand
 from discord.commands.core import application_command
 from discord.ext.commands import Cog
 
-import psycopg2
-from database.database import DatabaseHandler
-
 
 class JosixCog(Cog):
     """A class representing a Cog for Josix with a special attribute for the help command

@@ -13,6 +13,7 @@ def get_logs_selection(handler: DatabaseHandler, id_guild: int) -> LogSelection 
         for row in res:
             logs.append(row[1])
         return LogSelection(id_guild, logs)
+    return None
 
 
 @error_handler
