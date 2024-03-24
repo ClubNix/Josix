@@ -1,7 +1,7 @@
 
 
 <h1 align="center">
-  <img src="https://cdn.discordapp.com/attachments/933118079028826145/951590071948177488/josix.png" alt="icon_josix"  height="200" width="200">
+  <img src="assets/josix2.png" alt="icon_josix"  height="200" width="200">
   <br>
   Josix by Club*Nix
   <br>
