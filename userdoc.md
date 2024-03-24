@@ -63,6 +63,16 @@ All the following commands are made to be run by discord servers staff to handle
 
 - `enable_xp_system` Enable or disable the XP system on this server. If the system is disabled, no one will receive any XP.
 
+- `create_new_season` Store the current season results (all scores and ranking) and switch to a new season
+  - `label` The label for the season that will be stored
+
+- `delete_season` Delete a season from the history
+  - `label` The label of the season that must be deleted
+
+- `update_season` Update a season's label
+  - `old_label` The label of the targeted season
+  - `new_label` The new label for the targeted season
+
 - `set_custom_welcome` Set up the custom welcome for the server
   - `channel` The channel that will display the welcome message
   - `role` The role to give automatically when someone enters the server
@@ -121,6 +131,17 @@ Commands :
 - (**STAFF**) `block_user_xp` Block (or unblock) user from earning xp in your server
   - `member` The member you want to block or unblock
 
+- `show_seasons` Show the seasons historical of the server
+  - `limit` The limit of season to display (1 <= limit <= 25)
+
+- `user_history` Show the history of the user in this server for all seasons he participated
+  - `member` Mention of the member you want to see the history (default yourself)
+
+- `info_season` See the information of a season
+  - `label` The label of the targeted season
+
+- `user_season_profile` See your profile for a given season
+  - `label` The label of the targeted season
 
 ## Reaction role
 The reaction role helps a discord server staff to automatically gives role to their users.
