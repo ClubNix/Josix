@@ -37,7 +37,7 @@ class DatabaseHandler():
 
     @staticmethod
     def _error_handler(func: Callable):
-        def wrapper(ref: DatabaseHandler, *args):
+        def wrapper(ref: "DatabaseHandler", *args):
             try:
                 return func(ref, *args)
             except psycopg2.Error as dbError:

@@ -361,16 +361,7 @@ class Fun(JosixCog):
         guild = ctx.guild
         idAuth = ctx.author.id
         amount = 100
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idAuth, guild.id)
-
-        if not userDB:
-            discord_service.add_user(handler, idAuth)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idAuth, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, idAuth, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idAuth, guild.id)
 
         if userGuildDB is None:
             await ctx.respond("Unexpected data error")

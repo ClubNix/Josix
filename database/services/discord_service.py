@@ -72,3 +72,22 @@ def add_user_in_guild(handler: DatabaseHandler, id_user: int, id_guild: int) -> 
     params = (id_user, id_guild)
     handler.cursor.execute(query, params)
     handler.conn.commit()
+
+
+@error_handler
+def fetch_user_guild_relationship(handler: DatabaseHandler, id_user: int, id_guild: int) -> tuple[UserDB | None, GuildDB | None, LinkUserGuild | None]:
+    """
+    Fetch data the same way as `get_link_user_guild` but creates and returns data if its missing
+    """
+    userDB, guildDB, userGuildDB = get_link_user_guild(handler, id_user, id_guild)
+
+    if not userDB:
+        add_user(handler, id_user)
+        userDB = get_user(handler, id_user)
+    if not guildDB:
+        add_guild(handler, id_guild)
+        guildDB = get_guild(handler, id_guild)
+    if not userGuildDB:
+        add_user_in_guild(handler, id_user, id_guild)
+        userGuildDB = get_user_in_guild(handler, id_user, id_guild)
+    return userDB, guildDB, userGuildDB

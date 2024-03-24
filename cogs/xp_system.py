@@ -102,16 +102,7 @@ class XP(JosixCog):
             The XP the user will obtain
         """
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
-
-        if not userDB:
-            discord_service.add_user(handler, idTarget)
-        if not guildDB:
-            discord_service.add_guild(handler, idGuild)
-            guildDB = discord_service.get_guild(handler, idGuild)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idTarget, idGuild)
-            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+        _, guildDB, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
 
         if not (guildDB and userGuildDB):
             return
@@ -253,16 +244,7 @@ class XP(JosixCog):
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
-
-        if not userDB:
-            discord_service.add_user(handler, member.id)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, member.id, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, member.id, guild.id)
 
         if not userGuildDB:
             return
@@ -278,16 +260,7 @@ class XP(JosixCog):
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
-
-        if not userDB:
-            discord_service.add_user(handler, member.id)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, member.id, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, member.id, guild.id)
 
         if not userGuildDB:
             return
@@ -579,15 +552,7 @@ class XP(JosixCog):
         idGuild = ctx.guild_id
         handler = self.bot.get_handler()
         
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
-
-        if not userDB:
-            discord_service.add_user(handler, idTarget)
-        if not guildDB:
-            discord_service.add_guild(handler, idGuild)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idTarget, idGuild)
-            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
 
         if not userGuildDB:
             await ctx.respond("Could not fetch data")

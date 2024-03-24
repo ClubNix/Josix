@@ -66,16 +66,7 @@ class BaseGame(JosixCog):
 
     def grantsXP(self, member: Member, guild: discord.Guild, amount: int):
         idMember = member.id
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(self._db, idMember, guild.id)
-
-        if not userDB:
-            discord_service.add_user(self._db, idMember)
-        if not guildDB:
-            discord_service.add_guild(self._db, guild.id)
-            guildDB = discord_service.get_guild(self._db, guild.id)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(self._db, idMember, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(self._db, idMember, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(self._db, idMember, guild.id)
 
         if not userGuildDB:
             return
