@@ -1,11 +1,12 @@
+from random import randint
+
 import discord
-from discord.ext import commands
 from discord import ApplicationContext, Interaction, SelectOption, option
 
-from random import randint
-from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class OthelloInput(discord.ui.Select):
     """
@@ -29,7 +30,12 @@ class OthelloInput(discord.ui.Select):
         assert self.view is not None
         view: OthelloView = self.view
 
-        if not await view.checkGameState():
+        if not (
+            await view.checkGameState() and
+            interaction.user and
+            interaction.message and
+            interaction.data
+        ):
             return
 
         if interaction.user.id != view.currentPlayer.id:
@@ -40,7 +46,7 @@ class OthelloInput(discord.ui.Select):
         optionValue = 0
         try:
             optionValue = int(interaction.data["values"][0])
-        except KeyError:
+        except (KeyError, IndexError):
             return
 
         if self.custom_id == "row":
@@ -70,7 +76,8 @@ class OthelloInput(discord.ui.Select):
                 desc = "It's a tie !"
             else:
                 desc = f"{winner.mention} won !"
-                if not interaction.guild: return
+                if not interaction.guild:
+                    return
                 view.game.grantsXP(winner, interaction.guild, 50)
 
         else:
@@ -84,7 +91,7 @@ class OthelloInput(discord.ui.Select):
             description=desc,
             color=0x0089FF
         )
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
         await interaction.response.edit_message(embed=embed, view=view)
 
 
@@ -230,7 +237,7 @@ class OthelloView(BaseView):
 
         return self.whitePlayer if whitePoints > blackPoints else self.blackPlayer
 
-    def addToken(self, x: int, y: int) -> int:
+    def addToken(self, x: int, y: int) -> None:
         self.grid[y][x] = 1 if self.currentPlayer.id == self.whitePlayer.id else 2
 
     def setXMove(self, x: int) -> None:
@@ -301,7 +308,7 @@ class Othello(BaseGame):
             description=f"{view.currentPlayer.mention}'s turn !",
             color=0x0089FF
         )
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
         await ctx.respond(embed=embed, view=view)
 
     @josix_slash(description="See othello's rules")
@@ -329,5 +336,5 @@ class Othello(BaseGame):
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Othello(bot))

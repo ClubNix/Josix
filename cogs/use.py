@@ -46,7 +46,7 @@ class Poll(discord.ui.Modal):
 
         title = self.children[0]
         content = self.children[1]
-        text = (f"# {title.value} :\n\n" if title.value else "") + content.value
+        text = (f"# {title.value} :\n\n" if title.value else "") + (content.value if content.value else "")
 
         msg = await interaction.response.send_message(content=text)
         og = await msg.original_response()
@@ -90,6 +90,9 @@ class Usage(JosixCog):
                 cleaned_commands.append(command)
             return cleaned_commands
 
+        if not self.bot.user:
+            await ctx.respond("Unexpected data error")
+            return
 
         if not command_name:
             helpEmbed = discord.Embed(title="Help embed",
@@ -105,24 +108,24 @@ class Usage(JosixCog):
                 if not isinstance(cog, JosixCog):
                     continue
 
-                cog: JosixCog = cog
+                josix_cog: JosixCog = cog
                 if (
-                    not cog or
-                    not cog.showHelp or
-                    (cog.isOwner and not (await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator))
+                    not josix_cog or
+                    not josix_cog.showHelp or
+                    (josix_cog.isOwner and not (await self.bot.is_owner(ctx.author) or ctx.author.guild_permissions.administrator))
                 ):
                     continue
 
-                if cog.isGame:
-                    gamesCmd.extend(list(map(str, clean_commands(cog.get_commands()))))
+                if josix_cog.isGame:
+                    gamesCmd.extend(list(map(str, clean_commands(josix_cog.get_commands()))))
                     continue
 
-                cleaned_commands: list[JosixSlash | commands.Command] = clean_commands(cog.get_commands())
+                cleaned_commands: list[JosixSlash | commands.Command] = clean_commands(josix_cog.get_commands())
                 if len(cleaned_commands) == 0:
                     lstCmd = "No commands available"
                 else:
-                    for command in cleaned_commands:
-                        lstCmd += "`" + command.qualified_name + "`, "
+                    for cmd in cleaned_commands:
+                        lstCmd += "`" + cmd.qualified_name + "`, "
                     lstCmd = lstCmd[:len(lstCmd) - 2]
                 helpEmbed.add_field(name=cogName, value=lstCmd, inline=False)
 
@@ -156,7 +159,10 @@ class Usage(JosixCog):
             param = command.options
             options = ""
 
-            cmd_perms = get_permissions_str(command.default_member_permissions)
+            if command.default_member_permissions:
+                cmd_perms = get_permissions_str(command.default_member_permissions)
+            else:
+                cmd_perms = [] 
 
             for val in param:
                 default = val.default
@@ -188,6 +194,10 @@ class Usage(JosixCog):
 
     @josix_slash(description="All the links related to the bot and club")
     async def links(self, ctx: ApplicationContext):
+        if not self.bot.user:
+            await ctx.respond("Unexpected data error")
+            return
+
         try:
             with open(Usage._FILE_PATH, "r") as f:
                 data = json.load(f)
@@ -262,7 +272,15 @@ class Usage(JosixCog):
                 pass
 
             if closeName != "" and openName != "":
-                cTag, oTag = await Events.getTags(thread, closeName, openName)
+                result = await Events.getTags(thread, closeName, openName)
+                if not result:
+                    await ctx.respond("Forum tags error")
+                    return
+
+                cTag, oTag = result
+                if not (cTag and oTag):
+                    await ctx.respond("Forum tags error")
+                    return
 
                 tags = thread.applied_tags.copy()
                 if cTag and cTag not in tags:
@@ -498,5 +516,5 @@ class Usage(JosixCog):
                 )
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Usage(bot, True))

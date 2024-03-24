@@ -1,20 +1,32 @@
-import discord
-from discord.ext import commands
-from discord.ui.select import Select
-from discord import AutoModRule, AutoModActionExecutionEvent
-from discord import Guild, TextChannel, Emoji, GuildSticker, Role, PermissionOverwrite
-from discord import User, Member, RawMemberRemoveEvent, Embed
-from discord.abc import GuildChannel
-
-import logwrite as log
-
-from database.database import DatabaseHandler
+from datetime import datetime as dt
 from enum import IntEnum
 from typing import Sequence
-from datetime import datetime as dt
+
+import discord
+from discord import (
+    AutoModActionExecutionEvent,
+    AutoModRule,
+    Embed,
+    Emoji,
+    Guild,
+    GuildSticker,
+    Member,
+    PermissionOverwrite,
+    RawMemberRemoveEvent,
+    Role,
+    TextChannel,
+    User,
+)
+from discord.abc import GuildChannel
+from discord.ext import commands
+from discord.ui.select import Select, string_select
+
+import logwrite as log
 from bot_utils import JosixCog
+from database.database import DatabaseHandler
+from database.services import discord_service, logger_service
 from josix import Josix
-from database.services import logger_service, discord_service
+
 
 class Logs(IntEnum):
     """Enumerator that represents all differents logs"""
@@ -54,7 +66,7 @@ class LoggerView(discord.ui.View):
         self.db = db
         self.keep = keep
 
-    @discord.ui.select(
+    @string_select(
         placeholder="Choose the desired logs",
         min_values=0,
         max_values=12,
@@ -139,9 +151,8 @@ class LoggerView(discord.ui.View):
             await interaction.response.edit_message(content="Unknown error occured")
             return
 
-        for logValue in oldLogs:
-            if logValue not in values and self.keep:
-                values.append(logValue)
+        if self.keep:
+            values = list(set(values) | set(oldLogs))
 
         try:
             logger_service.update_logs_selection(self.db, idGuild, values)
@@ -209,14 +220,18 @@ class Logger(JosixCog):
         
         if (not guildLogs or not dbGuild) or (idLog not in guildLogs.logs):
             return None
-        return self.bot.get_channel(dbGuild.logNews) or await self.bot.fetch_channel(dbGuild.logNews)
+        
+        chan = self.bot.get_channel(dbGuild.logNews) or await self.bot.fetch_channel(dbGuild.logNews)
+        if chan is None or isinstance(chan, TextChannel):
+            return chan
+        return None
 
 #
 # Automod logs
 #
 
     async def automod_create_update(self, rule: AutoModRule, create: bool) -> None:
-        chan: discord.TextChannel = await self.checkLogStatus(rule.guild_id, Logs.AUTOMOD)
+        chan = await self.checkLogStatus(rule.guild_id, Logs.AUTOMOD)
         if not chan:
             return
 
@@ -226,9 +241,11 @@ class Logger(JosixCog):
             description=rule.name,
             color=Logger.addColor if create else Logger.updColor
         )
-        if creator: embed.set_author(name=creator, icon_url=creator.display_avatar)
+        if creator:
+            embed.set_author(name=creator, icon_url=creator.display_avatar)
+
         embed.add_field(name="Trigger", value=rule.trigger_type.name)
-        embed.add_field(name="Enabled", value=rule.enabled, inline=False)
+        embed.add_field(name="Enabled", value=str(rule.enabled), inline=False)
         embed.add_field(name="Actions", value=", ".join([i.type.name for i in rule.actions]))
         embed.set_footer(text=f"ID : {rule.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         await chan.send(embed=embed)
@@ -239,7 +256,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_auto_moderation_rule_delete(self, rule: AutoModRule):
-        chan: TextChannel = await self.checkLogStatus(rule.guild_id, Logs.AUTOMOD)
+        chan = await self.checkLogStatus(rule.guild_id, Logs.AUTOMOD)
         if not chan:
             return
 
@@ -249,7 +266,8 @@ class Logger(JosixCog):
             description=rule.name,
             color=Logger.noColor
         )
-        if creator: embed.set_author(name=creator, icon_url=creator.display_avatar)
+        if creator:
+            embed.set_author(name=creator, icon_url=creator.display_avatar)
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
@@ -258,8 +276,10 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_auto_moderation_action_execution(self, payload: AutoModActionExecutionEvent):
-        chan: TextChannel = await self.checkLogStatus(payload.guild_id)
-        if not chan:
+        chan = await self.checkLogStatus(payload.guild_id, Logs.AUTOMOD)
+        if not (
+            chan and payload.guild and payload.member and payload.matched_content and payload.content
+        ):
             return
         
         rule = await payload.guild.fetch_auto_moderation_rule(payload.rule_id)
@@ -281,14 +301,18 @@ class Logger(JosixCog):
 # Channel logs
 #
 
-    async def _channel_embed(self, channel: GuildChannel, title: str, color: int) -> Embed:
+    async def _channel_embed(self, channel: GuildChannel, title: str, color: int) -> Embed | None:
+        if not self.bot.user:
+            return None
+
+        category_name = "None" if channel.category is None else str(channel.category)
         embed = Embed(
             title=title,
             color=color
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.add_field(name="Name", value=channel.name)
-        embed.add_field(name="Category", value=channel.category)
+        embed.add_field(name="Category", value=category_name)
         embed.add_field(
             name="Overwrites",
             value=", ".join([target.mention for target in channel.overwrites.keys()])[:1023],
@@ -299,24 +323,28 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: GuildChannel):
-        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        chan = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
         if not chan:
             return
         embed = await self._channel_embed(channel, "Channel created", Logger.addColor)
+        if embed is None:
+            return
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: GuildChannel):
-        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
+        chan = await self.checkLogStatus(channel.guild.id, Logs.CHANNEL_LIFE)
         if not chan:
             return
         embed = await self._channel_embed(channel, "Channel deleted", Logger.noColor)
+        if embed is None:
+            return
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before: GuildChannel, after: GuildChannel):
-        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.CHANNEL_UPDATE)
-        if not chan:
+        chan = await self.checkLogStatus(before.guild.id, Logs.CHANNEL_UPDATE)
+        if not (chan and self.bot.user):
             return
 
         embed = Embed(
@@ -336,8 +364,8 @@ class Logger(JosixCog):
         else:
             embed.add_field(name="Name", value=after.name)
             test = False
-            updTarget: Member | Role = None
-            updPerms : PermissionOverwrite = None
+            updTarget: Member | Role | None = None
+            updPerms : PermissionOverwrite | None = None
 
             if len(before.overwrites) < len(after.overwrites):
                 test = True
@@ -364,7 +392,7 @@ class Logger(JosixCog):
                         updTarget = key
                         updPerms = after.overwrites[key]
 
-            if not (test or updTarget):
+            if not (test and updTarget and updPerms):
                 return
 
             embed.title = f"Permissions changed for {updTarget.name} in {after.name}"
@@ -392,14 +420,17 @@ class Logger(JosixCog):
 # Role logs
 #
 
-    async def _role_embed(self, role: Role, title: str, color: int) -> Embed:
+    async def _role_embed(self, role: Role, title: str, color: int) -> Embed | None:
+        if not (self.bot.user):
+            return None
+
         embed = Embed(
             title=title,
             color=color
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.add_field(name="Name", value=role.name)
-        embed.add_field(name="Color", value=role.color)
+        embed.add_field(name="Color", value=str(role.color))
         embed.add_field(
             name="Permissions",
             value=", ".join([perm for perm, allow in role.permissions if allow])[:1023],
@@ -410,23 +441,27 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: Role):
-        chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        chan = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
         embed = await self._role_embed(role, "Role created", Logger.addColor)
+        if embed is None:
+            return
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: Role):
-        chan: TextChannel = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
+        chan = await self.checkLogStatus(role.guild.id, Logs.ROLE_LIFE)
         if not chan:
             return
         embed = await self._role_embed(role, "Role deleted", Logger.noColor)
+        if embed is None:
+            return
         await chan.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: Role, after: Role):
-        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
+        chan = await self.checkLogStatus(before.guild.id, Logs.ROLE_UPDATE)
         if not chan:
             return
 
@@ -441,9 +476,9 @@ class Logger(JosixCog):
         if before.color != after.color:
             embed.add_field(name="Color", value=f"{before.color} **-->** {after.color}", inline=False)
         if before.mentionable != after.mentionable:
-            embed.add_field(name="Mentionable", value=after.mentionable, inline=False)
+            embed.add_field(name="Mentionable", value=str(after.mentionable), inline=False)
         if before.hoist != after.hoist:
-            embed.add_field(name="Separated", value=after.hoist, inline=False)
+            embed.add_field(name="Separated", value=str(after.hoist), inline=False)
 
         if before.permissions != after.permissions:
             embed.add_field(
@@ -458,30 +493,42 @@ class Logger(JosixCog):
 # Update logs
 #
 
-    def _emoji_embed(self, emoji: Emoji, create: bool) -> Embed:
+    def _emoji_embed(self, emoji: Emoji, create: bool) -> Embed | None:
+        if not self.bot.user:
+            return None
+
         embed = Embed(
             title=("New emoji" if create else "Emoji deleted"),
             color=(Logger.addColor if create else Logger.noColor)
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        embed.add_field(name="Emoji", value=emoji)
+        embed.add_field(name="Emoji", value=str(emoji))
         embed.add_field(name="Name", value=emoji.name)
         embed.add_field(name= '\u200B', value= '\u200B')
-        if emoji.user: embed.add_field(name="Creator", value=emoji.user.mention)
-        embed.add_field(name="Animated", value=emoji.animated)
+        if emoji.user:
+            embed.add_field(name="Creator", value=emoji.user.mention)
+
+        embed.add_field(name="Animated", value=str(emoji.animated))
         embed.set_footer(text=f"ID : {emoji.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
 
-    def _sticker_embed(self, sticker: GuildSticker, create: bool) -> Embed:
+    def _sticker_embed(self, sticker: GuildSticker, create: bool) -> Embed | None:
+        if not self.bot.user:
+            return None
+
         embed = Embed(
             title=("New sticker" if create else "Sticker deleted"),
             description=sticker.description,
             color=(Logger.addColor if create else Logger.noColor)
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar)
-        if sticker.url: embed.set_image(url=sticker.url)
+        if sticker.url:
+            embed.set_image(url=sticker.url)
+
         embed.add_field(name="Name", value=sticker.name)
-        if sticker.user: embed.add_field(name="Creator", value=sticker.user.mention)
+        if sticker.user:
+            embed.add_field(name="Creator", value=sticker.user.mention)
+
         embed.add_field(name="Format", value=sticker.format.name)
         embed.set_footer(text=f"ID : {sticker.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         return embed
@@ -489,7 +536,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_guild_update(self, before: Guild, after: Guild):
-        chan: TextChannel = await self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
+        chan = await self.checkLogStatus(before.id, Logs.GUILD_UPDATE)
         if not chan:
             return
 
@@ -498,7 +545,8 @@ class Logger(JosixCog):
             color=Logger.updColor
         )
         embed.set_footer(text=f"ID : {after.id} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
-        if after.icon: embed.set_thumbnail(url=after.icon)
+        if after.icon:
+            embed.set_thumbnail(url=after.icon)
 
         if before.afk_channel != after.afk_channel:
             bf = before.afk_channel.mention if before.afk_channel else "None"
@@ -528,41 +576,22 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: Guild, before: Sequence[Emoji], after: Sequence[Emoji]):
-        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
+        chan = await self.checkLogStatus(guild.id, Logs.EMOJIS_UPDATE)
         if not chan:
             return
 
-        if len(before) < len(after):
-            res: Emoji = None
-            for emoji in after:
-                if emoji not in before:
-                    res = emoji
-                    break
-
-            if not res:
-                return
-            await chan.send(embed=self._emoji_embed(res, True))
-
-        elif len(before) > len(after):
-            res: Emoji = None
-            for emoji in before:
-                if emoji not in after:
-                    res = emoji
-                    break
-
-            if not res:
-                return
-            await chan.send(embed=self._emoji_embed(res, False))
-
-        else:
-            resB: Emoji = None
-            resA: Emoji = None
+        embed: Embed | None = None
+        if len(before) == len(after):
+            resB: Emoji | None = None
+            resA: Emoji | None = None
             for i, emojiB in enumerate(before):
                 emojiA = after[i]
                 if emojiB.name != emojiA.name:
                     resB, resA = emojiB, emojiA
 
-            if not (resB or resA):
+            if not (
+                resB and resA and self.bot.user
+            ):
                 return
 
             embed = Embed(title=f"Emoji {resA.name} updated", color=Logger.updColor)
@@ -581,43 +610,44 @@ class Logger(JosixCog):
             if len(embed.fields) > 0:
                 await chan.send(embed=embed)
 
+        else:
+            # before inferior then we chek which emoji has been added
+            # else it means we need to check wich one has been deleted
+            added = len(before) < len(after)
+            order = after, before if added else before, after
+            res: Emoji | None = None
+
+            for emoji in order[0]:
+                if emoji not in order[1]:
+                    res = emoji
+                    break
+
+            if not res:
+                return
+
+            embed = self._emoji_embed(res, added)
+            if not embed:
+                return
+            await chan.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_guild_stickers_update(self, guild: Guild, before: Sequence[GuildSticker], after: Sequence[GuildSticker]):
-        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.STICKERS_UPDATE)
+        chan = await self.checkLogStatus(guild.id, Logs.STICKERS_UPDATE)
         if not chan:
             return
 
-        if len(before) < len(after):
-            res: GuildSticker = None
-            for sticker in after:
-                if sticker not in before:
-                    res = sticker
-                    break
-
-            if not res:
-                return
-            await chan.send(embed=self._sticker_embed(res, True))
-
-        elif len(before) > len(after):
-            res: Emoji = None
-            for sticker in before:
-                if sticker not in after:
-                    res = sticker
-                    break
-
-            if not res:
-                return
-            await chan.send(embed=self._sticker_embed(res, False))
-
-        else:
-            resB: GuildSticker = None
-            resA: GuildSticker = None
+        embed: Embed | None = None
+        if len(before) == len(after):
+            resB: GuildSticker | None = None
+            resA: GuildSticker | None = None
             for i, stickerB in enumerate(before):
                 stickerA = after[i]
                 if stickerB.name != stickerA.name or stickerB.emoji != stickerA.emoji:
                     resB, resA = stickerB, stickerA
 
-            if not (resB or resA):
+            if not (
+                resB and resA and self.bot.user
+            ):
                 return
 
             embed = Embed(title=f"Sticker {resA.name} updated", color=Logger.updColor)
@@ -637,16 +667,35 @@ class Logger(JosixCog):
             if len(embed.fields) > 0:
                 await chan.send(embed=embed)
 
+        else:
+            added = len(before) < len(after)
+            order = after, before if added else before, after
+            res: GuildSticker | None = None
+
+            for sticker in order[0]:
+                if sticker not in order[1]:
+                    res = sticker
+                    break
+
+            if not res:
+                return
+            if not (embed := self._sticker_embed(res, added)):
+                return
+            await chan.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_webhooks_update(self, channel: GuildChannel):
-        chan: TextChannel = await self.checkLogStatus(channel.guild.id, Logs.WEBHOOKS_UPDATE)
-        if not chan:
+        chan = await self.checkLogStatus(channel.guild.id, Logs.WEBHOOKS_UPDATE)
+        if not (
+            chan and self.bot.user
+        ):
             return
 
+        category_name = "None" if channel.category is None else str(channel.category)
         embed = Embed(title="Webhook update", color=Logger.updColor)
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.add_field(name="Name", value=channel.name)
-        embed.add_field(name="Category", value=channel.category)
+        embed.add_field(name="Category", value=category_name)
         embed.set_footer(text=f"{channel.mention} • {dt.strftime(dt.now(), '%d/%m/%Y %H:%M')}")
         await chan.send(embed=embed)
 
@@ -668,7 +717,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: Guild, user: User | Member):
-        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
+        chan = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
 
@@ -686,7 +735,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: Guild, user: User):
-        chan: TextChannel = await self.checkLogStatus(guild.id, Logs.BANS)
+        chan = await self.checkLogStatus(guild.id, Logs.BANS)
         if not chan:
             return
 
@@ -704,7 +753,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
-        chan: TextChannel = await self.checkLogStatus(member.guild.id, Logs.MEMBER_JOIN)
+        chan = await self.checkLogStatus(member.guild.id, Logs.MEMBER_JOIN)
         if not chan:
             return
 
@@ -714,7 +763,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_raw_member_remove(self, payload: RawMemberRemoveEvent):
-        chan: TextChannel = await self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
+        chan = await self.checkLogStatus(payload.guild_id, Logs.MEMBER_JOIN)
         if not chan:
             return
 
@@ -722,7 +771,7 @@ class Logger(JosixCog):
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
-        chan: TextChannel = await self.checkLogStatus(before.guild.id, Logs.MEMBER_UPDATE)
+        chan = await self.checkLogStatus(before.guild.id, Logs.MEMBER_UPDATE)
         if not chan:
             return
 
@@ -751,7 +800,7 @@ class Logger(JosixCog):
     @commands.Cog.listener()
     async def on_user_update(self, before: User, after: User):
         for guild in after.mutual_guilds:
-            chan: TextChannel = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
+            chan = await self.checkLogStatus(guild.id, Logs.USER_UPDATE)
             if not chan:
                 return
 
@@ -772,5 +821,5 @@ class Logger(JosixCog):
             if len(embed.fields) > 0:
                 await chan.send(embed=embed)
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Logger(bot, False))

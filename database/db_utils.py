@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Callable
 
+import psycopg2
+
 from bot_utils import JosixDatabaseException
 from database.database import DatabaseHandler
-
-import psycopg2
 
 # TODO : add dataclasses param checking on start (same name/order)
 

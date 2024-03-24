@@ -1,18 +1,32 @@
+import json
+import os
+from json import JSONDecodeError
+
 import discord
+from discord import (
+    ApplicationContext,
+    CheckFailure,
+    DiscordException,
+    Forbidden,
+    NotFound,
+    RawThreadUpdateEvent,
+)
 from discord.ext import commands
-from discord.ext.commands import BotMissingPermissions, MissingPermissions, MissingRequiredArgument, NoPrivateMessage, \
-    CommandOnCooldown, NotOwner
-from discord import RawThreadUpdateEvent, ApplicationContext, DiscordException, NotFound, Forbidden, CheckFailure
+from discord.ext.commands import (
+    BotMissingPermissions,
+    CommandOnCooldown,
+    MissingPermissions,
+    MissingRequiredArgument,
+    NoPrivateMessage,
+    NotOwner,
+)
 from discord.utils import get as discordGet
 
 import logwrite as log
-import os
-import json
-
-from json import JSONDecodeError
-from josix import Josix
 from bot_utils import JosixCog
 from database.services import discord_service
+from josix import Josix
+
 
 class Events(JosixCog):
     """
@@ -47,9 +61,13 @@ class Events(JosixCog):
         except (JSONDecodeError, FileNotFoundError, KeyError):
             pass
 
-    async def getTags(thread: discord.Thread, close: str, open: str) -> tuple[discord.ForumTag | None]:
-        cTag: discord.ForumTag = None
-        oTag: discord.ForumTag = None
+    @staticmethod
+    async def getTags(thread: discord.Thread, close: str, open: str) -> tuple[discord.ForumTag, discord.ForumTag | None] | None:
+        cTag: discord.ForumTag | None = None
+        oTag: discord.ForumTag | None = None
+
+        if not isinstance(thread.parent, discord.ForumChannel):
+            return None
 
         if close != "":
             cTag = discordGet(thread.parent.available_tags, name=close)
@@ -80,14 +98,19 @@ class Events(JosixCog):
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):
-        if not isinstance(thread.parent, discord.ForumChannel): return
+        if not isinstance(thread.parent, discord.ForumChannel):
+            return
 
         try:
             await thread.send("This thread is now open. You can close it automatically by using `/close`")
         except Exception as e:
             log.writeError(log.formatError(e))
 
-        _, oTag = await Events.getTags(thread, self.close, self.open)
+        result = await Events.getTags(thread, self.close, self.open)
+        if result is None or result[1] is None:
+            return
+        
+        _, oTag = result
         if oTag and oTag not in thread.applied_tags:
             tags = thread.applied_tags.copy()
             if not tags:
@@ -113,7 +136,11 @@ class Events(JosixCog):
             return
 
         data = payload.data
-        cTag, oTag = await Events.getTags(thread, self.close, self.open)
+        result = await Events.getTags(thread, self.close, self.open)
+        if result is None or None in result:
+            return
+
+        cTag, oTag = result
         tags = thread.applied_tags.copy()
         if data["thread_metadata"]["archived"] and data["thread_metadata"]["locked"]:
             # You can't edit archived thread and this current method creates useless loop
@@ -142,7 +169,7 @@ class Events(JosixCog):
                     except (ValueError, IndexError):
                         pass
 
-                if oTag and not oTag in tags:
+                if oTag and oTag not in tags:
                     tags.append(oTag)
                     await thread.edit(applied_tags=tags)
             except Exception as e:
@@ -164,6 +191,13 @@ class Events(JosixCog):
         chan = member.guild.get_channel(dbGuild.wChan)
         role = member.guild.get_role(dbGuild.wRole)
         text = dbGuild.wText
+
+        if isinstance(chan, (
+            discord.StageChannel,
+            discord.ForumChannel,
+            discord.CategoryChannel
+        )):
+            return
         
         if role:
             await member.add_roles(role, reason="Welcome role")
@@ -196,8 +230,8 @@ class Events(JosixCog):
         elif isinstance(error, CheckFailure):
             await ctx.respond("You didn't match the command checks")
         elif isinstance(error, CommandOnCooldown):
-            error: CommandOnCooldown = error
-            await ctx.respond(f"Too fast bro, wait {round(error.retry_after, 2)} seconds to retry this command")
+            cooldown_error: CommandOnCooldown = error
+            await ctx.respond(f"Too fast bro, wait {round(cooldown_error.retry_after, 2)} seconds to retry this command")
         elif isinstance(error, NotOwner):
             await ctx.respond("This command is only for my master ! (skill issue n°3)")
         else:
@@ -205,5 +239,5 @@ class Events(JosixCog):
             log.writeError(log.formatError(error))
         
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Events(bot, False))

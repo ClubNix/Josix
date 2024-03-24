@@ -1,8 +1,8 @@
 from database.database import DatabaseHandler
 from database.db_utils import (
-    error_handler,
     Birthday,
     BirthdayAuto,
+    error_handler,
 )
 
 
@@ -20,6 +20,7 @@ def check_birthday(handler: DatabaseHandler, day: int, month: int) -> list[Birth
     res = handler.cursor.fetchall()
     if res:
         return [BirthdayAuto(*row) for row in res]
+    return None
 
 
 @error_handler
@@ -32,6 +33,7 @@ def get_birthday_month(handler: DatabaseHandler, id_guild: int, month: int) -> l
     res = handler.cursor.fetchall()
     if res:
         return [Birthday(*row) for row in res]
+    return None
 
 
 @error_handler

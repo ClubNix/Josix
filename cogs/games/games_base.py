@@ -1,11 +1,9 @@
-import discord
-from discord.ui import View
-from discord.ext import commands
-from discord import ApplicationContext, Member
-
 import datetime as dt
 
-from josix import Josix
+import discord
+from discord import ApplicationContext, Member
+from discord.ui import View
+
 from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
@@ -14,6 +12,8 @@ from database.services import (
     games_service,
     xp_service,
 )
+from josix import Josix
+
 
 class Games(JosixCog):
     """
@@ -66,16 +66,10 @@ class BaseGame(JosixCog):
 
     def grantsXP(self, member: Member, guild: discord.Guild, amount: int):
         idMember = member.id
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(self._db, idMember, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(self._db, idMember, guild.id)
 
-        if not userDB:
-            discord_service.add_user(self._db, idMember)
-        if not guildDB:
-            discord_service.add_guild(self._db, guild.id)
-            guildDB = discord_service.get_guild(self._db, guild.id)
         if not userGuildDB:
-            discord_service.add_user_in_guild(self._db, idMember, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(self._db, idMember, guild.id)
+            return
 
         if userGuildDB.isUserBlocked:
             return
@@ -91,13 +85,13 @@ class BaseGame(JosixCog):
     def checkGameState(self, idGame: int, idUser: int) -> bool:
         return bool(games_service.get_existing_game(self._db, idGame, idUser))
 
-    def checkPlayers(self, idUser, idOpponent: int = None) -> bool:
+    def checkPlayers(self, idUser, idOpponent: int | None = None) -> bool:
         """Check if one of the two players are already in a game"""
         user = bool(games_service.get_game_from_user(self._db, idUser))
         oppo = bool(games_service.get_game_from_user(self._db, idOpponent)) if idOpponent else False
         return user or oppo
 
-    def initGame(self, playerId: int, oppoId: int = None) -> int:
+    def initGame(self, playerId: int, oppoId: int | None = None) -> int:
         testP1 = bool(discord_service.get_user(self._db, playerId))
         testP2 = bool(discord_service.get_user(self._db, oppoId)) if oppoId else True
 
@@ -155,5 +149,5 @@ class BaseView(View):
         self.stop()
         self.game.stopGame(self.idGame)
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Games(bot))

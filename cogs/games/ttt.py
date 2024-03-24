@@ -1,11 +1,13 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, Member, Interaction, option
-
 from random import randint
-from cogs.games.games_base import BaseGame, BaseView
+
+import discord
+from discord import ApplicationContext, Interaction, Member, option
+from discord.ext import commands
+
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class TTTBtn(discord.ui.Button["TTTView"]):
     """
@@ -29,7 +31,10 @@ class TTTBtn(discord.ui.Button["TTTView"]):
         assert self.view is not None
         view: TTTView = self.view
 
-        if not await view.checkGameState():
+        if not (
+            await view.checkGameState() and
+            interaction.user 
+        ):
             return
 
         if view.grid[self.x][self.y]:
@@ -58,12 +63,13 @@ class TTTBtn(discord.ui.Button["TTTView"]):
 
         if view.checkWin():
             msg = f"{view.currentPlayer.mention} won !"
-            if not interaction.guild: return
+            if not interaction.guild:
+                return
             view.game.grantsXP(view.currentPlayer, interaction.guild, 10)
             stop = True
 
         elif view.isFull():
-            msg = f"It's a tie !"
+            msg = "It's a tie !"
             stop = True
 
         if stop:
@@ -184,5 +190,5 @@ class TicTacToe(BaseGame):
             view=TTTView(ctx.interaction, self, idGame, ctx.author, opponent, first)
         )
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(TicTacToe(bot))

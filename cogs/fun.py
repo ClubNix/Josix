@@ -1,22 +1,21 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext
-from discord import option
-
-import os
-import json
-import random
 import datetime as dt
-
-from blagues_api import BlaguesAPI
-from aiohttp import ClientResponseError
+import json
+import os
+import random
 from asyncio import TimeoutError
-from dotenv import load_dotenv
 from json import JSONDecodeError
+
+import discord
+from aiohttp import ClientResponseError
+from blagues_api import BlaguesAPI
+from discord import ApplicationContext, Interaction, WebhookMessage, option
+from discord.ext import commands
+from dotenv import load_dotenv
+
 from bot_utils import JosixCog, josix_slash
-from josix import Josix
 from cogs.xp_system import XP
 from database.services import discord_service, xp_service
+from josix import Josix
 
 
 class Fun(JosixCog):
@@ -42,7 +41,7 @@ class Fun(JosixCog):
         self.jokes = BlaguesAPI(Fun._KEY)
 
     def checkJson(self, file: dict) -> bool:
-        return (file.keys()) or (len(file.keys()) > 0)
+        return bool(file.keys()) or (len(file.keys()) > 0)
 
     @josix_slash(description="The bot greets you")
     async def hello(self, ctx: ApplicationContext):
@@ -222,7 +221,7 @@ class Fun(JosixCog):
         except KeyError:
             await ctx.respond("Unknown member or askip\nAvailable names : `" + "`, `".join(credentials.keys()) + "`")
     
-    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str) -> None:
+    async def vote_askip(self, ctx: ApplicationContext, ask_aut: str, ask_name: str, ask_text: str) -> bool | None:
         """
         NOT A BOT COMMAND
         process the decision of whether of not the message passed in parameters
@@ -253,13 +252,17 @@ class Fun(JosixCog):
         yesEmbed = askEmbed.copy()
 
         yesEmbed.description = "Results gathered, askip added ! ✅"
-        yesEmbed.color = yesColor
+        yesEmbed.colour = discord.Colour(yesColor)
 
         noEmbed = askEmbed.copy()
-        noEmbed.color = noColor
+        noEmbed.colour = discord.Colour(noColor)
 
         reacts = []
-        msg: discord.Interaction = await ctx.respond(embed=askEmbed)
+        msg: Interaction | WebhookMessage = await ctx.respond(embed=askEmbed)
+        if isinstance(msg, WebhookMessage):
+            await ctx.send("Unexpected error during process")
+            return None
+
         og = await msg.original_response()
 
         # add reaction choices
@@ -358,17 +361,11 @@ class Fun(JosixCog):
         guild = ctx.guild
         idAuth = ctx.author.id
         amount = 100
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idAuth, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idAuth, guild.id)
 
-        if not userDB:
-            discord_service.add_user(handler, idAuth)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idAuth, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, idAuth, guild.id)
-
+        if userGuildDB is None:
+            await ctx.respond("Unexpected data error")
+            return
         if userGuildDB.isUserBlocked:
             return
 
@@ -393,5 +390,5 @@ class Fun(JosixCog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Fun(bot, True))

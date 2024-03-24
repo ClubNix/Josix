@@ -1,17 +1,26 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, option
-
 import datetime as dt
-import logwrite as log
 
-from josix import Josix
-from bot_utils import JosixSlash, JosixCog, josix_slash
+import discord
+from discord import (
+    ApplicationContext,
+    DMChannel,
+    GroupChannel,
+    PartialMessageable,
+    TextChannel,
+    VoiceChannel,
+    option,
+)
+from discord.abc import PrivateChannel
+from discord.ext import commands
+
+import logwrite as log
+from bot_utils import JosixCog, JosixSlash, josix_slash
 from database.services import (
     discord_service,
-    xp_service,
     season_service,
+    xp_service,
 )
+from josix import Josix
 
 
 class XP(JosixCog):
@@ -93,16 +102,10 @@ class XP(JosixCog):
             The XP the user will obtain
         """
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
+        _, guildDB, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
 
-        if not userDB:
-            discord_service.add_user(handler, idTarget)
-        if not guildDB:
-            discord_service.add_guild(handler, idGuild)
-            guildDB = discord_service.get_guild(handler, idGuild)
-        if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idTarget, idGuild)
-            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+        if not (guildDB and userGuildDB):
+            return
 
         xpChanId = guildDB.xpNews
         xpEnabled = guildDB.enableXp
@@ -131,7 +134,8 @@ class XP(JosixCog):
         xp_service.update_user_xp(handler, idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
-            if (xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId)):
+            if ((xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId))) and isinstance(xpChan, TextChannel):
+
                 await xpChan.send(
                     f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
                 )
@@ -142,9 +146,10 @@ class XP(JosixCog):
         await self.bot.process_commands(message)
         if (
             message.author.bot or 
-            isinstance(message.channel, discord.DMChannel) or
-            isinstance(message.channel, discord.GroupChannel)
-        ): return
+            isinstance(message.channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable)) or
+            not message.guild
+        ):
+            return
 
         idCat = message.channel.category_id
         msgLen = len(message.content)
@@ -167,7 +172,8 @@ class XP(JosixCog):
             isinstance(ctx.channel, discord.DMChannel) or
             isinstance(ctx.channel, discord.GroupChannel) or
             not isinstance(ctx.command, JosixSlash)
-        ): return
+        ):
+            return
 
         idCat = ctx.channel.category_id
         cmd: JosixSlash = ctx.command
@@ -191,10 +197,12 @@ class XP(JosixCog):
             return
 
         if (
+            not payload.member or
+            not payload.guild_id or
             payload.member.bot or
-            isinstance(channel, discord.DMChannel) or
-            isinstance(channel, discord.GroupChannel)
-        ): return
+            isinstance(channel, (DMChannel, GroupChannel, VoiceChannel, PartialMessageable, PrivateChannel))
+        ):
+            return
 
         idCat = channel.category_id
         try:
@@ -236,16 +244,10 @@ class XP(JosixCog):
     def _xp_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, member.id, guild.id)
 
-        if not userDB:
-            discord_service.add_user(handler, member.id)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
-            discord_service.add_user_in_guild(handler, member.id, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
+            return
 
         if userGuildDB.isUserBlocked:
             return
@@ -258,16 +260,10 @@ class XP(JosixCog):
     def _lvl_update(self, member: discord.Member, amount: int) -> None:
         guild = member.guild
         handler = self.bot.get_handler()
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, member.id, guild.id)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, member.id, guild.id)
 
-        if not userDB:
-            discord_service.add_user(handler, member.id)
-        if not guildDB:
-            discord_service.add_guild(handler, guild.id)
-            guildDB = discord_service.get_guild(handler, guild.id)
         if not userGuildDB:
-            discord_service.add_user_in_guild(handler, member.id, guild.id)
-            userGuildDB = discord_service.get_user_in_guild(handler, member.id, guild.id)
+            return
 
         if userGuildDB.isUserBlocked:
             return
@@ -434,6 +430,10 @@ class XP(JosixCog):
         idGuild = ctx.guild.id
         handler = self.bot.get_handler()
 
+        if not self.bot.user:
+            await ctx.respond("Unexpected error on data")
+            return
+
         try:
             guildDB = discord_service.get_guild(handler, idGuild)
             if not guildDB:
@@ -552,15 +552,11 @@ class XP(JosixCog):
         idGuild = ctx.guild_id
         handler = self.bot.get_handler()
         
-        userDB, guildDB, userGuildDB = discord_service.get_link_user_guild(handler, idTarget, idGuild)
+        _, _, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
 
-        if not userDB:
-            discord_service.add_user(handler, idTarget)
-        if not guildDB:
-            discord_service.add_guild(handler, idGuild)
         if not userGuildDB:
-            discord_service.add_user_in_guild(handler, idTarget, idGuild)
-            userGuildDB = discord_service.get_user_in_guild(handler, idTarget, idGuild)
+            await ctx.respond("Could not fetch data")
+            return
 
         blocked = userGuildDB.isUserBlocked
         xp_service.switch_user_xp_blocking(handler, idTarget, idGuild)
@@ -585,7 +581,8 @@ class XP(JosixCog):
             return
 
         seasons = season_service.get_seasons(self.bot.get_handler(), guild.id, limit)
-        if not seasons: seasons = []
+        if not seasons:
+            seasons = []
 
         embed = discord.Embed(
             title="Seasons",
@@ -769,9 +766,9 @@ class XP(JosixCog):
         embed.add_field(name="Label", value=season.label)
         embed.add_field(name="Score", value=score.score)
         embed.add_field(name="Ranking", value=score.ranking)
-        embed.add_field(name="Level", value=level)
+        embed.add_field(name="Level", value=str(level))
         await ctx.respond(embed=embed)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(XP(bot, True))

@@ -1,12 +1,16 @@
 import discord
+from discord import (
+    RawBulkMessageDeleteEvent,
+    RawMessageDeleteEvent,
+    RawReactionActionEvent,
+)
 from discord.ext import commands
-from discord import RawReactionActionEvent, RawMessageDeleteEvent, RawBulkMessageDeleteEvent
 
 import logwrite as log
-
 from bot_utils import JosixCog
-from josix import Josix
 from database.services import reactrole_service
+from josix import Josix
+
 
 class ReactionRole(JosixCog):
     """
@@ -51,6 +55,9 @@ class ReactionRole(JosixCog):
             userId = payload.user_id
             guildId = payload.guild_id
             emojiName = emoji.name
+
+            if not guildId:
+                return
 
             if not (guild := self.bot.get_guild(guildId)) and not (guild := await self.bot.fetch_guild(guildId)):
                 return
@@ -131,5 +138,5 @@ class ReactionRole(JosixCog):
         except Exception as e:
             log.writeError(log.formatError(e))
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(ReactionRole(bot, False))

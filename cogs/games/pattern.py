@@ -1,11 +1,13 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext, Member, Interaction
-
 from random import randint
-from cogs.games.games_base import BaseGame, BaseView
+
+import discord
+from discord import ApplicationContext, Interaction, Member
+from discord.ext import commands
+
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class PatternBtn(discord.ui.Button["PatternView"]):
     """
@@ -26,13 +28,16 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
         self.y = y
-        self.label = (x+1) + 3*y
+        self.label = str((x+1) + 3*y)
 
     async def callback(self, interaction: Interaction):
         assert self.view is not None
         view: PatternView = self.view
 
-        if not await view.checkGameState():
+        if not (
+            await view.checkGameState() and
+            interaction.user
+        ):
             return
 
         if interaction.user.id != view.player.id:
@@ -41,12 +46,12 @@ class PatternBtn(discord.ui.Button["PatternView"]):
         view.chooseSquare(self.x, self.y)
         view.addMove()
         embed = discord.Embed(
-            title=f"Pattern game",
+            title="Pattern game",
             description="Turn all the squares into blue to win",
             color=0x0089FF
         )
         embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
 
         if view.checkWin():
             embed.description = f"Congratulations, you won in **{view.count}** moves !"
@@ -158,16 +163,16 @@ class Pattern(BaseGame):
         idGame = self.initGame(ctx.author.id)
         view = PatternView(ctx.interaction, self, idGame, ctx.author)
         embed = discord.Embed(
-            title=f"Pattern game",
+            title="Pattern game",
             description="Turn all the squares into blue to win",
             color=0x0089FF
         )
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
         await ctx.respond(
             embed=embed,
             view=view
         )
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Pattern(bot))

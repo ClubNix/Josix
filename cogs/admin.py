@@ -1,23 +1,21 @@
-import discord
-from discord.ext import commands
-from discord import ApplicationContext
-from discord import option
-from discord import NotFound, InvalidArgument, HTTPException
-
 import re
-import logwrite as log
 
-from josix import Josix
-from cogs.logger import LoggerView
+import discord
+from discord import ApplicationContext, HTTPException, InvalidArgument, NotFound, option
+from discord.ext import commands
+
+import logwrite as log
 from bot_utils import JosixCog, josix_slash
+from cogs.logger import LoggerView
 from database.services import (
-    logger_service,
-    reactrole_service,
     discord_service,
     guild_service,
+    logger_service,
+    reactrole_service,
+    season_service,
     xp_service,
-    season_service
 )
+from josix import Josix
 
 
 class Admin(JosixCog):
@@ -82,7 +80,7 @@ class Admin(JosixCog):
         testMsg = None
         testGuild = None
         duos = None
-        msg: discord.Message = None
+        msg: discord.Message | None = None
         handler = self.bot.get_handler()
 
         testEmj = re.compile("[<>:]")
@@ -163,13 +161,17 @@ class Admin(JosixCog):
     )
     async def delete_couple(self, ctx: ApplicationContext, msg_id: str, emoji: str, role: discord.Role):
         testMsg = await ctx.respond("Testing...")
+        if not isinstance(testMsg, discord.Interaction):
+            await ctx.send("Error")
+            return
+
         og: discord.InteractionMessage = await testMsg.original_response()
 
         idRole = role.id
         idMsg = 0
         testEmj = None
         duos = None
-        msg: discord.Message = None
+        msg: discord.Message | None = None
         idCouple = 0
         handler = self.bot.get_handler()
 
@@ -297,6 +299,10 @@ class Admin(JosixCog):
         id_season = -1
         try:
             id_season = season_service.store_season(handler, guild.id, label)
+            if id_season is None:
+                await ctx.respond("Could not register the season")
+                return
+
         except ValueError as e:
             await ctx.respond(e)
             return
@@ -506,5 +512,5 @@ class Admin(JosixCog):
         await ctx.respond(f"The category **{category.name}** is now **{text}**")
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Admin(bot, True))

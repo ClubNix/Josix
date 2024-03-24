@@ -1,11 +1,12 @@
+from random import randint
+
 import discord
-from discord.ext import commands
 from discord import ApplicationContext, Interaction, option
 
-from random import randint
-from cogs.games.games_base import BaseGame, BaseView
 from bot_utils import josix_slash
+from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+
 
 class C4Button(discord.ui.Button["C4View"]):
     """
@@ -24,13 +25,13 @@ class C4Button(discord.ui.Button["C4View"]):
     def __init__(self, x: int):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b")
         self.x = x
-        self.label = x+1
+        self.label = str(x+1)
 
     async def callback(self, interaction: Interaction):
         assert self.view is not None
         view: C4View = self.view
 
-        if not await view.checkGameState():
+        if not (await view.checkGameState() and interaction.user):
             return
 
         if interaction.user.id != view.currentPlayer.id:
@@ -45,12 +46,13 @@ class C4Button(discord.ui.Button["C4View"]):
         if view.checkWin(self.x, y):
             view.stopGame()
             desc = f"{view.currentPlayer.name} won !"
-            if not interaction.guild: return
+            if not interaction.guild:
+                return
             view.game.grantsXP(view.currentPlayer, interaction.guild, 50)
 
         elif view.isFull():
             view.stopGame()
-            desc = "It's a tie !",
+            desc = "It's a tie !"
 
         else:
             if not view.checkCol(self.x):
@@ -63,7 +65,7 @@ class C4Button(discord.ui.Button["C4View"]):
             description=desc,
             color=0x0089FF
         )
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
         await interaction.response.edit_message(embed=embed, view=view)
         
 
@@ -217,10 +219,10 @@ class Connect4(BaseGame):
             description=f"{view.currentPlayer.name}'s turn",
             color=0x0089FF
         )
-        embed.add_field(name="", value=view)
+        embed.add_field(name="", value=str(view))
         await ctx.respond(embed=embed, view=view)
         
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Josix):
     bot.add_cog(Connect4(bot))

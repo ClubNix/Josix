@@ -11,6 +11,7 @@ def get_news_chan_from_user(handler: DatabaseHandler, id_user: int) -> list[int]
     res = handler.cursor.fetchall()
     if res:
         return [row[0] for row in res]
+    return None
 
 
 @error_handler

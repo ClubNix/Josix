@@ -1,5 +1,5 @@
 from database.database import DatabaseHandler
-from database.db_utils import error_handler, LogSelection
+from database.db_utils import LogSelection, error_handler
 
 
 @error_handler
@@ -13,6 +13,7 @@ def get_logs_selection(handler: DatabaseHandler, id_guild: int) -> LogSelection 
         for row in res:
             logs.append(row[1])
         return LogSelection(id_guild, logs)
+    return None
 
 
 @error_handler
