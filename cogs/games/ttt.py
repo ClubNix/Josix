@@ -98,7 +98,7 @@ class TTTView(BaseView):
         A 3x3 grid representing game's UI
     """
 
-    children: list[TTTBtn]
+    children: list[TTTBtn] # type: ignore
 
     def __init__(
         self,

@@ -117,10 +117,10 @@ class Usage(JosixCog):
                     continue
 
                 if josix_cog.isGame:
-                    gamesCmd.extend(list(map(str, clean_commands(josix_cog.get_commands()))))
+                    gamesCmd.extend(list(map(str, clean_commands(josix_cog.get_commands())))) # type: ignore
                     continue
 
-                cleaned_commands: list[JosixSlash | commands.Command] = clean_commands(josix_cog.get_commands())
+                cleaned_commands: list[JosixSlash | commands.Command] = clean_commands(josix_cog.get_commands()) # type: ignore
                 if len(cleaned_commands) == 0:
                     lstCmd = "No commands available"
                 else:
@@ -136,7 +136,7 @@ class Usage(JosixCog):
         else:
             command_name = command_name.lower()
             command: discord.SlashCommand = self.bot.get_application_command(name=command_name,
-                                                                             type=discord.SlashCommand)
+                                                                             type=discord.SlashCommand) # type: ignore
             if not command:
                 await ctx.respond((
                     "This option is only possible for slash commands" if self.bot.get_command(command_name)

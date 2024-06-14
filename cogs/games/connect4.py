@@ -88,7 +88,8 @@ class C4View(BaseView):
         A 6x7 grid representing the game's UI (the board)
     """
 
-    children: list[C4Button]
+    children: list[C4Button] # type: ignore
+
     def __init__(
         self,
         interaction: Interaction,

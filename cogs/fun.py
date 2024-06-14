@@ -7,7 +7,7 @@ from json import JSONDecodeError
 
 import discord
 from aiohttp import ClientResponseError
-from blagues_api import BlaguesAPI
+from blagues_api import BlaguesAPI  # type: ignore
 from discord import ApplicationContext, Interaction, WebhookMessage, option
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -152,6 +152,9 @@ class Fun(JosixCog):
                             "list_askip",
                             type=discord.commands.core.ApplicationCommand
                         )
+                        if cmd is None:
+                            await ctx.respond("Error encountered on the listing")
+                            return
                         await ctx.invoke(cmd, user=None)
                         return
 

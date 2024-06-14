@@ -45,7 +45,7 @@ class OthelloInput(discord.ui.Select):
         value = 1 if view.currentPlayer.id == view.whitePlayer.id else 2
         optionValue = 0
         try:
-            optionValue = int(interaction.data["values"][0])
+            optionValue = int(interaction.data["values"][0]) # type: ignore
         except (KeyError, IndexError):
             return
 
@@ -118,7 +118,8 @@ class OthelloView(BaseView):
         Y value of the move chose by the player
     """
 
-    children: list[OthelloInput]
+    children: list[OthelloInput] # type: ignore
+
     __directions = [(0,-1), (0,1), (-1,0), (1, 0), (-1,-1), (1,-1), (-1,1), (1,1)]
     
     def __init__(
