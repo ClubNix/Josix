@@ -98,7 +98,7 @@ def getPlayerStat(handler: DatabaseHandler, id_user: int) -> tuple[int, int] | N
     res = handler.cursor.fetchone()
     if not res:
         return None
-    return res
+    return res # type: ignore
 
 
 @error_handler

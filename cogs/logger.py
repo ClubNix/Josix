@@ -145,7 +145,7 @@ class LoggerView(discord.ui.View):
             oldLogs = old.logs
 
         try:
-            values = list(map(int, select.values))
+            values = list(map(int, select.values)) # type: ignore
         except ValueError as e:
             log.writeError(log.formatError(e))
             await interaction.response.edit_message(content="Unknown error occured")
@@ -767,7 +767,7 @@ class Logger(JosixCog):
         if not chan:
             return
 
-        await chan.send(embed=self._join_embed(payload.user, False))
+        await chan.send(embed=self._join_embed(payload.user, False)) # type: ignore
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):

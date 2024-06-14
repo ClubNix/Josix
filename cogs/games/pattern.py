@@ -77,7 +77,7 @@ class PatternView(BaseView):
         A 3x3 grid representing game's UI
     """
 
-    children: list[PatternBtn]
+    children: list[PatternBtn] # type: ignore
 
     def __init__(
         self,

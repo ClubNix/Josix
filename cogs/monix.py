@@ -7,9 +7,9 @@ import discord
 from discord import ApplicationContext, option
 from discord.ext import commands
 from dotenv import load_dotenv
-from requests import Session
-from urllib3 import disable_warnings
-from urllib3.exceptions import InsecureRequestWarning
+from requests import Session  # type: ignore
+from urllib3 import disable_warnings  # type: ignore
+from urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
 from bot_utils import JosixCog, josix_slash
 from josix import Josix
