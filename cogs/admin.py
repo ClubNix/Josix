@@ -258,7 +258,7 @@ class Admin(JosixCog):
     @josix_slash(description="Enable or disable the xp system on the server")
     @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
-    async def enable_xp_system(self, ctx: ApplicationContext):
+    async def toggle_xp_system(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
         handler = self.bot.get_handler()
@@ -434,7 +434,7 @@ class Admin(JosixCog):
     @josix_slash(description="Enable or disable the welcome system")
     @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
-    async def enable_welcome(self, ctx: ApplicationContext):
+    async def toggle_welcome(self, ctx: ApplicationContext):
         await ctx.defer(ephemeral=False, invisible=False)
 
         idGuild = ctx.guild_id
