@@ -36,7 +36,7 @@ class Josix(commands.Bot):
             help_command=None
         )
         try:
-            self.db = DatabaseHandler()
+            self.connect()
         except Error as error:
                 log.writeError(log.formatError(error))
                 if EXIT:
@@ -66,6 +66,13 @@ class Josix(commands.Bot):
                 
         except Exception as error:
             log.writeError(log.formatError(error))
+
+    def connect(self):
+        self.db = DatabaseHandler()
+
+    def kill_connection(self):
+        self.db.cursor.close()
+        self.db.conn.close()
 
     def get_handler(self) -> DatabaseHandler:
         return self.db

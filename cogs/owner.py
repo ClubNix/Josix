@@ -34,6 +34,7 @@ class Owner(JosixCog):
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp, isOwner=True)
         self.bot = bot
+        self.database_down = False
         self.startup = True
 
         try:
@@ -165,7 +166,18 @@ class Owner(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
         await self.lineDisplay(ctx, ERROR_FILE, count, True)
 
-    
+
+    @josix_slash(description="Force a reconnection to the database")
+    async def force_reconnection(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        self.bot.kill_connection()
+        try:
+            self.bot.connect()
+            await ctx.respond("Connection to database done")
+        except Exception as e:
+            log.writeError(log.formatError(e))
+            await ctx.respond("Reconnection failed")
+
     @tasks.loop(hours=24.0)
     async def daily_backup(self):
         if self.startup: # Prevents daily backup on startup
@@ -176,15 +188,20 @@ class Owner(JosixCog):
         except Exception as e:
             log.writeError(log.formatError(e))
 
-    @tasks.loop(hours=6.0)
+    @tasks.loop(minutes=5.0)
     async def check_connection(self):
         try:
             discord_service.get_user(self.bot.get_handler(), 0)
         except Exception as e:
+            if self.database_down:
+                return
+
+            self.database_down = True
             if self.report and ((reportChan := self.bot.get_channel(self.report)) or (reportChan := await self.bot.fetch_channel(self.report))):
                 await reportChan.send("Connection to database lost !\n" + str(e))
         else:
-            log.writeLog("Database connection check passed !")
+            if self.database_down:
+                log.writeLog("Database connection check passed !")
 
 
 def setup(bot: Josix):
