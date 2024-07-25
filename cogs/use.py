@@ -65,7 +65,7 @@ class Usage(JosixCog):
     """
         
     _SCRIPT_DIR = os.path.dirname(__file__)
-    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
+    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../configs/config.json')
 
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)

@@ -29,7 +29,7 @@ class Owner(JosixCog):
 
     _SCRIPT_DIR = os.path.dirname(__file__)
     _SQL_FILE = os.path.join(_SCRIPT_DIR, '../database/backup.sql')
-    _CONFIG_FILE = os.path.join(_SCRIPT_DIR, '../config.json')
+    _CONFIG_FILE = os.path.join(_SCRIPT_DIR, '../configs/config.json')
     
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp, isOwner=True)
