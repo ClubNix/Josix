@@ -4,8 +4,8 @@ from typing import Callable
 
 import psycopg2
 
-from bot_utils import JosixDatabaseException
 from database.database import DatabaseHandler
+from pkg.bot_utils import JosixDatabaseException
 
 # TODO : add dataclasses param checking on start (same name/order)
 

@@ -21,11 +21,11 @@ from discord.abc import GuildChannel
 from discord.ext import commands
 from discord.ui.select import Select, string_select
 
-import logwrite as log
-from bot_utils import JosixCog
+import pkg.logwrite as log
 from database.database import DatabaseHandler
 from database.services import discord_service, logger_service
 from josix import Josix
+from pkg.bot_utils import JosixCog
 
 
 class Logs(IntEnum):

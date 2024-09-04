@@ -22,10 +22,10 @@ from discord.ext.commands import (
 )
 from discord.utils import get as discordGet
 
-import logwrite as log
-from bot_utils import JosixCog
+import pkg.logwrite as log
 from database.services import discord_service
 from josix import Josix
+from pkg.bot_utils import JosixCog
 
 
 class Events(JosixCog):
@@ -44,7 +44,7 @@ class Events(JosixCog):
     """
     
     _SCRIPT_DIR = os.path.dirname(__file__)
-    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../config.json')
+    _FILE_PATH = os.path.join(_SCRIPT_DIR, '../configs/config.json')
 
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)

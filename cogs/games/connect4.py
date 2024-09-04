@@ -3,9 +3,9 @@ from random import randint
 import discord
 from discord import ApplicationContext, Interaction, option
 
-from bot_utils import josix_slash
 from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+from pkg.bot_utils import josix_slash
 
 
 class C4Button(discord.ui.Button["C4View"]):

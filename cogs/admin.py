@@ -4,8 +4,7 @@ import discord
 from discord import ApplicationContext, HTTPException, InvalidArgument, NotFound, option
 from discord.ext import commands
 
-import logwrite as log
-from bot_utils import JosixCog, josix_slash
+import pkg.logwrite as log
 from cogs.logger import LoggerView
 from database.services import (
     discord_service,
@@ -16,6 +15,7 @@ from database.services import (
     xp_service,
 )
 from josix import Josix
+from pkg.bot_utils import JosixCog, josix_slash
 
 
 class Admin(JosixCog):

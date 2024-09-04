@@ -7,7 +7,7 @@ services:
     restart: always
     env_file: .env.dev
     volumes:
-      - ./config.json:/app/config.json
+      - ./configs/config.json:/app/configs/config.json
       - ./data/logs:/app/logs
       - ./data/askip.json:/app/askip.json
       - ./data/backup.sql:/app/database/backup.sql

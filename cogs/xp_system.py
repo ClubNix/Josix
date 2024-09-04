@@ -13,14 +13,14 @@ from discord import (
 from discord.abc import PrivateChannel
 from discord.ext import commands
 
-import logwrite as log
-from bot_utils import JosixCog, JosixSlash, josix_slash
+import pkg.logwrite as log
 from database.services import (
     discord_service,
     season_service,
     xp_service,
 )
 from josix import Josix
+from pkg.bot_utils import JosixCog, JosixSlash, josix_slash
 
 
 class XP(JosixCog):

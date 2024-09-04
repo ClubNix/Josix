@@ -4,9 +4,9 @@ import discord
 from discord import ApplicationContext, Interaction, Member, option
 from discord.ext import commands
 
-from bot_utils import josix_slash
 from cogs.games.games_base import BaseGame, BaseView
 from josix import Josix
+from pkg.bot_utils import josix_slash
 
 
 class TTTBtn(discord.ui.Button["TTTView"]):
