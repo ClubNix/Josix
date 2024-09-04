@@ -1,10 +1,10 @@
-from bot_utils import JosixDatabaseException
 from database.database import DatabaseHandler
 from database.db_utils import (
     MsgReact,
     ReactCouple,
     error_handler,
 )
+from pkg.bot_utils import JosixDatabaseException
 
 
 @error_handler

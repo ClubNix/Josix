@@ -6,7 +6,7 @@ from typing import Callable
 import psycopg2
 from dotenv import load_dotenv
 
-import logwrite as log
+import pkg.logwrite as log
 
 SCRIPT_DIR = os.path.dirname(__file__)
 BACKUP_PATH = os.path.join(SCRIPT_DIR, 'backup.sql')

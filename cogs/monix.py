@@ -11,8 +11,8 @@ from requests import Session  # type: ignore
 from urllib3 import disable_warnings  # type: ignore
 from urllib3.exceptions import InsecureRequestWarning  # type: ignore
 
-from bot_utils import JosixCog, josix_slash
 from josix import Josix
+from pkg.bot_utils import JosixCog, josix_slash
 
 
 class HTTPMethod(Enum):

@@ -9,8 +9,7 @@ import discord
 from discord import ApplicationContext, option
 from discord.ext import commands, tasks
 
-import logwrite as log
-from bot_utils import JosixCog, JosixSlash, get_permissions_str, josix_slash
+import pkg.logwrite as log
 from cogs.events import Events
 from database.services import (
     birthday_service,
@@ -18,6 +17,7 @@ from database.services import (
     guild_service,
 )
 from josix import Josix
+from pkg.bot_utils import JosixCog, JosixSlash, get_permissions_str, josix_slash
 
 
 class Poll(discord.ui.Modal):

@@ -6,10 +6,10 @@ from discord import (
 )
 from discord.ext import commands
 
-import logwrite as log
-from bot_utils import JosixCog
+import pkg.logwrite as log
 from database.services import reactrole_service
 from josix import Josix
+from pkg.bot_utils import JosixCog
 
 
 class ReactionRole(JosixCog):

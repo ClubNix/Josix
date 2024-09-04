@@ -5,7 +5,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from psycopg2 import Error
 
-import logwrite as log
+import pkg.logwrite as log
 from database.database import DatabaseHandler
 
 EXIT = True

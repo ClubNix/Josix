@@ -12,10 +12,10 @@ from discord import ApplicationContext, Interaction, WebhookMessage, option
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.services import discord_service, xp_service
 from josix import Josix
+from pkg.bot_utils import JosixCog, josix_slash
 
 
 class Fun(JosixCog):

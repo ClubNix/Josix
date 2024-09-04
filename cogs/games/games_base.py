@@ -4,7 +4,6 @@ import discord
 from discord import ApplicationContext, Member
 from discord.ui import View
 
-from bot_utils import JosixCog, josix_slash
 from cogs.xp_system import XP
 from database.database import DatabaseHandler
 from database.services import (
@@ -13,6 +12,7 @@ from database.services import (
     xp_service,
 )
 from josix import Josix
+from pkg.bot_utils import JosixCog, josix_slash
 
 
 class Games(JosixCog):

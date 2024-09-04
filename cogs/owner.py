@@ -7,11 +7,11 @@ from discord import ApplicationContext, option
 from discord.ext import tasks
 from psycopg2 import Error as DBError
 
-import logwrite as log
-from bot_utils import JosixCog, josix_slash
+import pkg.logwrite as log
 from database.services import discord_service
 from josix import Josix
-from logwrite import ERROR_FILE, LOG_FILE
+from pkg.bot_utils import JosixCog, josix_slash
+from pkg.logwrite import ERROR_FILE, LOG_FILE
 
 
 class Owner(JosixCog):
