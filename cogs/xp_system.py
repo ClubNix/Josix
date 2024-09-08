@@ -426,7 +426,13 @@ class XP(JosixCog):
         min_value=1,
         max_value=50
     )
-    async def leaderboard(self, ctx: ApplicationContext, limit: int):
+    @option(
+        input_type=bool,
+        name="all_time",
+        description="Show the all-time leaderboard",
+        default=False
+    )
+    async def leaderboard(self, ctx: ApplicationContext, limit: int, all_time: bool):
         await ctx.defer(ephemeral=False, invisible=False)
         idGuild = ctx.guild.id
         handler = self.bot.get_handler()
@@ -444,7 +450,11 @@ class XP(JosixCog):
             elif not guildDB.enableXp:
                 await ctx.respond("The xp system is not enabled in this server.")
                 return
-            lb = xp_service.get_leaderboard(handler, idGuild, limit)
+
+            lb = (
+                xp_service.get_all_time_leaderboard(handler, idGuild, limit) if all_time else
+                xp_service.get_leaderboard(handler, idGuild, limit)
+            )
         except Exception as e:
             log.writeError(log.formatError(e))
             return

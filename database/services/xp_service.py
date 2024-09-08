@@ -19,6 +19,31 @@ def get_leaderboard(handler: DatabaseHandler, id_guild: int, limit: int | None) 
 
 
 @error_handler
+def get_all_time_leaderboard(handler: DatabaseHandler, id_guild, limit: int | None) -> list[LinkUserGuild] | None:
+    query = """
+SELECT idUser, SUM(score)
+FROM (
+    SELECT idUser, score
+    FROM josix.Score JOIN josix.Season se USING(idSeason)
+    WHERE se.idGuild = %s
+    UNION ALL
+    SELECT idUser, xp AS "score"
+    FROM josix.UserGuild ug
+    WHERE ug.idGuild = %s
+)
+GROUP BY idUser
+ORDER BY 2 DESC
+LIMIT %s;
+"""
+    params = (id_guild, id_guild, limit)
+    handler.cursor.execute(query, params)
+    res = handler.cursor.fetchall()
+    if res:
+        return [LinkUserGuild(row[0], 0, row[1], 0, dt.datetime.now(), False) for row in res]
+    return None
+
+
+@error_handler
 def get_ranking(handler: DatabaseHandler, id_user: int, id_guild: int) -> int | None:
     query = """SELECT COUNT(DISTINCT idUser) + 1
                 FROM josix.UserGuild
