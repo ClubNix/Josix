@@ -133,3 +133,10 @@ def clean_xp_guild_soft(handler: DatabaseHandler, id_guild: int) -> None:
                 WHERE idGuild = %s;"""
     handler.cursor.execute(query, (id_guild,))
     handler.conn.commit()
+
+
+@error_handler
+def toggle_ping_xp(handler: DatabaseHandler, id_user: int) -> None:
+    query = "UPDATE josix.User SET pingUser = NOT pingUser WHERE idUser = %s;"
+    handler.cursor.execute(query, (id_user,))
+    handler.conn.commit()
