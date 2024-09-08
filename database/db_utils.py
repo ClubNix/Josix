@@ -45,6 +45,8 @@ class GuildDB:
     wText: str
     logNews: int
     blockedCat: list[int]
+    tempSeasonActive: bool
+    endTempSeason: datetime
 
 @dataclass()
 class LinkUserGuild:
@@ -111,6 +113,7 @@ class Season:
     idGuild: int
     label: str
     ended_at: datetime
+    temporary: bool
 
 @dataclass()
 class UserScore:

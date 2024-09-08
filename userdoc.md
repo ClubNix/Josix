@@ -61,7 +61,7 @@ All the following commands are made to be run by discord servers staff to handle
 
 - `set_xp_channel` Set the current channel so it will receive all the announce for xp from the bot (Mentions when you pass a level if the XP is enabled)
 
-- `enable_xp_system` Enable or disable the XP system on this server. If the system is disabled, no one will receive any XP.
+- `toggle_xp_system` Enable or disable the XP system on this server. If the system is disabled, no one will receive any XP.
 
 - `create_new_season` Store the current season results (all scores and ranking) and switch to a new season
   - `label` The label for the season that will be stored
@@ -82,7 +82,7 @@ All the following commands are made to be run by discord servers staff to handle
     - **{ln}** : Will be replaced by a line-break
   - `keep` A boolean to clarify if you want to keep old values if they are not set in the command (If you don't specify a role and put `keep` to False, it will be deleted in the database)
 
-- `enable_welcome` Enable or disable the welcome message for this server
+- `toggle_welcome` Enable or disable the welcome message for this server
 
 - `set_logger` Set-up the custom logger for this server by choosing which logs to display
   - `keep` A boolean so clarify if you want to keep old selected logs if they are not selected in the command

@@ -19,7 +19,7 @@ class Owner(JosixCog):
     Represents the Owner functions extension of the bot
 
     By default it also allows the administrator of servers to perform these commands
-    because it was better to handler for the Club*Nix
+    because it was better to handle for the Club*Nix
 
     Attributes
     ----------

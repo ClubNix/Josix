@@ -98,3 +98,13 @@ def clean_xp_guild(handler: DatabaseHandler, id_guild: int) -> None:
     query = "DELETE FROM josix.UserGuild WHERE idGuild = %s;"
     handler.cursor.execute(query, (id_guild,))
     handler.conn.commit()
+
+
+@error_handler
+def clean_xp_guild_soft(handler: DatabaseHandler, id_guild: int) -> None:
+    query = """UPDATE josix.UserGuild
+                SET xp = 0,
+                    lvl = 0
+                WHERE idGuild = %s;"""
+    handler.cursor.execute(query, (id_guild,))
+    handler.conn.commit()

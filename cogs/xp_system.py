@@ -11,7 +11,7 @@ from discord import (
     option,
 )
 from discord.abc import PrivateChannel
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import pkg.logwrite as log
 from database.services import (
@@ -36,6 +36,7 @@ class XP(JosixCog):
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
+        self.check_temporary.start()
 
     @staticmethod
     def nextLevelXP(lvl: int, xp: int = 0) -> int:
@@ -279,7 +280,7 @@ class XP(JosixCog):
         xp_service.update_user_xp(handler, member.id, guild.id, newLvl, xp, dt.datetime.now())
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Gives XP to a user")
+    @josix_slash(description="Gives XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -313,7 +314,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Removes XP to a user")
+    @josix_slash(description="Removes XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -347,7 +348,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Gives levels to a user")
+    @josix_slash(description="Gives levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -381,7 +382,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Removes levels to a user")
+    @josix_slash(description="Removes levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -415,7 +416,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Leaderboard of users based on their xp points in the server")
+    @josix_slash(description="Leaderboard of users based on their xp points in the server")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=int,
@@ -446,6 +447,7 @@ class XP(JosixCog):
             lb = xp_service.get_leaderboard(handler, idGuild, limit)
         except Exception as e:
             log.writeError(log.formatError(e))
+            return
 
         embed = discord.Embed(
             title="XP Leaderboard",
@@ -483,7 +485,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Show the XP card of the user")
+    @josix_slash(description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=discord.Member,
@@ -533,7 +535,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Block or unblock xp progression for a member")
+    @josix_slash(description="Block or unblock xp progression for a member")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -563,7 +565,7 @@ class XP(JosixCog):
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
 
     
-    @josix_slash(guild_ids=[933118079028826142], description="See all past seasons in this server")
+    @josix_slash(description="See all past seasons in this server")
     @commands.guild_only()
     @option(
         input_type=int,
@@ -618,7 +620,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="See user history in all the seasons")
+    @josix_slash(description="See user history in all the seasons")
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -675,7 +677,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Display all the informations of a season")
+    @josix_slash(description="Display all the informations of a season")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -726,7 +728,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
     
-    @josix_slash(guild_ids=[933118079028826142], description="Show the profile of the user on a specific season")
+    @josix_slash(description="Show the profile of the user on a specific season")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -768,6 +770,28 @@ class XP(JosixCog):
         embed.add_field(name="Ranking", value=score.ranking)
         embed.add_field(name="Level", value=str(level))
         await ctx.respond(embed=embed)
+
+
+    @tasks.loop(seconds=1.0)
+    async def check_temporary(self):
+        handler = self.bot.get_handler()
+        guilds = season_service.get_guilds_ended_temporary(handler)
+        if not guilds:
+            return
+
+        for guild in guilds:
+            try:
+                season_service.stop_temporary_season(handler, guild.id)
+                if not guild.xpNews:
+                    continue
+
+                if not (xpChan := self.bot.get_channel(guild.xpNews)) and not (xpChan := await self.bot.fetch_channel(guild.xpNews)):
+                    continue
+
+                await xpChan.send("The temporary season has ended ! Rolling back to the previous season")
+            except Exception as e:
+                log.writeError(log.formatError(e))
+                continue
 
 
 def setup(bot: Josix):
