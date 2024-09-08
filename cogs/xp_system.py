@@ -11,7 +11,7 @@ from discord import (
     option,
 )
 from discord.abc import PrivateChannel
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import pkg.logwrite as log
 from database.services import (
@@ -36,6 +36,7 @@ class XP(JosixCog):
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
+        self.check_temporary.start()
 
     @staticmethod
     def nextLevelXP(lvl: int, xp: int = 0) -> int:
@@ -769,6 +770,28 @@ class XP(JosixCog):
         embed.add_field(name="Ranking", value=score.ranking)
         embed.add_field(name="Level", value=str(level))
         await ctx.respond(embed=embed)
+
+
+    @tasks.loop(seconds=1.0)
+    async def check_temporary(self):
+        handler = self.bot.get_handler()
+        guilds = season_service.get_guilds_ended_temporary(handler)
+        if not guilds:
+            return
+
+        for guild in guilds:
+            try:
+                season_service.stop_temporary_season(handler, guild.id)
+                if not guild.xpNews:
+                    continue
+
+                if not (xpChan := self.bot.get_channel(guild.xpNews)) and not (xpChan := await self.bot.fetch_channel(guild.xpNews)):
+                    continue
+
+                await xpChan.send("The temporary season has ended ! Rolling back to the previous season")
+            except Exception as e:
+                log.writeError(log.formatError(e))
+                continue
 
 
 def setup(bot: Josix):

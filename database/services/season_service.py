@@ -2,6 +2,7 @@ from datetime import datetime
 
 from database.database import DatabaseHandler
 from database.db_utils import (
+    GuildDB,
     Score,
     Season,
     UserScore,
@@ -204,3 +205,13 @@ def stop_temporary_season(handler: DatabaseHandler, id_guild: int):
     query = "UPDATE josix.Guild SET tempSeasonActive = FALSE WHERE idGuild = %s;"
     handler.cursor.execute(query, (id_guild,))
     handler.conn.commit()
+
+
+@error_handler
+def get_guilds_ended_temporary(handler: DatabaseHandler) -> list[GuildDB] | None:
+    query = "SELECT * FROM josix.Guild WHERE tempSeasonActive = TRUE AND endTempSeason <= %s;"
+    handler.cursor.execute(query, (datetime.now(),))
+    res = handler.cursor.fetchall()
+    if res:
+        return [GuildDB(*row) for row in res]
+    return None
