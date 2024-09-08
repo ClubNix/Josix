@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS josix.Guild (
     logNews BIGINT,
     blockedCategories BIGINT ARRAY DEFAULT ARRAY[]::Integer[],
     tempSeasonActive BOOLEAN DEFAULT FALSE,
-    endTempSeason DATETIME DEFAULT NULL,
+    endTempSeason TIMESTAMP DEFAULT NULL,
     PRIMARY KEY(idGuild)
 );
 
@@ -93,8 +93,9 @@ CREATE TABLE IF NOT EXISTS josix.Season (
     CONSTRAINT fk_guild_season_id FOREIGN KEY(idGuild) REFERENCES josix.Guild(idGuild)
 );
 
+
 --
---  
+--
 --
 
 

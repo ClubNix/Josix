@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from database.database import DatabaseHandler
 from database.db_utils import error_handler
 
@@ -48,4 +50,15 @@ def switch_welcome_enabling(handler: DatabaseHandler, id_guild: int) -> None:
                 SET enableWelcome = NOT enableWelcome
                 WHERE idGuild = %s"""
     handler.cursor.execute(query, (id_guild,))
+    handler.conn.commit()
+
+
+@error_handler
+def start_temporary_season(handler: DatabaseHandler, id_guild: int, end: datetime):
+    query = """UPDATE josix.Guild
+               SET tempSeasonActive = TRUE,
+                   endTempSeason = %s
+               WHERE idGuild = %s"""
+    params = (end, id_guild)
+    handler.cursor.execute(query, params)
     handler.conn.commit()

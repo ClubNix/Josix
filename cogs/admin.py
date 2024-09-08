@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 
 import discord
 from discord import ApplicationContext, HTTPException, InvalidArgument, NotFound, option
@@ -288,9 +289,6 @@ class Admin(JosixCog):
         await ctx.defer(ephemeral=False, invisible=False)
 
         handler = self.bot.get_handler()
-        if label is None:
-            label = ""
-
         guild = ctx.guild
         if not guild:
             await ctx.respond("Data not found")
@@ -308,7 +306,7 @@ class Admin(JosixCog):
             return
 
         season_service.store_scores(handler, guild.id, id_season)
-        xp_service.clean_xp_guild(handler, guild.id)
+        xp_service.clean_xp_guild_soft(handler, guild.id)
         await ctx.respond("A new season has been started !")
 
 
@@ -369,6 +367,99 @@ class Admin(JosixCog):
 
         season_service.update_season_label(handler, season, new_label)
         await ctx.respond("Done !")
+
+
+    @josix_slash(description="Create a season that will replace the current one temporary (starting everyone from 0)")
+    @discord.default_permissions(manage_guild=True)
+    @commands.guild_only()
+    @option(
+        input_type=str,
+        name="label",
+        description="Label of the temporary season",
+        required=True
+    )
+    @option(
+        input_type=str,
+        name="duration",
+        description="Duration of the season (format : 1d2h3m4s)",
+        required=True
+    )
+    async def create_temp_season(self, ctx: ApplicationContext, label: str, duration: str):
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        duration = duration.lower()
+        groups = re.search(
+            r"^(?P<days>\d+d)?(?=(?:(?!d).)*$)(?P<hours>\d+h)?(?=(?:(?!h).)*$)(?P<minutes>\d+m)?(?=(?:(?!m).)*$)(?P<seconds>\d+s)?$",
+            duration
+        )
+        if groups is None:
+            await ctx.send("Invalid input for the duration")
+            return
+
+        total = 0
+        results = groups.groupdict()
+        for result in results.values():
+            if result is None:
+                continue
+
+            value, unit = result[:len(result)-1], result[len(result)-1:]
+            try:
+                value = int(value)
+            except ValueError:
+                await ctx.send("Got a wrong value as an input")
+                return
+
+            match unit:
+                case "d":
+                    total += 86400 * value
+                case "h":
+                    total += 3600 * value
+                case "m":
+                    total += 60 * value
+                case "s":
+                    total += 60
+
+        if total < 0 or total / 86400 > 31:
+            await ctx.send("A temporary season must be between 1 day and 1 months")
+            return
+
+        handler = self.bot.get_handler()
+        guild = discord_service.get_guild(handler, ctx.guild_id)
+        if not guild:
+            guild = discord_service.add_guild(handler, ctx.guild_id)
+            if not guild:
+                await ctx.send("Internal error, please retry")
+                return
+
+        if guild.tempSeasonActive:
+            await ctx.send("This server is still under a temporary season. Please wait for the current one to finish.")
+            return
+
+        end = datetime.now() + timedelta(seconds=total)
+        season_service.create_temp_season(
+            handler,
+            ctx.guild_id,
+            label,
+            end,
+        )
+
+        await ctx.respond(f"Temporary season created ! It will end on {datetime.strftime(end, '%d/%m/%Y %H:%M:%S')}.")
+
+
+    @josix_slash(description="Stop prematurely a temporary season and rollback to previous stored season")
+    @discord.default_permissions(manage_guild=True)
+    @commands.guild_only()
+    async def stop_temporary_season(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+
+        handler = self.bot.get_handler()
+        guild = discord_service.get_guild(handler, ctx.guild_id)
+        if not guild or not guild.tempSeasonActive:
+            await ctx.respond("No temporary season is currently active")
+            return
+
+        season_service.stop_temporary_season(handler, ctx.guild_id)
+        await ctx.respond("Temporary season stopped")
 
 
     @josix_slash(description="Set up the custom welcome system for your server")

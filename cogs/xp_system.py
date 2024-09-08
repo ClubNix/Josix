@@ -279,7 +279,7 @@ class XP(JosixCog):
         xp_service.update_user_xp(handler, member.id, guild.id, newLvl, xp, dt.datetime.now())
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Gives XP to a user")
+    @josix_slash(description="Gives XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -313,7 +313,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Removes XP to a user")
+    @josix_slash(description="Removes XP to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -347,7 +347,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Gives levels to a user")
+    @josix_slash(description="Gives levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -381,7 +381,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Removes levels to a user")
+    @josix_slash(description="Removes levels to a user")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -415,7 +415,7 @@ class XP(JosixCog):
         await ctx.respond("Done !")
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Leaderboard of users based on their xp points in the server")
+    @josix_slash(description="Leaderboard of users based on their xp points in the server")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=int,
@@ -446,6 +446,7 @@ class XP(JosixCog):
             lb = xp_service.get_leaderboard(handler, idGuild, limit)
         except Exception as e:
             log.writeError(log.formatError(e))
+            return
 
         embed = discord.Embed(
             title="XP Leaderboard",
@@ -483,7 +484,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Show the XP card of the user")
+    @josix_slash(description="Show the XP card of the user")
     @commands.cooldown(1, 30.0, commands.BucketType.user)
     @option(
         input_type=discord.Member,
@@ -533,7 +534,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Block or unblock xp progression for a member")
+    @josix_slash(description="Block or unblock xp progression for a member")
     @discord.default_permissions(moderate_members=True)
     @commands.guild_only()
     @option(
@@ -563,7 +564,7 @@ class XP(JosixCog):
         await ctx.respond(f"The block status for {member.mention} is set to **{not blocked}**")
 
     
-    @josix_slash(guild_ids=[933118079028826142], description="See all past seasons in this server")
+    @josix_slash(description="See all past seasons in this server")
     @commands.guild_only()
     @option(
         input_type=int,
@@ -618,7 +619,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="See user history in all the seasons")
+    @josix_slash(description="See user history in all the seasons")
     @commands.guild_only()
     @option(
         input_type=discord.Member,
@@ -675,7 +676,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
 
-    @josix_slash(guild_ids=[933118079028826142], description="Display all the informations of a season")
+    @josix_slash(description="Display all the informations of a season")
     @commands.guild_only()
     @option(
         input_type=str,
@@ -726,7 +727,7 @@ class XP(JosixCog):
         await ctx.respond(embed=embed)
 
     
-    @josix_slash(guild_ids=[933118079028826142], description="Show the profile of the user on a specific season")
+    @josix_slash(description="Show the profile of the user on a specific season")
     @commands.guild_only()
     @option(
         input_type=str,
