@@ -31,6 +31,7 @@ class UserDB:
     elo: int
     nbGames: int
     hbDate: date
+    pingUser: bool
 
 @dataclass()
 class GuildDB:

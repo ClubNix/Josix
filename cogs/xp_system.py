@@ -2,6 +2,7 @@ import datetime as dt
 
 import discord
 from discord import (
+    AllowedMentions,
     ApplicationContext,
     DMChannel,
     GroupChannel,
@@ -103,7 +104,7 @@ class XP(JosixCog):
             The XP the user will obtain
         """
         handler = self.bot.get_handler()
-        _, guildDB, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
+        userDB, guildDB, userGuildDB = discord_service.fetch_user_guild_relationship(handler, idTarget, idGuild)
 
         if not (guildDB and userGuildDB):
             return
@@ -135,10 +136,20 @@ class XP(JosixCog):
         xp_service.update_user_xp(handler, idTarget, idGuild, currentLvl, currentXP, nowTime)
 
         if newLvl and xpChanId:
+            ping = currentLvl == 1 or userDB.pingUser
+            info = ""
+            if currentLvl == 1:
+                info = "\nYou can toggle the ping with `/toggle_ping` command"
+
+            mentions = AllowedMentions.none()
+            if ping:
+                mentions = AllowedMentions.all()
+
             if ((xpChan := self.bot.get_channel(xpChanId)) or (xpChan := await self.bot.fetch_channel(xpChanId))) and isinstance(xpChan, TextChannel):
 
                 await xpChan.send(
-                    f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉"
+                    f"Congratulations <@{idTarget}>, you are now level **{currentLvl}** with **{currentXP}** exp. ! 🎉" + info,
+                    allowed_mentions=mentions
                 )
 
 
@@ -426,13 +437,7 @@ class XP(JosixCog):
         min_value=1,
         max_value=50
     )
-    @option(
-        input_type=bool,
-        name="all_time",
-        description="Show the all-time leaderboard",
-        default=False
-    )
-    async def leaderboard(self, ctx: ApplicationContext, limit: int, all_time: bool):
+    async def leaderboard(self, ctx: ApplicationContext, limit: int):
         await ctx.defer(ephemeral=False, invisible=False)
         idGuild = ctx.guild.id
         handler = self.bot.get_handler()
@@ -450,11 +455,7 @@ class XP(JosixCog):
             elif not guildDB.enableXp:
                 await ctx.respond("The xp system is not enabled in this server.")
                 return
-
-            lb = (
-                xp_service.get_all_time_leaderboard(handler, idGuild, limit) if all_time else
-                xp_service.get_leaderboard(handler, idGuild, limit)
-            )
+            lb = xp_service.get_leaderboard(handler, idGuild, limit)
         except Exception as e:
             log.writeError(log.formatError(e))
             return
@@ -802,6 +803,22 @@ class XP(JosixCog):
             except Exception as e:
                 log.writeError(log.formatError(e))
                 continue
+
+
+    @josix_slash(description="Toggle the ping on level up")
+    async def toggle_ping(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=False, invisible=False)
+        handler = self.bot.get_handler()
+
+        user = discord_service.get_user(handler, ctx.author.id)
+        if not user:
+            user = discord_service.add_user(handler, ctx.author.id)
+            if not user:
+                await ctx.respond("Error on registration")
+                return
+
+        xp_service.toggle_ping_xp(handler, ctx.author.id)
+        await ctx.respond(f"Ping on level up is now **{'enabled' if not user.pingUser else 'disabled'}**")
 
 
 def setup(bot: Josix):

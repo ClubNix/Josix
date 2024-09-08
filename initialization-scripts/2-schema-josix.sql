@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS josix.User (
     idUser BIGINT,
     elo INT DEFAULT 1000,
     nbGames INT DEFAULT 0,
-    hbDate DATE, 
+    hbDate DATE,
+    pingUser BOOLEAN DEFAULT FALSE,
     PRIMARY KEY(idUser)
 );
 
