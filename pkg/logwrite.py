@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.dev")
 
+print("Bonjour")
+
 # GLOBAL PATHS
 HOME_PATH = os.getenv("HOME")
 LOGS_PATH = os.path.join(HOME_PATH, os.getenv("LOGS", "")) if HOME_PATH else ""
