@@ -1,6 +1,4 @@
-import json
 import os
-from json import JSONDecodeError
 
 import discord
 from discord import (
@@ -9,7 +7,6 @@ from discord import (
     DiscordException,
     Forbidden,
     NotFound,
-    RawThreadUpdateEvent,
 )
 from discord.ext import commands
 from discord.ext.commands import (
@@ -20,7 +17,6 @@ from discord.ext.commands import (
     NoPrivateMessage,
     NotOwner,
 )
-from discord.utils import get as discordGet
 
 import pkg.logwrite as log
 from database.services import discord_service
@@ -49,44 +45,6 @@ class Events(JosixCog):
     def __init__(self, bot: Josix, showHelp: bool):
         super().__init__(showHelp=showHelp)
         self.bot = bot
-        self.close = ""
-        self.open = ""
-
-        try:
-            with open(Events._FILE_PATH, "r") as f:
-                data = json.load(f)
-
-            self.close = data["tags"]["closed"]
-            self.open = data["tags"]["open"]
-        except (JSONDecodeError, FileNotFoundError, KeyError):
-            pass
-
-    @staticmethod
-    async def getTags(thread: discord.Thread, close: str, open: str) -> tuple[discord.ForumTag, discord.ForumTag | None] | None:
-        cTag: discord.ForumTag | None = None
-        oTag: discord.ForumTag | None = None
-
-        if not isinstance(thread.parent, discord.ForumChannel):
-            return None
-
-        if close != "":
-            cTag = discordGet(thread.parent.available_tags, name=close)
-
-        if open != "":
-            oTag = discordGet(thread.parent.available_tags, name=open)
-
-        newTags = thread.parent.available_tags.copy()
-        if not cTag:
-            cTag = discord.ForumTag(name=close, emoji="🔴")
-            newTags.append(cTag)
-        if not oTag:
-            oTag = discord.ForumTag(name=open, emoji="🟢")
-            newTags.append(oTag)
-
-        if len(newTags) > len(thread.parent.available_tags):
-            await thread.parent.edit(available_tags=newTags)
-
-        return (cTag, oTag)
 
 # ==================================================
 # ==================================================
@@ -95,85 +53,6 @@ class Events(JosixCog):
     @commands.Cog.listener()
     async def on_ready(self):
         log.writeLog(f"==> Bot ready : py-cord v{discord.__version__}\n")
-
-    @commands.Cog.listener()
-    async def on_thread_create(self, thread: discord.Thread):
-        if not isinstance(thread.parent, discord.ForumChannel):
-            return
-
-        try:
-            await thread.send("This thread is now open. You can close it automatically by using `/close`")
-        except Exception as e:
-            log.writeError(log.formatError(e))
-
-        result = await Events.getTags(thread, self.close, self.open)
-        if result is None or result[1] is None:
-            return
-        
-        _, oTag = result
-        if oTag and oTag not in thread.applied_tags:
-            tags = thread.applied_tags.copy()
-            if not tags:
-                tags = [oTag]
-            else:
-                tags.append(oTag)
-
-            await thread.edit(applied_tags=tags)
-
-    @commands.Cog.listener()
-    async def on_raw_thread_update(self, payload: RawThreadUpdateEvent):
-        if not (guild := self.bot.get_guild(payload.guild_id)) or not (guild := await self.bot.fetch_guild(payload.guild_id)):
-            return
-
-        if not payload.thread:
-            thread = guild.get_thread(payload.thread_id)
-            if not thread:
-                return
-        else:
-            thread = payload.thread
-
-        if not isinstance(thread.parent, discord.ForumChannel):
-            return
-
-        data = payload.data
-        result = await Events.getTags(thread, self.close, self.open)
-        if result is None or None in result:
-            return
-
-        cTag, oTag = result
-        tags = thread.applied_tags.copy()
-        if data["thread_metadata"]["archived"] and data["thread_metadata"]["locked"]:
-            # You can't edit archived thread and this current method creates useless loop
-            """
-            try:
-                if oTag:
-                    try:
-                        del tags[tags.index(oTag)]
-                    except (ValueError, IndexError):
-                        pass
-
-                if cTag and not cTag in tags:
-                    tags.append(cTag)
-                    await thread.unarchive()
-                    await thread.edit(applied_tags=tags)
-                    await thread.archive()
-            except Exception as e:
-                log.writeError(log.formatError(e))
-            """
-
-        elif not data["thread_metadata"]["archived"]:
-            try:
-                if cTag:
-                    try:
-                        del tags[tags.index(cTag)]
-                    except (ValueError, IndexError):
-                        pass
-
-                if oTag and oTag not in tags:
-                    tags.append(oTag)
-                    await thread.edit(applied_tags=tags)
-            except Exception as e:
-                log.writeError(log.formatError(e))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
