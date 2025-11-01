@@ -10,7 +10,6 @@ from discord import ApplicationContext, option
 from discord.ext import commands, tasks
 
 import pkg.logwrite as log
-from cogs.events import Events
 from database.services import (
     birthday_service,
     discord_service,
@@ -18,40 +17,6 @@ from database.services import (
 )
 from josix import Josix
 from pkg.bot_utils import JosixCog, JosixSlash, get_permissions_str, josix_slash
-
-
-class Poll(discord.ui.Modal):
-    """A class representing a modal to create custom polls on discord"""
-
-    def __init__(self) -> None:
-        super().__init__(title="Poll", timeout=300.0)
-        self.add_item(discord.ui.InputText(
-            label="Title (optional)",
-            max_length=64,
-            style=discord.InputTextStyle.singleline,
-            row=0,
-            required=False
-        ))
-        self.add_item(discord.ui.InputText(
-            label="Content",
-            min_length=1,
-            max_length=512,
-            style=discord.InputTextStyle.paragraph,
-            row=1
-        ))
-
-    async def callback(self, interaction: discord.Interaction):
-        if not interaction:
-            return
-
-        title = self.children[0]
-        content = self.children[1]
-        text = (f"# {title.value} :\n\n" if title.value else "") + (content.value if content.value else "")
-
-        msg = await interaction.response.send_message(content=text)
-        og = await msg.original_response()
-        await og.add_reaction("✅")
-        await og.add_reaction("❌")
 
 
 class Usage(JosixCog):
@@ -135,7 +100,7 @@ class Usage(JosixCog):
 
         else:
             command_name = command_name.lower()
-            command: discord.SlashCommand = self.bot.get_application_command(name=command_name,
+            command: discord.SlashCommand | None = self.bot.get_application_command(name=command_name,
                                                                              type=discord.SlashCommand) # type: ignore
             if not command:
                 await ctx.respond((
@@ -255,44 +220,6 @@ class Usage(JosixCog):
             await ctx.respond("You can only close a thread created in the forum")
             return
 
-        testMod = ctx.author.guild_permissions.manage_threads  # Check if permissions are greater than manage_threads
-        if (ctx.author != thread.owner and not testMod) or (lock and not testMod):
-            await ctx.respond("You don't have the required permissions to do this")
-            return
-
-        if lock:
-            closeName = ""
-            try:
-                with open(Usage._FILE_PATH, "r") as f:
-                    data = json.load(f)
-
-                closeName = data["tags"]["closed"]
-                openName = data["tags"]["open"]
-            except (JSONDecodeError, FileNotFoundError, KeyError):
-                pass
-
-            if closeName != "" and openName != "":
-                result = await Events.getTags(thread, closeName, openName)
-                if not result:
-                    await ctx.respond("Forum tags error")
-                    return
-
-                cTag, oTag = result
-                if not (cTag and oTag):
-                    await ctx.respond("Forum tags error")
-                    return
-
-                tags = thread.applied_tags.copy()
-                if cTag and cTag not in tags:
-                    tags.append(cTag)
-
-                try:
-                    del tags[tags.index(oTag)]
-                except (ValueError, IndexError):
-                    pass
-
-                await thread.edit(applied_tags=tags)
-
         await ctx.respond(f"Closing the thread.\nLocking : {lock}")
         await thread.archive(locked=lock)
 
@@ -333,12 +260,6 @@ class Usage(JosixCog):
         minutesFactor = 1 + (((minutes_count // 30) + (1 if minutes_count % 30 > 0 else 0)) / 20)
         finalPrice = ceil(10*(cura_price * minutesFactor * factor)) / 10
         await ctx.respond(f"The price for this print is : **{finalPrice} €**")
-
-    @josix_slash(description="Create a poll on this server")
-    @commands.guild_only()
-    @discord.default_permissions(manage_messages=True)
-    async def create_poll(self, ctx: ApplicationContext):
-        await ctx.send_modal(Poll())
 
     @josix_slash(description="Add your birthday in the database !", give_xp=True)
     @commands.guild_only()
@@ -436,6 +357,9 @@ class Usage(JosixCog):
             return embed
 
         for val in values:
+            if not val:
+                continue
+
             res.append(f"`{val.day}/{val.month}` (<@{val.idUser}>)")
 
         return embed.add_field(name=months[monthInt - 1], value=" , ".join(res))
@@ -477,7 +401,7 @@ class Usage(JosixCog):
     async def user_birthday(self, ctx: ApplicationContext, user: discord.User):
         await ctx.defer(ephemeral=False, invisible=False)
         res = discord_service.get_user(self.bot.get_handler(), user.id)
-        if not res:
+        if not res or not res.hbDate:
             await ctx.respond("User not registered")
             return
 

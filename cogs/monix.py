@@ -14,6 +14,7 @@ from urllib3.exceptions import InsecureRequestWarning  # type: ignore
 from josix import Josix
 from pkg.bot_utils import JosixCog, josix_slash
 
+DISABLE_MONIX = True
 
 class HTTPMethod(Enum):
     """Enumerator that represents HTTP method used for the bot"""
@@ -493,4 +494,7 @@ class Monix(JosixCog):
 
 
 def setup(bot: Josix):
+    if DISABLE_MONIX:
+        return
+
     bot.add_cog(Monix(bot, True))
